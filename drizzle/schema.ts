@@ -148,3 +148,83 @@ export const savedTopics = mysqlTable("saved_topics", {
 
 export type SavedTopic = typeof savedTopics.$inferSelect;
 export type InsertSavedTopic = typeof savedTopics.$inferInsert;
+
+/**
+ * Commission Junction integration settings
+ */
+export const cjSettings = mysqlTable("cj_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  cid: varchar("cid", { length: 50 }).notNull(), // CJ Account ID
+  websiteId: varchar("websiteId", { length: 50 }),
+  apiToken: text("apiToken"), // Encrypted API token if provided
+  isActive: boolean("isActive").default(true).notNull(),
+  lastSyncAt: timestamp("lastSyncAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CJSettings = typeof cjSettings.$inferSelect;
+export type InsertCJSettings = typeof cjSettings.$inferInsert;
+
+/**
+ * CJ Products/Advertisers cache
+ */
+export const cjProducts = mysqlTable("cj_products", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  advertiserId: varchar("advertiserId", { length: 50 }).notNull(),
+  advertiserName: varchar("advertiserName", { length: 200 }).notNull(),
+  category: varchar("category", { length: 100 }),
+  productName: varchar("productName", { length: 500 }),
+  productUrl: text("productUrl"),
+  affiliateUrl: text("affiliateUrl").notNull(),
+  imageUrl: text("imageUrl"),
+  price: decimal("price", { precision: 10, scale: 2 }),
+  commission: varchar("commission", { length: 100 }),
+  epc: decimal("epc", { precision: 10, scale: 4 }), // Earnings per click
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CJProduct = typeof cjProducts.$inferSelect;
+export type InsertCJProduct = typeof cjProducts.$inferInsert;
+
+/**
+ * Publishing queue for automated article publishing
+ */
+export const publishingQueue = mysqlTable("publishing_queue", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  articleId: int("articleId").notNull(),
+  scheduledAt: timestamp("scheduledAt").notNull(),
+  status: mysqlEnum("status", ["pending", "processing", "published", "failed"]).default("pending").notNull(),
+  publishedAt: timestamp("publishedAt"),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PublishingQueue = typeof publishingQueue.$inferSelect;
+export type InsertPublishingQueue = typeof publishingQueue.$inferInsert;
+
+/**
+ * Auto-generated content queue
+ */
+export const contentQueue = mysqlTable("content_queue", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  topicId: int("topicId"),
+  title: varchar("title", { length: 500 }).notNull(),
+  keywords: json("keywords").$type<string[]>(),
+  targetProducts: json("targetProducts").$type<number[]>(), // CJ product IDs to include
+  status: mysqlEnum("status", ["pending", "generating", "ready", "published", "failed"]).default("pending").notNull(),
+  generatedArticleId: int("generatedArticleId"),
+  priority: int("priority").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ContentQueue = typeof contentQueue.$inferSelect;
+export type InsertContentQueue = typeof contentQueue.$inferInsert;

@@ -570,6 +570,337 @@ const analyticsRouter = router({
     }),
 });
 
+// Commission Junction integration router
+const cjRouter = router({
+  getSettings: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getCJSettings(ctx.user.id);
+  }),
+
+  saveSettings: protectedProcedure
+    .input(z.object({
+      cid: z.string().min(1),
+      websiteId: z.string().optional(),
+      apiToken: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await db.saveCJSettings({
+        userId: ctx.user.id,
+        cid: input.cid,
+        websiteId: input.websiteId,
+        apiToken: input.apiToken,
+        isActive: true,
+      });
+      return { id, success: true };
+    }),
+
+  getProducts: protectedProcedure
+    .input(z.object({ category: z.string().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      return await db.getCJProducts(ctx.user.id, input?.category);
+    }),
+
+  syncProducts: protectedProcedure
+    .input(z.object({ category: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      // Use AI to generate sample CJ products for the category
+      // In production, this would call the actual CJ API
+      const settings = await db.getCJSettings(ctx.user.id);
+      if (!settings) throw new Error("CJ settings not configured");
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `You are a product database. Generate 10 realistic affiliate products that could be found on Commission Junction. Return JSON with products array containing: advertiserId, advertiserName, category, productName, productUrl, affiliateUrl (use format https://www.anrdoezrs.net/click-${settings.cid}-[productid]), imageUrl, price (number), commission (e.g., "8%"), epc (earnings per click, number between 0.01 and 2.00).`
+          },
+          {
+            role: "user",
+            content: input.category 
+              ? `Generate affiliate products in the ${input.category} category.`
+              : `Generate affiliate products across various popular categories.`
+          }
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "cj_products",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                products: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      advertiserId: { type: "string" },
+                      advertiserName: { type: "string" },
+                      category: { type: "string" },
+                      productName: { type: "string" },
+                      productUrl: { type: "string" },
+                      affiliateUrl: { type: "string" },
+                      imageUrl: { type: "string" },
+                      price: { type: "number" },
+                      commission: { type: "string" },
+                      epc: { type: "number" }
+                    },
+                    required: ["advertiserId", "advertiserName", "category", "productName", "productUrl", "affiliateUrl", "imageUrl", "price", "commission", "epc"],
+                    additionalProperties: false
+                  }
+                }
+              },
+              required: ["products"],
+              additionalProperties: false
+            }
+          }
+        }
+      });
+
+      const rawContent = response.choices[0]?.message?.content;
+      const content = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
+      if (!content) throw new Error("Failed to sync products");
+
+      const parsed = JSON.parse(content);
+      const products = parsed.products;
+
+      // Save products to database
+      const productsToSave = products.map((p: any) => ({
+        userId: ctx.user.id,
+        advertiserId: p.advertiserId,
+        advertiserName: p.advertiserName,
+        category: p.category,
+        productName: p.productName,
+        productUrl: p.productUrl,
+        affiliateUrl: p.affiliateUrl,
+        imageUrl: p.imageUrl,
+        price: p.price.toString(),
+        commission: p.commission,
+        epc: p.epc.toString(),
+        isActive: true,
+      }));
+
+      await db.bulkSaveCJProducts(productsToSave);
+      
+      // Update last sync time
+      await db.saveCJSettings({
+        userId: ctx.user.id,
+        cid: settings.cid,
+        lastSyncAt: new Date(),
+      });
+
+      return { count: products.length, products };
+    }),
+
+  importToAffiliateLinks: protectedProcedure
+    .input(z.object({ productIds: z.array(z.number()) }))
+    .mutation(async ({ ctx, input }) => {
+      const imported: number[] = [];
+      
+      for (const productId of input.productIds) {
+        const product = await db.getCJProductById(productId, ctx.user.id);
+        if (!product) continue;
+
+        const shortCode = `cj-${product.advertiserId}-${Date.now()}`;
+        const id = await db.createAffiliateLink({
+          userId: ctx.user.id,
+          name: product.productName || product.advertiserName,
+          url: product.affiliateUrl,
+          shortCode,
+          category: product.category || "General",
+          program: "Commission Junction",
+          commission: product.commission || "",
+        });
+        imported.push(id);
+      }
+
+      return { imported: imported.length, ids: imported };
+    }),
+});
+
+// Publishing queue router
+const publishingRouter = router({
+  queue: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getPublishingQueue(ctx.user.id);
+  }),
+
+  schedule: protectedProcedure
+    .input(z.object({
+      articleId: z.number(),
+      scheduledAt: z.string().transform(s => new Date(s)),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await db.addToPublishingQueue({
+        userId: ctx.user.id,
+        articleId: input.articleId,
+        scheduledAt: input.scheduledAt,
+        status: "pending",
+      });
+      return { id, success: true };
+    }),
+
+  publishNow: protectedProcedure
+    .input(z.object({ articleId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      // Update article status to published
+      await db.updateArticle(input.articleId, ctx.user.id, {
+        status: "published",
+        publishedAt: new Date(),
+      });
+      return { success: true };
+    }),
+
+  cancel: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await db.removeFromPublishingQueue(input.id, ctx.user.id);
+      return { success: true };
+    }),
+});
+
+// Content queue router for auto-generation
+const contentQueueRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getContentQueue(ctx.user.id);
+  }),
+
+  add: protectedProcedure
+    .input(z.object({
+      title: z.string(),
+      topicId: z.number().optional(),
+      keywords: z.array(z.string()).optional(),
+      targetProducts: z.array(z.number()).optional(),
+      priority: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await db.addToContentQueue({
+        userId: ctx.user.id,
+        title: input.title,
+        topicId: input.topicId,
+        keywords: input.keywords,
+        targetProducts: input.targetProducts,
+        priority: input.priority || 0,
+        status: "pending",
+      });
+      return { id, success: true };
+    }),
+
+  generate: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      // Get the content queue item
+      const queue = await db.getContentQueue(ctx.user.id);
+      const item = queue.find(q => q.id === input.id);
+      if (!item) throw new Error("Content queue item not found");
+
+      // Update status to generating
+      await db.updateContentQueueItem(input.id, { status: "generating" });
+
+      try {
+        // Get target products if specified
+        let productContext = "";
+        if (item.targetProducts && item.targetProducts.length > 0) {
+          const products = await db.getCJProducts(ctx.user.id);
+          const targetProducts = products.filter(p => item.targetProducts?.includes(p.id));
+          if (targetProducts.length > 0) {
+            productContext = `\n\nInclude mentions of these products naturally in the article:\n${targetProducts.map(p => `- ${p.productName} by ${p.advertiserName} (${p.commission} commission)`).join("\n")}`;
+          }
+        }
+
+        // Generate content
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert SEO content writer specializing in affiliate marketing content. Write engaging, well-structured articles that naturally incorporate product recommendations. Use markdown formatting with proper headings, bullet points, and bold text for emphasis. Include compelling CTAs near product mentions.`
+            },
+            {
+              role: "user",
+              content: `Write a comprehensive article about "${item.title}".
+${item.keywords?.length ? `Target keywords: ${item.keywords.join(", ")}` : ""}
+Target length: 1500-2000 words${productContext}
+
+Make sure to:
+1. Include the main keyword naturally in the first paragraph
+2. Use subheadings that include related keywords
+3. Write in an engaging, readable style
+4. Include product recommendations with clear CTAs
+5. End with a strong conclusion and call-to-action`
+            }
+          ]
+        });
+
+        const content = typeof response.choices[0]?.message?.content === 'string' 
+          ? response.choices[0].message.content 
+          : '';
+
+        // Create the article
+        const slug = item.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '')
+          .substring(0, 100);
+
+        const articleId = await db.createArticle({
+          userId: ctx.user.id,
+          title: item.title,
+          slug,
+          content,
+          status: "draft",
+          keywords: item.keywords,
+          topicId: item.topicId,
+        });
+
+        // Update queue item
+        await db.updateContentQueueItem(input.id, {
+          status: "ready",
+          generatedArticleId: articleId,
+        });
+
+        return { articleId, success: true };
+      } catch (error) {
+        await db.updateContentQueueItem(input.id, { status: "failed" });
+        throw error;
+      }
+    }),
+
+  remove: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await db.removeFromContentQueue(input.id, ctx.user.id);
+      return { success: true };
+    }),
+});
+
+// Public articles router (for published content)
+const publicArticlesRouter = router({
+  list: publicProcedure
+    .input(z.object({ limit: z.number().optional() }).optional())
+    .query(async ({ input }) => {
+      return await db.getPublishedArticles(input?.limit || 20);
+    }),
+
+  get: publicProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ input }) => {
+      const article = await db.getPublishedArticleBySlug(input.slug);
+      if (article) {
+        // Increment views
+        await db.incrementArticleViews(article.id);
+      }
+      return article;
+    }),
+
+  trackClick: publicProcedure
+    .input(z.object({ articleId: z.number(), linkId: z.number().optional() }))
+    .mutation(async ({ input }) => {
+      await db.incrementArticleClicks(input.articleId);
+      if (input.linkId) {
+        await db.incrementLinkClicks(input.linkId);
+      }
+      return { success: true };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -584,6 +915,10 @@ export const appRouter = router({
   articles: articlesRouter,
   affiliate: affiliateRouter,
   analytics: analyticsRouter,
+  cj: cjRouter,
+  publishing: publishingRouter,
+  contentQueue: contentQueueRouter,
+  publicArticles: publicArticlesRouter,
 });
 
 export type AppRouter = typeof appRouter;

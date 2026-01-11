@@ -26,7 +26,9 @@ import {
   CheckCircle,
   Info,
   ListTree,
-  Link2
+  Link2,
+  Wand2,
+  DollarSign
 } from "lucide-react";
 
 export default function ArticleEditor() {
@@ -136,6 +138,77 @@ export default function ArticleEditor() {
     },
     onError: (error) => toast.error(error.message)
   });
+
+  // Smart affiliate link insertion
+  const { data: affiliateLinks } = trpc.affiliate.list.useQuery({});
+  const suggestLinksMutation = trpc.affiliate.suggestLinks.useMutation({
+    onSuccess: (data) => {
+      if (data.suggestions && data.suggestions.length > 0) {
+        setLinkSuggestions(data.suggestions);
+        toast.success(`Found ${data.suggestions.length} affiliate link opportunities!`);
+      } else {
+        toast.info("No affiliate link opportunities found. Add more affiliate links first.");
+      }
+    },
+    onError: (error) => toast.error(error.message)
+  });
+
+  const [linkSuggestions, setLinkSuggestions] = useState<any[]>([]);
+
+  const handleSuggestLinks = () => {
+    if (!content.trim()) {
+      toast.error("Add content first to find affiliate opportunities");
+      return;
+    }
+    if (!affiliateLinks || affiliateLinks.length === 0) {
+      toast.error("Add affiliate links first to find placement opportunities");
+      return;
+    }
+    suggestLinksMutation.mutate({ 
+      content,
+      existingLinks: affiliateLinks.map(l => ({ id: l.id, name: l.name, category: l.category }))
+    });
+  };
+
+  const handleInsertLink = (suggestion: any) => {
+    const link = affiliateLinks?.find(l => l.id === suggestion.linkId);
+    if (!link) return;
+
+    // Find the context in content and wrap with markdown link
+    const anchorText = suggestion.anchorText;
+    const markdownLink = `[${anchorText}](${link.url})`;
+    
+    // Replace first occurrence of anchor text with the link
+    const newContent = content.replace(anchorText, markdownLink);
+    setContent(newContent);
+    
+    // Remove this suggestion from the list
+    setLinkSuggestions(prev => prev.filter(s => s !== suggestion));
+    toast.success(`Inserted affiliate link for "${anchorText}"`);
+  };
+
+  const handleInsertAllLinks = () => {
+    let newContent = content;
+    let insertedCount = 0;
+    
+    for (const suggestion of linkSuggestions) {
+      const link = affiliateLinks?.find(l => l.id === suggestion.linkId);
+      if (!link) continue;
+      
+      const anchorText = suggestion.anchorText;
+      const markdownLink = `[${anchorText}](${link.url})`;
+      
+      // Only replace if not already a link
+      if (!newContent.includes(`[${anchorText}]`)) {
+        newContent = newContent.replace(anchorText, markdownLink);
+        insertedCount++;
+      }
+    }
+    
+    setContent(newContent);
+    setLinkSuggestions([]);
+    toast.success(`Inserted ${insertedCount} affiliate links!`);
+  };
 
   const handleSave = () => {
     if (!title.trim()) {
@@ -309,6 +382,20 @@ export default function ArticleEditor() {
                         )}
                         Generate
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSuggestLinks}
+                        disabled={!content || suggestLinksMutation.isPending}
+                        className="text-primary border-primary/50 hover:bg-primary/10"
+                      >
+                        {suggestLinksMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <DollarSign className="w-4 h-4 mr-2" />
+                        )}
+                        Add Links
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -375,6 +462,53 @@ export default function ArticleEditor() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Affiliate Link Suggestions */}
+            {linkSuggestions.length > 0 && (
+              <Card className="card-glow border-primary/50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <DollarSign className="w-4 h-4 text-primary" />
+                      Affiliate Opportunities ({linkSuggestions.length})
+                    </CardTitle>
+                    <Button size="sm" onClick={handleInsertAllLinks} className="btn-glow">
+                      <Wand2 className="w-3 h-3 mr-1" />
+                      Insert All
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {linkSuggestions.map((suggestion, i) => {
+                    const link = affiliateLinks?.find(l => l.id === suggestion.linkId);
+                    return (
+                      <div key={i} className="p-3 rounded-lg bg-secondary/50 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline" className="text-primary">
+                            {link?.name || `Link #${suggestion.linkId}`}
+                          </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => handleInsertLink(suggestion)}
+                          >
+                            <Link2 className="w-3 h-3 mr-1" />
+                            Insert
+                          </Button>
+                        </div>
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Anchor: </span>
+                          <span className="font-medium text-primary">{suggestion.anchorText}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {suggestion.reason}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
+
             {/* SEO Settings */}
             <Card className="card-glow">
               <CardHeader>

@@ -371,3 +371,253 @@ export async function getTopPerformingLinks(userId: number, limit: number = 5) {
     .orderBy(desc(affiliateLinks.clicks))
     .limit(limit);
 }
+
+
+// ============ COMMISSION JUNCTION FUNCTIONS ============
+import { 
+  cjSettings, InsertCJSettings, CJSettings,
+  cjProducts, InsertCJProduct, CJProduct,
+  publishingQueue, InsertPublishingQueue, PublishingQueue,
+  contentQueue, InsertContentQueue, ContentQueue
+} from "../drizzle/schema";
+
+export async function getCJSettings(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db
+    .select()
+    .from(cjSettings)
+    .where(eq(cjSettings.userId, userId))
+    .limit(1);
+  
+  return result[0];
+}
+
+export async function saveCJSettings(settings: InsertCJSettings) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Check if settings exist
+  const existing = await getCJSettings(settings.userId);
+  
+  if (existing) {
+    await db
+      .update(cjSettings)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(cjSettings.userId, settings.userId));
+    return existing.id;
+  } else {
+    const result = await db.insert(cjSettings).values(settings);
+    return result[0].insertId;
+  }
+}
+
+export async function getCJProducts(userId: number, category?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let conditions = [eq(cjProducts.userId, userId), eq(cjProducts.isActive, true)];
+  if (category) {
+    conditions.push(eq(cjProducts.category, category));
+  }
+  
+  return await db
+    .select()
+    .from(cjProducts)
+    .where(and(...conditions))
+    .orderBy(desc(cjProducts.epc))
+    .limit(100);
+}
+
+export async function saveCJProduct(product: InsertCJProduct) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(cjProducts).values(product);
+  return result[0].insertId;
+}
+
+export async function bulkSaveCJProducts(products: InsertCJProduct[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  if (products.length === 0) return;
+  
+  await db.insert(cjProducts).values(products);
+}
+
+export async function getCJProductById(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db
+    .select()
+    .from(cjProducts)
+    .where(and(eq(cjProducts.id, id), eq(cjProducts.userId, userId)))
+    .limit(1);
+  
+  return result[0];
+}
+
+// ============ PUBLISHING QUEUE FUNCTIONS ============
+export async function getPublishingQueue(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select({
+      id: publishingQueue.id,
+      articleId: publishingQueue.articleId,
+      scheduledAt: publishingQueue.scheduledAt,
+      status: publishingQueue.status,
+      publishedAt: publishingQueue.publishedAt,
+      errorMessage: publishingQueue.errorMessage,
+      createdAt: publishingQueue.createdAt,
+      article: articles
+    })
+    .from(publishingQueue)
+    .leftJoin(articles, eq(publishingQueue.articleId, articles.id))
+    .where(eq(publishingQueue.userId, userId))
+    .orderBy(desc(publishingQueue.scheduledAt));
+}
+
+export async function addToPublishingQueue(item: InsertPublishingQueue) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(publishingQueue).values(item);
+  return result[0].insertId;
+}
+
+export async function updatePublishingQueueItem(id: number, updates: Partial<InsertPublishingQueue>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .update(publishingQueue)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(publishingQueue.id, id));
+}
+
+export async function getPendingPublishItems() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const now = new Date();
+  
+  return await db
+    .select()
+    .from(publishingQueue)
+    .where(and(
+      eq(publishingQueue.status, 'pending'),
+      sql`${publishingQueue.scheduledAt} <= ${now}`
+    ))
+    .orderBy(publishingQueue.scheduledAt);
+}
+
+export async function removeFromPublishingQueue(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(publishingQueue).where(
+    and(eq(publishingQueue.id, id), eq(publishingQueue.userId, userId))
+  );
+}
+
+// ============ CONTENT QUEUE FUNCTIONS ============
+export async function getContentQueue(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select()
+    .from(contentQueue)
+    .where(eq(contentQueue.userId, userId))
+    .orderBy(desc(contentQueue.priority), desc(contentQueue.createdAt));
+}
+
+export async function addToContentQueue(item: InsertContentQueue) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(contentQueue).values(item);
+  return result[0].insertId;
+}
+
+export async function updateContentQueueItem(id: number, updates: Partial<InsertContentQueue>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .update(contentQueue)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(contentQueue.id, id));
+}
+
+export async function getPendingContentItems(limit: number = 5) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select()
+    .from(contentQueue)
+    .where(eq(contentQueue.status, 'pending'))
+    .orderBy(desc(contentQueue.priority), contentQueue.createdAt)
+    .limit(limit);
+}
+
+export async function removeFromContentQueue(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(contentQueue).where(
+    and(eq(contentQueue.id, id), eq(contentQueue.userId, userId))
+  );
+}
+
+// ============ PUBLISHED ARTICLES (PUBLIC) ============
+export async function getPublishedArticles(limit: number = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select()
+    .from(articles)
+    .where(eq(articles.status, 'published'))
+    .orderBy(desc(articles.publishedAt))
+    .limit(limit);
+}
+
+export async function getPublishedArticleBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db
+    .select()
+    .from(articles)
+    .where(and(eq(articles.slug, slug), eq(articles.status, 'published')))
+    .limit(1);
+  
+  return result[0];
+}
+
+export async function incrementArticleViews(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .update(articles)
+    .set({ views: sql`${articles.views} + 1` })
+    .where(eq(articles.id, id));
+}
+
+export async function incrementArticleClicks(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .update(articles)
+    .set({ clicks: sql`${articles.clicks} + 1` })
+    .where(eq(articles.id, id));
+}

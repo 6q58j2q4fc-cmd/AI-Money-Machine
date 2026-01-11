@@ -12,11 +12,20 @@ import ArticleEditor from "./pages/ArticleEditor";
 import AffiliateLinks from "./pages/AffiliateLinks";
 import Analytics from "./pages/Analytics";
 import MonetizationGuide from "./pages/MonetizationGuide";
+import CJIntegration from "./pages/CJIntegration";
+import AutoPublish from "./pages/AutoPublish";
+import Blog from "./pages/Blog";
+import PublicArticle from "./pages/PublicArticle";
 
 function Router() {
   return (
     <Switch>
+      {/* Public routes */}
       <Route path="/" component={Home} />
+      <Route path="/blog" component={Blog} />
+      <Route path="/blog/:slug" component={PublicArticle} />
+      
+      {/* Dashboard routes */}
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/topics" component={TrendingTopics} />
       <Route path="/articles" component={Articles} />
@@ -25,6 +34,9 @@ function Router() {
       <Route path="/affiliate-links" component={AffiliateLinks} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/monetization-guide" component={MonetizationGuide} />
+      <Route path="/cj-integration" component={CJIntegration} />
+      <Route path="/auto-publish" component={AutoPublish} />
+      
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
