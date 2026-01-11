@@ -228,3 +228,26 @@ export const contentQueue = mysqlTable("content_queue", {
 
 export type ContentQueue = typeof contentQueue.$inferSelect;
 export type InsertContentQueue = typeof contentQueue.$inferInsert;
+
+
+/**
+ * Automation settings for scheduled content generation
+ */
+export const automationSettings = mysqlTable("automation_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  isEnabled: boolean("isEnabled").default(true).notNull(),
+  articlesPerCycle: int("articlesPerCycle").default(3).notNull(),
+  cycleIntervalHours: int("cycleIntervalHours").default(24).notNull(), // How often to run
+  targetNiches: json("targetNiches").$type<string[]>(), // Niches to focus on
+  autoPublish: boolean("autoPublish").default(true).notNull(),
+  lastRunAt: timestamp("lastRunAt"),
+  nextRunAt: timestamp("nextRunAt"),
+  totalArticlesGenerated: int("totalArticlesGenerated").default(0).notNull(),
+  totalRevenue: decimal("totalRevenue", { precision: 10, scale: 2 }).default("0.00"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AutomationSettings = typeof automationSettings.$inferSelect;
+export type InsertAutomationSettings = typeof automationSettings.$inferInsert;

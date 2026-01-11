@@ -909,6 +909,7 @@ const automationRouter = router({
     const publishQueue = await db.getPublishingQueue(ctx.user.id);
     const articles = await db.getArticles(ctx.user.id);
     const links = await db.getAffiliateLinks(ctx.user.id);
+    const settings = await db.getAutomationSettings(ctx.user.id);
     
     return {
       pendingContent: queue.filter(q => q.status === 'pending').length,
@@ -918,9 +919,40 @@ const automationRouter = router({
       totalArticles: articles.length,
       publishedArticles: articles.filter(a => a.status === 'published').length,
       affiliateLinks: links.length,
-      isActive: true,
+      isActive: settings?.isEnabled ?? false,
+      settings: settings || null,
     };
   }),
+
+  // Get/save automation settings
+  getSettings: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getAutomationSettings(ctx.user.id);
+  }),
+
+  saveSettings: protectedProcedure
+    .input(z.object({
+      isEnabled: z.boolean(),
+      articlesPerCycle: z.number().min(1).max(10),
+      cycleIntervalHours: z.number().min(1).max(168),
+      targetNiches: z.array(z.string()).optional(),
+      autoPublish: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const nextRunAt = input.isEnabled 
+        ? new Date(Date.now() + input.cycleIntervalHours * 60 * 60 * 1000)
+        : null;
+      
+      const id = await db.saveAutomationSettings({
+        userId: ctx.user.id,
+        isEnabled: input.isEnabled,
+        articlesPerCycle: input.articlesPerCycle,
+        cycleIntervalHours: input.cycleIntervalHours,
+        targetNiches: input.targetNiches,
+        autoPublish: input.autoPublish,
+        nextRunAt,
+      });
+      return { id, success: true };
+    }),
 
   // Run full automation cycle: discover trends -> generate content -> insert links -> publish
   runCycle: protectedProcedure

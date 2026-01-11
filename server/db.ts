@@ -621,3 +621,64 @@ export async function incrementArticleClicks(id: number) {
     .set({ clicks: sql`${articles.clicks} + 1` })
     .where(eq(articles.id, id));
 }
+
+
+// ============ AUTOMATION SETTINGS FUNCTIONS ============
+import { automationSettings, InsertAutomationSettings, AutomationSettings } from "../drizzle/schema";
+
+export async function getAutomationSettings(userId: number): Promise<AutomationSettings | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(automationSettings)
+    .where(eq(automationSettings.userId, userId))
+    .limit(1);
+
+  return result[0];
+}
+
+export async function saveAutomationSettings(settings: InsertAutomationSettings): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Upsert - update if exists, insert if not
+  const existing = await getAutomationSettings(settings.userId);
+  
+  if (existing) {
+    await db
+      .update(automationSettings)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(automationSettings.userId, settings.userId));
+    return existing.id;
+  } else {
+    const result = await db.insert(automationSettings).values(settings);
+    return result[0].insertId;
+  }
+}
+
+export async function updateAutomationStats(userId: number, articlesGenerated: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(automationSettings)
+    .set({
+      lastRunAt: new Date(),
+      nextRunAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Next run in 24 hours
+      totalArticlesGenerated: sql`${automationSettings.totalArticlesGenerated} + ${articlesGenerated}`,
+      updatedAt: new Date(),
+    })
+    .where(eq(automationSettings.userId, userId));
+}
+
+export async function getActiveAutomationUsers(): Promise<AutomationSettings[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(automationSettings)
+    .where(eq(automationSettings.isEnabled, true));
+}

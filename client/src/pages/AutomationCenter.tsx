@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { 
   Zap, 
@@ -23,8 +24,12 @@ import {
   Target,
   DollarSign,
   RefreshCw,
-  Settings
+  Settings,
+  Clock,
+  Power,
+  Calendar
 } from "lucide-react";
+import { format } from "date-fns";
 
 export default function AutomationCenter() {
   const [niche, setNiche] = useState("");
@@ -33,8 +38,38 @@ export default function AutomationCenter() {
   const [isRunning, setIsRunning] = useState(false);
   const [cycleResults, setCycleResults] = useState<any>(null);
 
+  // Scheduler settings
+  const [schedulerEnabled, setSchedulerEnabled] = useState(false);
+  const [schedulerArticles, setSchedulerArticles] = useState(3);
+  const [schedulerInterval, setSchedulerInterval] = useState(24);
+  const [schedulerNiches, setSchedulerNiches] = useState<string[]>([]);
+  const [schedulerAutoPublish, setSchedulerAutoPublish] = useState(true);
+
   const { data: status, refetch: refetchStatus } = trpc.automation.status.useQuery();
+  const { data: settings, refetch: refetchSettings } = trpc.automation.getSettings.useQuery();
   
+  // Load settings when available
+  useEffect(() => {
+    if (settings) {
+      setSchedulerEnabled(settings.isEnabled);
+      setSchedulerArticles(settings.articlesPerCycle);
+      setSchedulerInterval(settings.cycleIntervalHours);
+      setSchedulerNiches(settings.targetNiches || []);
+      setSchedulerAutoPublish(settings.autoPublish);
+    }
+  }, [settings]);
+
+  const saveSettingsMutation = trpc.automation.saveSettings.useMutation({
+    onSuccess: () => {
+      toast.success("Automation settings saved!");
+      refetchSettings();
+      refetchStatus();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    }
+  });
+
   const runCycleMutation = trpc.automation.runCycle.useMutation({
     onSuccess: (data) => {
       setCycleResults(data);
@@ -62,6 +97,21 @@ export default function AutomationCenter() {
     });
   };
 
+  const handleSaveScheduler = () => {
+    saveSettingsMutation.mutate({
+      isEnabled: schedulerEnabled,
+      articlesPerCycle: schedulerArticles,
+      cycleIntervalHours: schedulerInterval,
+      targetNiches: schedulerNiches.length > 0 ? schedulerNiches : undefined,
+      autoPublish: schedulerAutoPublish,
+    });
+  };
+
+  const nicheOptions = [
+    "technology", "finance", "health", "lifestyle", "business", 
+    "entertainment", "education", "travel", "food", "fitness"
+  ];
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -76,10 +126,19 @@ export default function AutomationCenter() {
               Fully automated content generation and publishing
             </p>
           </div>
-          <Badge variant="outline" className="text-primary border-primary w-fit">
-            <Brain className="w-3 h-3 mr-1" />
-            AI-Powered
-          </Badge>
+          <div className="flex items-center gap-2">
+            {status?.isActive ? (
+              <Badge className="bg-green-500/20 text-green-500 border-green-500">
+                <Power className="w-3 h-3 mr-1" />
+                Auto-Pilot Active
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-muted-foreground">
+                <Power className="w-3 h-3 mr-1" />
+                Manual Mode
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Status Overview */}
@@ -130,17 +189,129 @@ export default function AutomationCenter() {
           </Card>
         </div>
 
-        {/* Main Automation Panel */}
+        {/* Auto-Pilot Scheduler */}
+        <Card className="card-glow border-green-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-green-500" />
+              Auto-Pilot Scheduler
+              {status?.isActive && (
+                <Badge className="ml-2 bg-green-500/20 text-green-500 text-xs">RUNNING</Badge>
+              )}
+            </CardTitle>
+            <CardDescription>
+              Set it and forget it - automatically generates and publishes content on schedule
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
+              <div className="space-y-0.5">
+                <Label className="text-base font-medium">Enable Auto-Pilot</Label>
+                <p className="text-sm text-muted-foreground">
+                  Automatically run content generation cycles
+                </p>
+              </div>
+              <Switch
+                checked={schedulerEnabled}
+                onCheckedChange={setSchedulerEnabled}
+              />
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Articles Per Cycle</Label>
+                <Select 
+                  value={schedulerArticles.toString()} 
+                  onValueChange={(v) => setSchedulerArticles(parseInt(v))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 5, 7, 10].map(n => (
+                      <SelectItem key={n} value={n.toString()}>{n} articles</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Run Every</Label>
+                <Select 
+                  value={schedulerInterval.toString()} 
+                  onValueChange={(v) => setSchedulerInterval(parseInt(v))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="6">6 hours</SelectItem>
+                    <SelectItem value="12">12 hours</SelectItem>
+                    <SelectItem value="24">24 hours (Daily)</SelectItem>
+                    <SelectItem value="48">48 hours</SelectItem>
+                    <SelectItem value="72">72 hours</SelectItem>
+                    <SelectItem value="168">Weekly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Auto-Publish Articles</Label>
+                <p className="text-xs text-muted-foreground">
+                  Publish immediately after generation
+                </p>
+              </div>
+              <Switch
+                checked={schedulerAutoPublish}
+                onCheckedChange={setSchedulerAutoPublish}
+              />
+            </div>
+
+            {settings?.nextRunAt && schedulerEnabled && (
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="flex items-center gap-2 text-green-500">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    Next scheduled run: {format(new Date(settings.nextRunAt), "MMM d, yyyy 'at' h:mm a")}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {settings?.lastRunAt && (
+              <p className="text-xs text-muted-foreground">
+                Last run: {format(new Date(settings.lastRunAt), "MMM d, yyyy 'at' h:mm a")} 
+                {settings.totalArticlesGenerated > 0 && ` • ${settings.totalArticlesGenerated} total articles generated`}
+              </p>
+            )}
+
+            <Button 
+              onClick={handleSaveScheduler}
+              disabled={saveSettingsMutation.isPending}
+              className="w-full"
+            >
+              {saveSettingsMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Settings className="w-4 h-4 mr-2" />
+              )}
+              Save Scheduler Settings
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Manual Run Panel */}
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Run Automation */}
           <Card className="card-glow border-primary/30">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Rocket className="w-5 h-5 text-primary" />
-                Run Automation Cycle
+                Run Manual Cycle
               </CardTitle>
               <CardDescription>
-                Discover trends, generate articles, insert affiliate links, and publish automatically
+                Trigger an immediate content generation cycle
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -154,9 +325,6 @@ export default function AutomationCenter() {
                     placeholder="e.g., personal finance, tech gadgets, health..."
                     className="mt-1"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Leave empty to discover across all niches
-                  </p>
                 </div>
 
                 <div>
@@ -176,7 +344,7 @@ export default function AutomationCenter() {
                   <div className="space-y-0.5">
                     <Label>Auto-Publish</Label>
                     <p className="text-xs text-muted-foreground">
-                      Publish articles immediately after generation
+                      Publish articles immediately
                     </p>
                   </div>
                   <Switch
@@ -200,7 +368,7 @@ export default function AutomationCenter() {
                 ) : (
                   <>
                     <Play className="w-5 h-5 mr-2" />
-                    Start Automation Cycle
+                    Start Cycle Now
                   </>
                 )}
               </Button>
@@ -283,8 +451,8 @@ export default function AutomationCenter() {
         <Card className="card-glow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5 text-primary" />
-              How Automation Works
+              <Brain className="w-5 h-5 text-primary" />
+              How Auto-Pilot Works
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -304,7 +472,7 @@ export default function AutomationCenter() {
                 </div>
                 <h3 className="font-medium mb-1">2. Content Generation</h3>
                 <p className="text-xs text-muted-foreground">
-                  SEO-optimized articles are created with affiliate opportunities
+                  SEO-optimized articles created with affiliate opportunities
                 </p>
               </div>
               <div className="p-4 rounded-lg bg-secondary/30 text-center">
@@ -313,7 +481,7 @@ export default function AutomationCenter() {
                 </div>
                 <h3 className="font-medium mb-1">3. Link Insertion</h3>
                 <p className="text-xs text-muted-foreground">
-                  Affiliate links are automatically placed for maximum clicks
+                  Your CJ affiliate links automatically placed for clicks
                 </p>
               </div>
               <div className="p-4 rounded-lg bg-secondary/30 text-center">
@@ -322,7 +490,7 @@ export default function AutomationCenter() {
                 </div>
                 <h3 className="font-medium mb-1">4. Publish & Earn</h3>
                 <p className="text-xs text-muted-foreground">
-                  Content goes live and starts generating revenue
+                  Content goes live and starts generating commissions
                 </p>
               </div>
             </div>
