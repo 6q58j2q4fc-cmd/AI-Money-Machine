@@ -1,14 +1,22 @@
 import { trpc } from "@/lib/trpc";
 import { useParams, Link } from "wouter";
-import { Loader2, ArrowLeft, Calendar, Eye, MousePointer, Share2 } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, Eye, MousePointer, Share2, Twitter, Facebook, Linkedin, Mail, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Streamdown } from "streamdown";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function PublicArticle() {
   const { slug } = useParams<{ slug: string }>();
+  const [copied, setCopied] = useState(false);
   
   const { data: article, isLoading, error } = trpc.publicArticles.get.useQuery(
     { slug: slug || "" },
@@ -24,19 +32,34 @@ export default function PublicArticle() {
     }
   };
 
-  const handleShare = async () => {
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const encodedUrl = encodeURIComponent(currentUrl);
+  const encodedTitle = encodeURIComponent(article?.title || '');
+
+  const shareLinks = {
+    twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    linkedin: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
+    email: `mailto:?subject=${encodedTitle}&body=Check out this article: ${encodedUrl}`,
+  };
+
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(currentUrl);
+    setCopied(true);
+    toast.success("Link copied to clipboard!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleNativeShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
           title: article?.title,
-          url: window.location.href,
+          url: currentUrl,
         });
       } catch {
         // User cancelled
       }
-    } else {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied to clipboard!");
     }
   };
 
@@ -76,10 +99,48 @@ export default function PublicArticle() {
               All Articles
             </Button>
           </Link>
-          <Button variant="outline" size="sm" onClick={handleShare}>
-            <Share2 className="w-4 h-4 mr-2" />
-            Share
-          </Button>
+          
+          {/* Share Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Share2 className="w-4 h-4 mr-2" />
+                Share
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => window.open(shareLinks.twitter, '_blank')}>
+                <Twitter className="w-4 h-4 mr-2" />
+                Twitter / X
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.open(shareLinks.facebook, '_blank')}>
+                <Facebook className="w-4 h-4 mr-2" />
+                Facebook
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.open(shareLinks.linkedin, '_blank')}>
+                <Linkedin className="w-4 h-4 mr-2" />
+                LinkedIn
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.open(shareLinks.email, '_blank')}>
+                <Mail className="w-4 h-4 mr-2" />
+                Email
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleCopyLink}>
+                {copied ? (
+                  <Check className="w-4 h-4 mr-2 text-green-500" />
+                ) : (
+                  <Copy className="w-4 h-4 mr-2" />
+                )}
+                Copy Link
+              </DropdownMenuItem>
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
+                <DropdownMenuItem onClick={handleNativeShare}>
+                  <Share2 className="w-4 h-4 mr-2" />
+                  More Options...
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -133,8 +194,45 @@ export default function PublicArticle() {
           <Streamdown>{article.content || ""}</Streamdown>
         </div>
 
-        {/* Footer */}
+        {/* Social Share Bar */}
         <div className="mt-12 pt-8 border-t border-border">
+          <div className="text-center mb-6">
+            <p className="text-lg font-medium mb-4">Found this helpful? Share it!</p>
+            <div className="flex items-center justify-center gap-3">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => window.open(shareLinks.twitter, '_blank')}
+                className="hover:bg-[#1DA1F2]/10 hover:text-[#1DA1F2] hover:border-[#1DA1F2]"
+              >
+                <Twitter className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => window.open(shareLinks.facebook, '_blank')}
+                className="hover:bg-[#4267B2]/10 hover:text-[#4267B2] hover:border-[#4267B2]"
+              >
+                <Facebook className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => window.open(shareLinks.linkedin, '_blank')}
+                className="hover:bg-[#0A66C2]/10 hover:text-[#0A66C2] hover:border-[#0A66C2]"
+              >
+                <Linkedin className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleCopyLink}
+              >
+                {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+              </Button>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between">
             <Link href="/blog">
               <Button variant="outline">
@@ -142,10 +240,6 @@ export default function PublicArticle() {
                 More Articles
               </Button>
             </Link>
-            <Button onClick={handleShare}>
-              <Share2 className="w-4 h-4 mr-2" />
-              Share This Article
-            </Button>
           </div>
         </div>
       </article>

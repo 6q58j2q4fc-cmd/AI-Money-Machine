@@ -14,6 +14,7 @@ import Analytics from "./pages/Analytics";
 import MonetizationGuide from "./pages/MonetizationGuide";
 import CJIntegration from "./pages/CJIntegration";
 import AutoPublish from "./pages/AutoPublish";
+import AutomationCenter from "./pages/AutomationCenter";
 import Blog from "./pages/Blog";
 import PublicArticle from "./pages/PublicArticle";
 
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/monetization-guide" component={MonetizationGuide} />
       <Route path="/cj-integration" component={CJIntegration} />
       <Route path="/auto-publish" component={AutoPublish} />
+      <Route path="/automation" component={AutomationCenter} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

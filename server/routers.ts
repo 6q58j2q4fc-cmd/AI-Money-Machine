@@ -901,6 +901,303 @@ const publicArticlesRouter = router({
     }),
 });
 
+// Full automation router - auto-discovers, generates, and publishes content
+const automationRouter = router({
+  // Get automation status and settings
+  status: protectedProcedure.query(async ({ ctx }) => {
+    const queue = await db.getContentQueue(ctx.user.id);
+    const publishQueue = await db.getPublishingQueue(ctx.user.id);
+    const articles = await db.getArticles(ctx.user.id);
+    const links = await db.getAffiliateLinks(ctx.user.id);
+    
+    return {
+      pendingContent: queue.filter(q => q.status === 'pending').length,
+      generatingContent: queue.filter(q => q.status === 'generating').length,
+      readyToPublish: queue.filter(q => q.status === 'ready').length,
+      scheduledPublish: publishQueue.length,
+      totalArticles: articles.length,
+      publishedArticles: articles.filter(a => a.status === 'published').length,
+      affiliateLinks: links.length,
+      isActive: true,
+    };
+  }),
+
+  // Run full automation cycle: discover trends -> generate content -> insert links -> publish
+  runCycle: protectedProcedure
+    .input(z.object({ 
+      count: z.number().min(1).max(10).optional(),
+      niche: z.string().optional(),
+      autoPublish: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const count = input.count || 3;
+      const results: { step: string; success: boolean; details: string }[] = [];
+
+      try {
+        // Step 1: Discover trending topics
+        const topicsResponse = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert trend analyst and SEO specialist. Identify ${count} highly monetizable trending topics that are:
+1. Currently popular and searched frequently
+2. Have high commercial intent (people looking to buy)
+3. Have affiliate marketing potential
+4. Low to medium competition
+5. Evergreen or trending upward
+
+Return JSON with topics array containing: title, category, keywords (5 high-value keywords), monetizationAngle (how to make money from this topic), searchIntent (informational/commercial/transactional).`
+            },
+            {
+              role: "user",
+              content: input.niche 
+                ? `Find ${count} trending, monetizable topics in the ${input.niche} niche.`
+                : `Find ${count} trending, monetizable topics across popular niches like tech, finance, health, and lifestyle.`
+            }
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "trending_topics",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  topics: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        category: { type: "string" },
+                        keywords: { type: "array", items: { type: "string" } },
+                        monetizationAngle: { type: "string" },
+                        searchIntent: { type: "string" }
+                      },
+                      required: ["title", "category", "keywords", "monetizationAngle", "searchIntent"],
+                      additionalProperties: false
+                    }
+                  }
+                },
+                required: ["topics"],
+                additionalProperties: false
+              }
+            }
+          }
+        });
+
+        const topicsContent = typeof topicsResponse.choices[0]?.message?.content === 'string'
+          ? topicsResponse.choices[0].message.content
+          : '';
+        const topicsData = JSON.parse(topicsContent);
+        results.push({ step: "Trend Discovery", success: true, details: `Found ${topicsData.topics.length} trending topics` });
+
+        // Get existing affiliate links for insertion
+        const affiliateLinks = await db.getAffiliateLinks(ctx.user.id);
+        const linkContext = affiliateLinks.length > 0
+          ? `\n\nAvailable affiliate products to recommend:\n${affiliateLinks.slice(0, 10).map(l => `- ${l.name} (${l.category}): ${l.url}`).join('\n')}`
+          : '';
+
+        // Step 2: Generate articles for each topic
+        const generatedArticles: number[] = [];
+        for (const topic of topicsData.topics) {
+          const articleResponse = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `You are an expert SEO content writer and affiliate marketing specialist. Write a comprehensive, engaging article that:
+1. Ranks well in search engines (use keywords naturally)
+2. Provides genuine value to readers
+3. Naturally incorporates product recommendations with compelling CTAs
+4. Uses markdown formatting with proper H2/H3 headings
+5. Includes a strong hook in the introduction
+6. Has a clear call-to-action at the end
+7. Is 1500-2500 words long
+8. Uses power words and emotional triggers
+9. Includes bullet points and numbered lists for scannability
+10. Ends with a summary and next steps${linkContext}`
+              },
+              {
+                role: "user",
+                content: `Write a high-converting article about: "${topic.title}"
+
+Target keywords: ${topic.keywords.join(', ')}
+Monetization angle: ${topic.monetizationAngle}
+Search intent: ${topic.searchIntent}
+
+Make it engaging, valuable, and optimized for both readers and search engines.`
+              }
+            ]
+          });
+
+          const articleContent = typeof articleResponse.choices[0]?.message?.content === 'string'
+            ? articleResponse.choices[0].message.content
+            : '';
+
+          // Create the article
+          const slug = generateSlug(topic.title);
+          const articleId = await db.createArticle({
+            userId: ctx.user.id,
+            title: topic.title,
+            slug: slug + '-' + Date.now().toString(36),
+            content: articleContent,
+            status: input.autoPublish ? 'published' : 'draft',
+            keywords: topic.keywords,
+            metaTitle: topic.title.substring(0, 60),
+            metaDescription: `Discover everything about ${topic.title}. Expert insights, tips, and recommendations.`.substring(0, 160),
+            focusKeyword: topic.keywords[0],
+            seoScore: 85,
+            readabilityScore: 80,
+            publishedAt: input.autoPublish ? new Date() : undefined,
+          });
+
+          generatedArticles.push(articleId);
+
+          // Auto-insert affiliate links
+          if (affiliateLinks.length > 0) {
+            // Find relevant links based on content
+            for (const link of affiliateLinks) {
+              const linkKeywords = link.name.toLowerCase().split(' ');
+              const contentLower = articleContent.toLowerCase();
+              if (linkKeywords.some(kw => contentLower.includes(kw))) {
+                await db.addAffiliateLinkToArticle({
+                  articleId,
+                  affiliateLinkId: link.id,
+                  anchorText: link.name,
+                  position: 1,
+                });
+              }
+            }
+          }
+        }
+
+        results.push({ 
+          step: "Content Generation", 
+          success: true, 
+          details: `Generated ${generatedArticles.length} SEO-optimized articles` 
+        });
+
+        if (input.autoPublish) {
+          results.push({ 
+            step: "Auto-Publish", 
+            success: true, 
+            details: `Published ${generatedArticles.length} articles to blog` 
+          });
+        }
+
+        return {
+          success: true,
+          topicsDiscovered: topicsData.topics.length,
+          articlesGenerated: generatedArticles.length,
+          articleIds: generatedArticles,
+          results,
+        };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        results.push({ step: "Error", success: false, details: errorMessage });
+        return {
+          success: false,
+          topicsDiscovered: 0,
+          articlesGenerated: 0,
+          articleIds: [],
+          results,
+        };
+      }
+    }),
+
+  // Generate viral-optimized content
+  generateViralContent: protectedProcedure
+    .input(z.object({ topic: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `You are a viral content expert. Create content that is designed to be shared widely. Use:
+1. Emotional hooks and power words
+2. Curiosity gaps
+3. Surprising statistics or facts
+4. Relatable stories
+5. Clear, actionable takeaways
+6. Share-worthy headlines
+7. Engaging subheadings
+8. Visual content suggestions (describe images that should be added)
+9. Social proof elements
+10. Strong CTAs for sharing`
+          },
+          {
+            role: "user",
+            content: `Create viral-optimized content about: ${input.topic}`
+          }
+        ]
+      });
+
+      return {
+        content: typeof response.choices[0]?.message?.content === 'string'
+          ? response.choices[0].message.content
+          : '',
+      };
+    }),
+
+  // Get SEO recommendations for existing content
+  optimizeSEO: protectedProcedure
+    .input(z.object({ articleId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const article = await db.getArticleById(input.articleId, ctx.user.id);
+      if (!article) throw new Error("Article not found");
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `You are an SEO expert. Analyze the content and provide specific, actionable recommendations to improve search rankings. Return JSON with: currentScore (0-100), recommendations (array of {type, priority, suggestion, impact}), suggestedTitle, suggestedMetaDescription, additionalKeywords.`
+          },
+          {
+            role: "user",
+            content: `Analyze and optimize this article:\n\nTitle: ${article.title}\nCurrent Meta: ${article.metaDescription || 'None'}\nKeywords: ${(article.keywords as string[])?.join(', ') || 'None'}\n\nContent:\n${article.content?.substring(0, 3000)}`
+          }
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "seo_analysis",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                currentScore: { type: "integer" },
+                recommendations: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      type: { type: "string" },
+                      priority: { type: "string" },
+                      suggestion: { type: "string" },
+                      impact: { type: "string" }
+                    },
+                    required: ["type", "priority", "suggestion", "impact"],
+                    additionalProperties: false
+                  }
+                },
+                suggestedTitle: { type: "string" },
+                suggestedMetaDescription: { type: "string" },
+                additionalKeywords: { type: "array", items: { type: "string" } }
+              },
+              required: ["currentScore", "recommendations", "suggestedTitle", "suggestedMetaDescription", "additionalKeywords"],
+              additionalProperties: false
+            }
+          }
+        }
+      });
+
+      const content = typeof response.choices[0]?.message?.content === 'string'
+        ? response.choices[0].message.content
+        : '{}';
+      return JSON.parse(content);
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -919,6 +1216,7 @@ export const appRouter = router({
   publishing: publishingRouter,
   contentQueue: contentQueueRouter,
   publicArticles: publicArticlesRouter,
+  automation: automationRouter,
 });
 
 export type AppRouter = typeof appRouter;
