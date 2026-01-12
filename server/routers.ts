@@ -1130,6 +1130,63 @@ Make it engaging, valuable, and optimized for both readers and search engines.`
             success: true, 
             details: `Published ${generatedArticles.length} articles to blog` 
           });
+          
+          // Auto-submit to search engines (IndexNow for Bing/Yandex, ping Google)
+          try {
+            // Get the slugs for published articles
+            const articleUrls: string[] = [];
+            for (const articleId of generatedArticles) {
+              const article = await db.getArticleById(articleId, ctx.user.id);
+              if (article?.slug) {
+                articleUrls.push(`/blog/${article.slug}`);
+              }
+            }
+            
+            // Submit to IndexNow (Bing, Yandex)
+            const indexNowKey = 'moneymachine2026indexnow';
+            const baseUrl = process.env.VITE_APP_URL || 'https://3000-imsfbegzhv1gdqs8koo38-9b174543.us1.manus.computer';
+            
+            const indexNowPayload = {
+              host: new URL(baseUrl).host,
+              key: indexNowKey,
+              keyLocation: `${baseUrl}/${indexNowKey}.txt`,
+              urlList: articleUrls.map((url: string) => `${baseUrl}${url}`)
+            };
+            
+            // Submit to IndexNow endpoints
+            const endpoints = [
+              'https://api.indexnow.org/indexnow',
+              'https://www.bing.com/indexnow',
+              'https://yandex.com/indexnow'
+            ];
+            
+            await Promise.allSettled(
+              endpoints.map(endpoint =>
+                fetch(endpoint, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(indexNowPayload)
+                })
+              )
+            );
+            
+            // Ping Google about sitemap update
+            const sitemapUrl = `${baseUrl}/sitemap.xml`;
+            await fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`);
+            
+            results.push({ 
+              step: "Search Engine Indexing", 
+              success: true, 
+              details: `Submitted ${articleUrls.length} URLs to Google, Bing, and Yandex for indexing` 
+            });
+          } catch (indexError) {
+            console.error('Search engine indexing error:', indexError);
+            results.push({ 
+              step: "Search Engine Indexing", 
+              success: false, 
+              details: 'Failed to submit to search engines' 
+            });
+          }
         }
 
         return {

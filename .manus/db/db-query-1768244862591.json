@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, slug, title, status, publishedAt FROM articles WHERE status = 'published' ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, slug, title, status, publishedAt FROM articles WHERE status = 'published' ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "120008",
+      "slug": "specialty-coffee-brewing-at-home-mkbj881t",
+      "title": "Specialty Coffee Brewing at Home",
+      "status": "published",
+      "publishedAt": "2026-01-12 19:04:41"
+    },
+    {
+      "id": "120007",
+      "slug": "digital-nomad-essentials-setup-mkbj7l2g",
+      "title": "Digital Nomad Essentials & Setup",
+      "status": "published",
+      "publishedAt": "2026-01-12 19:04:11"
+    },
+    {
+      "id": "120006",
+      "slug": "beginner-friendly-investment-strategies-mkbj6o1v",
+      "title": "Beginner-Friendly Investment Strategies",
+      "status": "published",
+      "publishedAt": "2026-01-12 19:03:29"
+    },
+    {
+      "id": "120005",
+      "slug": "budget-friendly-home-fitness-equipment-mkbj5x22",
+      "title": "Budget-Friendly Home Fitness Equipment",
+      "status": "published",
+      "publishedAt": "2026-01-12 19:02:54"
+    },
+    {
+      "id": "120004",
+      "slug": "ai-powered-personal-productivity-tools-mkbj5aae",
+      "title": "AI-Powered Personal Productivity Tools",
+      "status": "published",
+      "publishedAt": "2026-01-12 19:02:24"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tslug\ttitle\tstatus\tpublishedAt\n120008\tspecialty-coffee-brewing-at-home-mkbj881t\tSpecialty Coffee Brewing at Home\tpublished\t2026-01-12 19:04:41\n120007\tdigital-nomad-essentials-setup-mkbj7l2g\tDigital Nomad Essentials & Setup\tpublished\t2026-01-12 19:04:11\n120006\tbeginner-friendly-investment-strategies-mkbj6o1v\tBeginner-Friendly Investment Strategies\tpublished\t2026-01-12 19:03:29\n120005\tbudget-friendly-home-fitness-equipment-mkbj5x22\tBudget-Friendly Home Fitness Equipment\tpublished\t2026-01-12 19:02:54\n120004\tai-powered-personal-productivity-tools-mkbj5aae\tAI-Powered Personal Productivity Tools\tpublished\t2026-01-12 19:02:24\n",
+  "stderr": "",
+  "execution_time_ms": 442
+}

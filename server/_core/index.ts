@@ -77,6 +77,85 @@ async function startServer() {
     res.set('Content-Type', 'text/plain');
     res.send(robotsTxt);
   });
+  
+  // IndexNow API key file for Bing/Yandex instant indexing
+  const INDEXNOW_KEY = 'moneymachine2026indexnow';
+  app.get(`/${INDEXNOW_KEY}.txt`, (req, res) => {
+    res.set('Content-Type', 'text/plain');
+    res.send(INDEXNOW_KEY);
+  });
+  
+  // IndexNow submission endpoint - submits URLs to Bing, Yandex instantly
+  app.post('/api/indexnow', async (req, res) => {
+    try {
+      const { urls } = req.body;
+      const baseUrl = req.protocol + '://' + req.get('host');
+      
+      if (!urls || !Array.isArray(urls)) {
+        return res.status(400).json({ error: 'URLs array required' });
+      }
+      
+      // Submit to IndexNow (Bing, Yandex, Seznam, Naver)
+      const indexNowPayload = {
+        host: new URL(baseUrl).host,
+        key: INDEXNOW_KEY,
+        keyLocation: `${baseUrl}/${INDEXNOW_KEY}.txt`,
+        urlList: urls.map(url => url.startsWith('http') ? url : `${baseUrl}${url}`)
+      };
+      
+      // Submit to multiple IndexNow endpoints
+      const endpoints = [
+        'https://api.indexnow.org/indexnow',
+        'https://www.bing.com/indexnow',
+        'https://yandex.com/indexnow'
+      ];
+      
+      const results = await Promise.allSettled(
+        endpoints.map(endpoint =>
+          fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(indexNowPayload)
+          })
+        )
+      );
+      
+      const successful = results.filter(r => r.status === 'fulfilled').length;
+      console.log(`IndexNow: Submitted ${urls.length} URLs to ${successful}/${endpoints.length} search engines`);
+      
+      res.json({ 
+        success: true, 
+        message: `Submitted ${urls.length} URLs to ${successful} search engines`,
+        urls: indexNowPayload.urlList
+      });
+    } catch (error) {
+      console.error('IndexNow submission error:', error);
+      res.status(500).json({ error: 'Failed to submit to IndexNow' });
+    }
+  });
+  
+  // Google Ping endpoint - pings Google about sitemap updates
+  app.post('/api/ping-google', async (req, res) => {
+    try {
+      const baseUrl = req.protocol + '://' + req.get('host');
+      const sitemapUrl = `${baseUrl}/sitemap.xml`;
+      
+      // Ping Google about sitemap update
+      const googlePingUrl = `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`;
+      
+      const response = await fetch(googlePingUrl);
+      
+      if (response.ok) {
+        console.log(`Google Ping: Successfully pinged Google about sitemap update`);
+        res.json({ success: true, message: 'Google pinged successfully', sitemapUrl });
+      } else {
+        throw new Error(`Google ping failed: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Google ping error:', error);
+      res.status(500).json({ error: 'Failed to ping Google' });
+    }
+  });
   // tRPC API
   app.use(
     "/api/trpc",

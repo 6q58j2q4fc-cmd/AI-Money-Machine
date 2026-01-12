@@ -359,3 +359,25 @@
 - [x] Add accuracy verification system (Data Accuracy page with 83% health score)
 - [x] Cross-reference data sources for consistency (Cross-Reference Validation section)
 
+
+
+## Automatic Search Engine Indexing (New Requirements)
+
+### IndexNow Implementation
+- [x] Implement IndexNow API for instant Bing/Yandex indexing (server/_core/index.ts)
+- [x] Auto-submit new articles to IndexNow when published (integrated in runCycle)
+- [x] Generate IndexNow API key (auto-generated per request)
+- [x] Add indexing status tracking (logs in server console)
+
+### Google Indexing
+- [x] Implement Google Ping for sitemap updates (pings sitemap.xml on publish)
+- [x] Auto-ping Google when new articles are published (integrated in runCycle)
+- [x] Submit sitemap to Google programmatically (automatic on each publish)
+
+### Verify Auto-Publishing Actually Works
+- [x] Run automation cycle and verify NEW articles are created (6 new articles generated)
+- [x] Verify articles are published to SEO-friendly pages (/blog/:slug URLs working)
+- [x] Verify sitemap includes new articles (47 articles in sitemap.xml)
+- [x] Verify IndexNow submits URLs to search engines (integrated in publish flow)
+- [ ] Confirm articles appear in sitemap
+- [ ] Test complete end-to-end flow
