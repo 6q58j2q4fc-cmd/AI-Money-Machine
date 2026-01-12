@@ -682,3 +682,177 @@ export async function getActiveAutomationUsers(): Promise<AutomationSettings[]> 
     .from(automationSettings)
     .where(eq(automationSettings.isEnabled, true));
 }
+
+
+// ============ PERFORMANCE LEARNING FUNCTIONS ============
+import { 
+  performanceLearning, InsertPerformanceLearning, PerformanceLearning,
+  contentGenerationHistory, InsertContentGenerationHistory, ContentGenerationHistory
+} from "../drizzle/schema";
+
+export async function recordLearning(learning: InsertPerformanceLearning): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Check if this learning already exists
+  const existing = await db
+    .select()
+    .from(performanceLearning)
+    .where(and(
+      eq(performanceLearning.userId, learning.userId),
+      eq(performanceLearning.learningType, learning.learningType),
+      eq(performanceLearning.learningKey, learning.learningKey)
+    ))
+    .limit(1);
+
+  if (existing.length > 0) {
+    // Update existing learning with new data
+    await db
+      .update(performanceLearning)
+      .set({
+        impressions: sql`${performanceLearning.impressions} + ${learning.impressions || 0}`,
+        clicks: sql`${performanceLearning.clicks} + ${learning.clicks || 0}`,
+        conversions: sql`${performanceLearning.conversions} + ${learning.conversions || 0}`,
+        revenue: sql`${performanceLearning.revenue} + ${learning.revenue || 0}`,
+        timesUsed: sql`${performanceLearning.timesUsed} + 1`,
+        lastUsedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(performanceLearning.id, existing[0].id));
+    return existing[0].id;
+  } else {
+    const result = await db.insert(performanceLearning).values(learning);
+    return result[0].insertId;
+  }
+}
+
+export async function getTopPerformingLearnings(
+  userId: number, 
+  learningType: string, 
+  limit: number = 10
+): Promise<PerformanceLearning[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(performanceLearning)
+    .where(and(
+      eq(performanceLearning.userId, userId),
+      eq(performanceLearning.learningType, learningType as any)
+    ))
+    .orderBy(desc(performanceLearning.performanceScore), desc(performanceLearning.clicks))
+    .limit(limit);
+}
+
+export async function updateLearningScores(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  // Update CTR, conversion rate, and performance scores
+  await db.execute(sql`
+    UPDATE performance_learning 
+    SET 
+      ctr = CASE WHEN impressions > 0 THEN clicks / impressions ELSE 0 END,
+      conversionRate = CASE WHEN clicks > 0 THEN conversions / clicks ELSE 0 END,
+      revenuePerClick = CASE WHEN clicks > 0 THEN revenue / clicks ELSE 0 END,
+      performanceScore = LEAST(100, GREATEST(0, 
+        (CASE WHEN impressions > 0 THEN (clicks / impressions) * 40 ELSE 0 END) +
+        (CASE WHEN clicks > 0 THEN (conversions / clicks) * 30 ELSE 0 END) +
+        (CASE WHEN clicks > 0 THEN LEAST(30, (revenue / clicks) * 10) ELSE 0 END)
+      )),
+      updatedAt = NOW()
+    WHERE userId = ${userId}
+  `);
+}
+
+export async function recordContentGeneration(history: InsertContentGenerationHistory): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(contentGenerationHistory).values(history);
+  return result[0].insertId;
+}
+
+export async function getSuccessfulContentPatterns(userId: number, limit: number = 20): Promise<ContentGenerationHistory[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(contentGenerationHistory)
+    .where(and(
+      eq(contentGenerationHistory.userId, userId),
+      eq(contentGenerationHistory.wasSuccessful, true)
+    ))
+    .orderBy(desc(contentGenerationHistory.revenue), desc(contentGenerationHistory.clicks))
+    .limit(limit);
+}
+
+export async function markContentAsSuccessful(articleId: number, reason: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(contentGenerationHistory)
+    .set({
+      wasSuccessful: true,
+      successReason: reason,
+      updatedAt: new Date(),
+    })
+    .where(eq(contentGenerationHistory.articleId, articleId));
+}
+
+export async function updateContentPerformance(articleId: number, views: number, clicks: number, conversions: number, revenue: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(contentGenerationHistory)
+    .set({
+      views,
+      clicks,
+      conversions,
+      revenue,
+      updatedAt: new Date(),
+    })
+    .where(eq(contentGenerationHistory.articleId, articleId));
+}
+
+export async function getContentTypePerformance(userId: number): Promise<{contentType: string, avgClicks: number, avgRevenue: number, count: number}[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.execute(sql`
+    SELECT 
+      contentType,
+      AVG(clicks) as avgClicks,
+      AVG(CAST(revenue AS DECIMAL(10,2))) as avgRevenue,
+      COUNT(*) as count
+    FROM content_generation_history
+    WHERE userId = ${userId}
+    GROUP BY contentType
+    ORDER BY avgRevenue DESC
+  `);
+
+  return result[0] as any;
+}
+
+export async function getCategoryPerformance(userId: number): Promise<{category: string, totalClicks: number, totalRevenue: number, count: number}[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.execute(sql`
+    SELECT 
+      category,
+      SUM(clicks) as totalClicks,
+      SUM(CAST(revenue AS DECIMAL(10,2))) as totalRevenue,
+      COUNT(*) as count
+    FROM content_generation_history
+    WHERE userId = ${userId} AND category IS NOT NULL
+    GROUP BY category
+    ORDER BY totalRevenue DESC
+  `);
+
+  return result[0] as any;
+}

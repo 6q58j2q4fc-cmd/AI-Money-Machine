@@ -33,14 +33,14 @@ import { format } from "date-fns";
 
 export default function AutomationCenter() {
   const [niche, setNiche] = useState("");
-  const [articleCount, setArticleCount] = useState(3);
+  const [articleCount, setArticleCount] = useState(10); // Default to 10 for aggressive monetization
   const [autoPublish, setAutoPublish] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
   const [cycleResults, setCycleResults] = useState<any>(null);
 
   // Scheduler settings
   const [schedulerEnabled, setSchedulerEnabled] = useState(false);
-  const [schedulerArticles, setSchedulerArticles] = useState(3);
+  const [schedulerArticles, setSchedulerArticles] = useState(10); // Default to 10 for aggressive monetization
   const [schedulerInterval, setSchedulerInterval] = useState(24);
   const [schedulerNiches, setSchedulerNiches] = useState<string[]>([]);
   const [schedulerAutoPublish, setSchedulerAutoPublish] = useState(true);
@@ -228,7 +228,7 @@ export default function AutomationCenter() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {[1, 2, 3, 5, 7, 10].map(n => (
+                    {[1, 2, 3, 5, 7, 10, 15, 20, 30, 50].map(n => (
                       <SelectItem key={n} value={n.toString()}>{n} articles</SelectItem>
                     ))}
                   </SelectContent>

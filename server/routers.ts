@@ -932,7 +932,7 @@ const automationRouter = router({
   saveSettings: protectedProcedure
     .input(z.object({
       isEnabled: z.boolean(),
-      articlesPerCycle: z.number().min(1).max(10),
+      articlesPerCycle: z.number().min(1).max(50), // Increased to 50 for aggressive mode
       cycleIntervalHours: z.number().min(1).max(168),
       targetNiches: z.array(z.string()).optional(),
       autoPublish: z.boolean(),
@@ -955,14 +955,16 @@ const automationRouter = router({
     }),
 
   // Run full automation cycle: discover trends -> generate content -> insert links -> publish
+  // AGGRESSIVE MODE: Maximizes article output and affiliate link density
   runCycle: protectedProcedure
     .input(z.object({ 
-      count: z.number().min(1).max(10).optional(),
+      count: z.number().min(1).max(20).optional(), // Increased max to 20 articles per cycle
       niche: z.string().optional(),
       autoPublish: z.boolean().optional(),
+      aggressiveMode: z.boolean().optional(), // Enable maximum monetization
     }))
     .mutation(async ({ ctx, input }) => {
-      const count = input.count || 3;
+      const count = input.count || 10; // Default to 10 articles per cycle for aggressive monetization
       const results: { step: string; success: boolean; details: string }[] = [];
 
       try {
@@ -1036,18 +1038,23 @@ Return JSON with topics array containing: title, category, keywords (5 high-valu
           const articleResponse = await invokeLLM({
             messages: [
               {
-                role: "system",
-                content: `You are an expert SEO content writer and affiliate marketing specialist. Write a comprehensive, engaging article that:
-1. Ranks well in search engines (use keywords naturally)
-2. Provides genuine value to readers
-3. Naturally incorporates product recommendations with compelling CTAs
-4. Uses markdown formatting with proper H2/H3 headings
-5. Includes a strong hook in the introduction
-6. Has a clear call-to-action at the end
-7. Is 1500-2500 words long
-8. Uses power words and emotional triggers
-9. Includes bullet points and numbered lists for scannability
-10. Ends with a summary and next steps${linkContext}`
+              role: "system",
+              content: `You are an ELITE affiliate marketing content specialist and SEO expert. Your ONLY goal is to create content that MAXIMIZES affiliate link clicks and commissions. Write content that:
+
+1. AGGRESSIVELY targets buyer-intent keywords that convert
+2. Places MULTIPLE compelling calls-to-action throughout (minimum 5-7 CTAs per article)
+3. Uses PROVEN persuasion techniques: scarcity, social proof, authority, urgency
+4. Creates IRRESISTIBLE product recommendations with emotional triggers
+5. Uses markdown with strategic H2/H3 headings containing money keywords
+6. Opens with a POWERFUL hook that creates immediate desire
+7. Is 2000-3500 words for maximum SEO value and more CTA opportunities
+8. Uses POWER WORDS: exclusive, limited, proven, guaranteed, secret, breakthrough
+9. Includes comparison tables, pros/cons lists, and "best of" sections
+10. Ends with STRONG urgency-based CTA ("Don't miss out", "Act now")
+11. Naturally weaves in product mentions every 200-300 words
+12. Uses storytelling to create emotional connection to products
+13. Includes FAQ sections with product recommendations in answers
+14. Creates FOMO (fear of missing out) around featured products${linkContext}`
               },
               {
                 role: "user",
@@ -1230,6 +1237,119 @@ Make it engaging, valuable, and optimized for both readers and search engines.`
     }),
 });
 
+// Self-learning optimization router - learns from performance data
+const learningRouter = router({
+  // Get performance insights
+  getInsights: protectedProcedure.query(async ({ ctx }) => {
+    const topTopics = await db.getTopPerformingLearnings(ctx.user.id, 'topic', 10);
+    const topKeywords = await db.getTopPerformingLearnings(ctx.user.id, 'keyword', 10);
+    const topCategories = await db.getTopPerformingLearnings(ctx.user.id, 'category', 10);
+    const contentTypePerf = await db.getContentTypePerformance(ctx.user.id);
+    const categoryPerf = await db.getCategoryPerformance(ctx.user.id);
+    const successfulPatterns = await db.getSuccessfulContentPatterns(ctx.user.id, 10);
+
+    return {
+      topTopics,
+      topKeywords,
+      topCategories,
+      contentTypePerformance: contentTypePerf,
+      categoryPerformance: categoryPerf,
+      successfulPatterns,
+    };
+  }),
+
+  // Update learning scores based on current performance
+  updateScores: protectedProcedure.mutation(async ({ ctx }) => {
+    await db.updateLearningScores(ctx.user.id);
+    return { success: true };
+  }),
+
+  // Get AI-powered recommendations based on learnings
+  getRecommendations: protectedProcedure.mutation(async ({ ctx }) => {
+    const topTopics = await db.getTopPerformingLearnings(ctx.user.id, 'topic', 5);
+    const topKeywords = await db.getTopPerformingLearnings(ctx.user.id, 'keyword', 10);
+    const successfulPatterns = await db.getSuccessfulContentPatterns(ctx.user.id, 5);
+
+    const learningContext = `
+Top Performing Topics: ${topTopics.map(t => t.learningKey).join(', ')}
+Top Keywords: ${topKeywords.map(k => k.learningKey).join(', ')}
+Successful Content Patterns: ${successfulPatterns.map(p => p.topic).join(', ')}
+`;
+
+    const response = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content: `You are an elite affiliate marketing strategist. Based on performance data, provide actionable recommendations to MAXIMIZE affiliate commissions. Focus on:
+1. Topics that convert best
+2. Keywords with highest revenue potential
+3. Content types that drive the most clicks
+4. Optimal posting frequency
+5. Best practices from top affiliate marketers`
+        },
+        {
+          role: "user",
+          content: `Based on this performance data, give me 5 specific, actionable recommendations to increase affiliate revenue:\n${learningContext}`
+        }
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "recommendations",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              recommendations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    description: { type: "string" },
+                    priority: { type: "string" },
+                    expectedImpact: { type: "string" },
+                    actionItems: { type: "array", items: { type: "string" } }
+                  },
+                  required: ["title", "description", "priority", "expectedImpact", "actionItems"],
+                  additionalProperties: false
+                }
+              },
+              suggestedTopics: { type: "array", items: { type: "string" } },
+              suggestedKeywords: { type: "array", items: { type: "string" } }
+            },
+            required: ["recommendations", "suggestedTopics", "suggestedKeywords"],
+            additionalProperties: false
+          }
+        }
+      }
+    });
+
+    const content = typeof response.choices[0]?.message?.content === 'string'
+      ? response.choices[0].message.content
+      : '{}';
+    return JSON.parse(content);
+  }),
+
+  // Record a learning from article performance
+  recordLearning: protectedProcedure
+    .input(z.object({
+      learningType: z.enum(['topic', 'headline', 'keyword', 'cta', 'link_placement', 'content_length', 'category']),
+      learningKey: z.string(),
+      impressions: z.number().optional(),
+      clicks: z.number().optional(),
+      conversions: z.number().optional(),
+      revenue: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await db.recordLearning({
+        userId: ctx.user.id,
+        ...input,
+      });
+      return { id, success: true };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -1249,6 +1369,7 @@ export const appRouter = router({
   contentQueue: contentQueueRouter,
   publicArticles: publicArticlesRouter,
   automation: automationRouter,
+  learning: learningRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -251,3 +251,69 @@ export const automationSettings = mysqlTable("automation_settings", {
 
 export type AutomationSettings = typeof automationSettings.$inferSelect;
 export type InsertAutomationSettings = typeof automationSettings.$inferInsert;
+
+/**
+ * Performance learning - tracks what content strategies work best
+ */
+export const performanceLearning = mysqlTable("performance_learning", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // What we learned
+  learningType: mysqlEnum("learningType", ["topic", "headline", "keyword", "cta", "link_placement", "content_length", "category"]).notNull(),
+  learningKey: varchar("learningKey", { length: 500 }).notNull(), // The specific topic/headline/keyword
+  
+  // Performance metrics
+  impressions: int("impressions").default(0).notNull(),
+  clicks: int("clicks").default(0).notNull(),
+  conversions: int("conversions").default(0).notNull(),
+  revenue: decimal("revenue", { precision: 10, scale: 2 }).default("0.00"),
+  
+  // Calculated scores
+  ctr: decimal("ctr", { precision: 5, scale: 4 }).default("0.0000"), // Click-through rate
+  conversionRate: decimal("conversionRate", { precision: 5, scale: 4 }).default("0.0000"),
+  revenuePerClick: decimal("revenuePerClick", { precision: 10, scale: 4 }).default("0.0000"),
+  performanceScore: int("performanceScore").default(0).notNull(), // 0-100 overall score
+  
+  // Usage tracking
+  timesUsed: int("timesUsed").default(1).notNull(),
+  lastUsedAt: timestamp("lastUsedAt").defaultNow().notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PerformanceLearning = typeof performanceLearning.$inferSelect;
+export type InsertPerformanceLearning = typeof performanceLearning.$inferInsert;
+
+/**
+ * Content generation history - tracks all generated content for learning
+ */
+export const contentGenerationHistory = mysqlTable("content_generation_history", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  articleId: int("articleId"),
+  
+  // Generation parameters
+  topic: varchar("topic", { length: 500 }).notNull(),
+  category: varchar("category", { length: 100 }),
+  keywords: json("keywords").$type<string[]>(),
+  contentType: mysqlEnum("contentType", ["article", "listicle", "review", "comparison", "how_to", "news"]).default("article").notNull(),
+  targetLength: int("targetLength").default(1500),
+  
+  // Performance after publishing
+  views: int("views").default(0).notNull(),
+  clicks: int("clicks").default(0).notNull(),
+  conversions: int("conversions").default(0).notNull(),
+  revenue: decimal("revenue", { precision: 10, scale: 2 }).default("0.00"),
+  
+  // Learning flags
+  wasSuccessful: boolean("wasSuccessful").default(false),
+  successReason: text("successReason"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ContentGenerationHistory = typeof contentGenerationHistory.$inferSelect;
+export type InsertContentGenerationHistory = typeof contentGenerationHistory.$inferInsert;

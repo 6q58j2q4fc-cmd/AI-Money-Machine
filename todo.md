@@ -88,3 +88,19 @@
 - [x] Auto-scheduler that runs content generation daily
 - [x] Initial content batch generation (3 articles published)
 - [x] Continuous self-running content pipeline
+
+
+## Aggressive Commission Maximization System (New Requirements)
+
+- [x] Increase daily article output to maximum (10+ articles per cycle, up to 50)
+- [x] Self-learning system that analyzes click/conversion data
+- [x] Adaptive content strategy based on top-performing articles
+- [x] Learn from affiliate marketing best practices automatically
+- [x] Maximize affiliate link density in all content (5-7 CTAs per article)
+- [x] Performance-based topic selection (focus on what converts)
+- [x] A/B headline testing for click optimization
+- [x] Continuous improvement loop based on analytics
+- [x] Track and optimize for CJ commission metrics
+- [x] Auto-adjust content style based on conversion rates
+- [x] Aggressive SEO optimization for affiliate keywords
+- [x] Multi-format content (articles, listicles, reviews, comparisons)
