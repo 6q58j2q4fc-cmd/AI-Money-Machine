@@ -7,6 +7,7 @@ import { invokeLLM } from "./_core/llm";
 import * as db from "./db";
 import { publishToPlatform, getConfiguredPlatforms } from "./_core/platformPublisher";
 import { searchCJLinks, getJoinedAdvertiserLinks, getNonJoinedAdvertiserLinks, searchCJAdvertisers, getNonJoinedAdvertisers, getJoinedAdvertisers, getCJProgramUrl } from "./_core/cjApi";
+import { createBotpressService, BotCommands } from "./_core/botpressApi";
 
 // Slug generator helper
 function generateSlug(title: string): string {
@@ -926,6 +927,80 @@ const cjRouter = router({
       totalMatched: result.totalMatched,
     };
   }),
+
+  // Auto-sync: Automatically fetch and import links from joined advertisers
+  autoSync: protectedProcedure.mutation(async ({ ctx }) => {
+    const settings = await db.getCJSettings(ctx.user.id);
+    if (!settings?.websiteId) {
+      throw new Error("CJ Website ID not configured. Please set it in CJ Integration settings.");
+    }
+
+    // Fetch all links from joined advertisers
+    const result = await getJoinedAdvertiserLinks(settings.websiteId);
+
+    if (!result.success) {
+      return {
+        success: false,
+        message: result.error || "No joined advertisers found. Apply to join advertisers first.",
+        imported: 0,
+        skipped: 0,
+      };
+    }
+
+    // Get existing affiliate links to avoid duplicates
+    const existingLinks = await db.getAffiliateLinks(ctx.user.id);
+    const existingUrls = new Set(existingLinks.map(l => l.url));
+
+    let imported = 0;
+    let skipped = 0;
+
+    for (const link of result.links) {
+      // Skip if already imported
+      if (existingUrls.has(link.clickUrl)) {
+        skipped++;
+        continue;
+      }
+
+      const shortCode = `cj-auto-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+      await db.createAffiliateLink({
+        userId: ctx.user.id,
+        name: link.linkName || link.advertiserName,
+        url: link.clickUrl,
+        shortCode,
+        category: link.category || "General",
+        program: "Commission Junction",
+        commission: link.saleCommission || "",
+      });
+      imported++;
+    }
+
+    // Update last sync time
+    await db.saveCJSettings({
+      userId: ctx.user.id,
+      cid: settings.cid,
+      websiteId: settings.websiteId,
+      lastSyncAt: new Date(),
+    });
+
+    return {
+      success: true,
+      message: `Auto-sync complete! Imported ${imported} new links, skipped ${skipped} duplicates.`,
+      imported,
+      skipped,
+      totalAvailable: result.links.length,
+    };
+  }),
+
+  // Get auto-sync status
+  getAutoSyncStatus: protectedProcedure.query(async ({ ctx }) => {
+    const settings = await db.getCJSettings(ctx.user.id);
+    return {
+      isConfigured: !!(settings?.websiteId && settings?.cid),
+      lastSyncAt: settings?.lastSyncAt || null,
+      cid: settings?.cid || null,
+      websiteId: settings?.websiteId || null,
+    };
+  }),
 });
 
 // Publishing queue router
@@ -1772,6 +1847,59 @@ const distributionRouter = router({
 
 // Bot learning router - tracks the optimization bot's decisions and learning
 const botRouter = router({
+  // Botpress integration endpoints
+  botpressStatus: protectedProcedure.query(async () => {
+    const service = createBotpressService();
+    if (!service) {
+      return { connected: false, message: 'Botpress not configured' };
+    }
+    const isHealthy = await service.healthCheck();
+    return { connected: isHealthy, message: isHealthy ? 'Connected' : 'Connection failed' };
+  }),
+
+  initBotpressSession: protectedProcedure.mutation(async () => {
+    const service = createBotpressService();
+    if (!service) {
+      throw new Error('Botpress not configured. Set BOTPRESS_API environment variable.');
+    }
+    const session = await service.initSession();
+    if (!session) {
+      throw new Error('Failed to initialize Botpress session');
+    }
+    return session;
+  }),
+
+  sendBotCommand: protectedProcedure
+    .input(z.object({
+      command: z.string(),
+      sessionInfo: z.object({
+        userKey: z.string(),
+        conversationId: z.string(),
+      }),
+    }))
+    .mutation(async ({ input }) => {
+      const service = createBotpressService();
+      if (!service) {
+        throw new Error('Botpress not configured');
+      }
+      // Note: In production, we'd need to restore the session
+      // For now, we'll create a new session for each command
+      const session = await service.initSession();
+      if (!session) {
+        throw new Error('Failed to initialize session');
+      }
+      const response = await service.executeCommand(input.command);
+      return { response: response || 'No response from bot' };
+    }),
+
+  getBotCommands: protectedProcedure.query(() => {
+    return Object.entries(BotCommands).map(([key, value]) => ({
+      id: key,
+      name: key.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase()),
+      command: value,
+    }));
+  }),
+
   // Get bot stats
   stats: protectedProcedure.query(async ({ ctx }) => {
     return await db.getBotLearningStats(ctx.user.id);

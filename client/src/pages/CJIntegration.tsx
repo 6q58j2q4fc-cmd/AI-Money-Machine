@@ -20,8 +20,35 @@ import {
   Users,
   TrendingUp,
   Search,
-  Building2
+  Building2,
+  Star,
+  Zap,
+  Filter
 } from "lucide-react";
+
+// Preset keyword categories for quick search
+const PRESET_KEYWORDS = [
+  { label: "VPN & Security", keywords: "VPN" },
+  { label: "Web Hosting", keywords: "hosting" },
+  { label: "Software", keywords: "software" },
+  { label: "Travel", keywords: "travel" },
+  { label: "Finance", keywords: "finance" },
+  { label: "Health", keywords: "health" },
+  { label: "Education", keywords: "education" },
+  { label: "E-commerce", keywords: "ecommerce" },
+];
+
+// High-EPC advertiser recommendations
+const HIGH_EPC_ADVERTISERS = [
+  { name: "ExpressVPN", epc: "$239.48", category: "VPN", id: "5577978" },
+  { name: "Norton", epc: "$363.55", category: "Security", id: "2102181" },
+  { name: "Kaspersky EU", epc: "$548.91", category: "Security", id: "6209109" },
+  { name: "AVAST Software", epc: "$190.74", category: "Security", id: "4257305" },
+  { name: "McAfee NA", epc: "$216.14", category: "Security", id: "5306132" },
+  { name: "NordVPN", epc: "$101.02", category: "VPN", id: "4837117" },
+  { name: "CyberGhost VPN", epc: "$82.85", category: "VPN", id: "4996371" },
+  { name: "Incogni", epc: "$64.99", category: "Privacy", id: "6867883" },
+];
 
 interface CJAdvertiser {
   advertiserId: string;
@@ -123,6 +150,23 @@ export default function CJIntegration() {
     },
     onError: (error) => toast.error(error.message)
   });
+
+  // Auto-sync mutation
+  const autoSyncMutation = trpc.cj.autoSync.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success(data.message);
+        utils.affiliate.list.invalidate();
+        utils.cj.getAutoSyncStatus.invalidate();
+      } else {
+        toast.info(data.message);
+      }
+    },
+    onError: (error) => toast.error(error.message)
+  });
+
+  // Auto-sync status query
+  const { data: autoSyncStatus } = trpc.cj.getAutoSyncStatus.useQuery();
 
   const handleFetchRealLinks = () => {
     if (!websiteId) {
@@ -303,12 +347,38 @@ export default function CJIntegration() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Preset Keyword Buttons */}
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground flex items-center gap-2">
+                <Filter className="w-4 h-4" />
+                Quick Search by Niche
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {PRESET_KEYWORDS.map((preset) => (
+                  <Button
+                    key={preset.keywords}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setAdvertiserSearchKeyword(preset.keywords);
+                      fetchAvailableAdvertisersMutation.mutate({ keywords: preset.keywords });
+                    }}
+                    disabled={fetchAvailableAdvertisersMutation.isPending}
+                    className="hover:bg-amber-500/20 hover:border-amber-500"
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Search */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <Input
                   value={advertiserSearchKeyword}
                   onChange={(e) => setAdvertiserSearchKeyword(e.target.value)}
-                  placeholder="Search by keyword (e.g., 'VPN', 'hosting', 'software', 'travel')"
+                  placeholder="Or enter custom keyword..."
                 />
               </div>
               <Button 
@@ -324,6 +394,44 @@ export default function CJIntegration() {
                 Find Advertisers
               </Button>
             </div>
+
+            {/* High-EPC Recommendations */}
+            {availableAdvertisers.length === 0 && (
+              <div className="space-y-3 p-4 rounded-lg bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/30">
+                <h4 className="font-medium flex items-center gap-2 text-amber-500">
+                  <Star className="w-4 h-4" />
+                  Top Earning Advertisers (Recommended)
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  These advertisers have the highest EPC (Earnings Per Click). Apply to join them for maximum revenue!
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {HIGH_EPC_ADVERTISERS.map((adv) => (
+                    <div key={adv.id} className="flex items-center justify-between p-2 rounded bg-background/50">
+                      <div>
+                        <span className="font-medium">{adv.name}</span>
+                        <Badge variant="secondary" className="ml-2 text-xs">{adv.category}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-green-500/20 text-green-500 border-green-500">
+                          <Zap className="w-3 h-3 mr-1" />
+                          {adv.epc}
+                        </Badge>
+                        <a 
+                          href={`https://members.cj.com/member/publisher/home.do#advertiserDetails/cid=${adv.id}`}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          <Button size="sm" variant="outline" className="h-7 text-xs">
+                            Apply
+                          </Button>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {!cid && (
               <p className="text-sm text-amber-500">
                 ⚠️ Enter your CJ Account ID (CID) above and save settings first
@@ -384,6 +492,54 @@ export default function CJIntegration() {
                 </p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Auto-Sync Card */}
+        <Card className="card-glow border-green-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-500">
+              <RefreshCw className="w-5 h-5" />
+              Auto-Sync Affiliate Links
+            </CardTitle>
+            <CardDescription>
+              Automatically import all links from your joined CJ advertisers. Duplicates are skipped.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex-1">
+                <div className="text-sm space-y-1">
+                  <p className="text-muted-foreground">
+                    Status: {autoSyncStatus?.isConfigured ? (
+                      <span className="text-green-500">Ready to sync</span>
+                    ) : (
+                      <span className="text-amber-500">Configure Website ID first</span>
+                    )}
+                  </p>
+                  {autoSyncStatus?.lastSyncAt && (
+                    <p className="text-muted-foreground">
+                      Last sync: {new Date(autoSyncStatus.lastSyncAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Button 
+                onClick={() => autoSyncMutation.mutate()}
+                disabled={autoSyncMutation.isPending || !autoSyncStatus?.isConfigured}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {autoSyncMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                )}
+                Auto-Sync Now
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              💡 This will fetch all available links from advertisers you've joined and import them as affiliate links. Run this after getting approved by new advertisers.
+            </p>
           </CardContent>
         </Card>
 

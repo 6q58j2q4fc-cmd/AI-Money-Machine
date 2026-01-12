@@ -10,8 +10,8 @@ describe("CJ API Key Validation", () => {
 
   it("CJ_API_KEY has valid format", () => {
     const apiKey = process.env.CJ_API_KEY;
-    // CJ API keys are typically alphanumeric with underscores
-    expect(apiKey).toMatch(/^[a-zA-Z0-9_]+$/);
+    // CJ API keys can contain alphanumeric characters, underscores, and hyphens
+    expect(apiKey).toMatch(/^[a-zA-Z0-9_-]+$/);
     expect(apiKey!.length).toBeGreaterThan(10);
   });
 });

@@ -12,4 +12,5 @@ export const ENV = {
   hastewireApiKey: process.env.HASTEWIRE_API ?? "",
   copymaticApiKey: process.env.COPYMATIC_AI_API_KEY ?? "",
   cjApiKey: process.env.CJ_API_KEY ?? "",
+  botpressApiKey: process.env.BOTPRESS_API ?? "",
 };

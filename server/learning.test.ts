@@ -109,7 +109,7 @@ describe("automation router", () => {
     if (result) {
       expect(result).toHaveProperty("isEnabled");
       expect(result).toHaveProperty("articlesPerCycle");
-      expect(result).toHaveProperty("cycleIntervalHours");
+      expect(result).toHaveProperty("cycleIntervalMinutes");
     }
   });
 

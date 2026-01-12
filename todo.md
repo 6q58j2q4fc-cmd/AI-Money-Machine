@@ -477,3 +477,30 @@
 - [x] Find Advertisers button returns real CJ advertiser data
 - [x] Display advertiser EPC, rank, and category information
 - [x] Apply to Join links direct to CJ program pages
+
+
+## Botpress Integration & CJ Enhancements (New Requirements)
+
+### Botpress Custom Bot Integration
+- [x] Create Botpress API service for custom bot management
+- [x] Add Bot Intelligence page integration with Botpress
+- [ ] Implement efficiency tracking via Botpress bots
+- [ ] Create bot workflows for content optimization
+
+### High-EPC Advertiser Recommendations
+- [x] Add recommended advertisers section with top EPC programs
+- [x] Highlight NordVPN, ExpressVPN, Norton and other high-earners
+- [x] Sort advertisers by EPC for easy selection
+- [ ] Add one-click apply to multiple advertisers
+
+### Multi-Niche Keyword Search
+- [x] Add preset keyword buttons (VPN, hosting, software, travel, finance)
+- [ ] Enable multi-keyword search
+- [ ] Category-based advertiser filtering
+- [ ] Save favorite search keywords
+
+### Auto-Sync for Approved Advertisers
+- [x] Implement automatic detection of joined advertisers
+- [x] Auto-fetch affiliate links from approved programs
+- [ ] Schedule periodic sync of new links
+- [ ] Notify when new advertisers approve partnership
