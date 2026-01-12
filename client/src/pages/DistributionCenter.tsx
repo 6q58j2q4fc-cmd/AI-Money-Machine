@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Globe, Share2, CheckCircle, XCircle, Clock, ExternalLink, Send, RefreshCw, Link2, Eye, MousePointer, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -35,7 +35,8 @@ const PLATFORMS = [
 
 export default function DistributionCenter() {
   const [selectedArticle, setSelectedArticle] = useState<string>("");
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(PLATFORMS.map(p => p.id)); // Auto-select all platforms by default
+  const [autoSelectAll, setAutoSelectAll] = useState(true); // Enable auto-select all by default
 
   const { data: stats, isLoading: statsLoading } = trpc.distribution.stats.useQuery();
   const { data: distributions, isLoading: distLoading, refetch } = trpc.distribution.list.useQuery({});

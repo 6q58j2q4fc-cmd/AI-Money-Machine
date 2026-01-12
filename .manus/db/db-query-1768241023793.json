@@ -1,0 +1,30 @@
+{
+  "query": "SELECT id, slug FROM articles WHERE status = 'published' AND slug IS NOT NULL LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, slug FROM articles WHERE status = 'published' AND slug IS NOT NULL LIMIT 5;",
+  "rows": [
+    {
+      "id": "2",
+      "slug": "sustainable-home-gardening-urban-farming-mk9swxmt"
+    },
+    {
+      "id": "3",
+      "slug": "ai-powered-productivity-tools-for-small-businesses-mk9sxkmo"
+    },
+    {
+      "id": "4",
+      "slug": "personalized-nutrition-for-gut-health-mk9sy1pi"
+    },
+    {
+      "id": "6",
+      "slug": "sustainable-home-gardening-urban-farming-mk9tl6ib"
+    },
+    {
+      "id": "7",
+      "slug": "ai-powered-productivity-tools-for-small-business-mk9tlu1d"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tslug\n2\tsustainable-home-gardening-urban-farming-mk9swxmt\n3\tai-powered-productivity-tools-for-small-businesses-mk9sxkmo\n4\tpersonalized-nutrition-for-gut-health-mk9sy1pi\n6\tsustainable-home-gardening-urban-farming-mk9tl6ib\n7\tai-powered-productivity-tools-for-small-business-mk9tlu1d\n",
+  "stderr": "",
+  "execution_time_ms": 393
+}

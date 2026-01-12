@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, title, slug, status FROM articles WHERE status = 'published' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, slug, status FROM articles WHERE status = 'published' LIMIT 5;",
+  "rows": [
+    {
+      "id": "2",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "slug": "sustainable-home-gardening-urban-farming-mk9swxmt",
+      "status": "published"
+    },
+    {
+      "id": "3",
+      "title": "AI-Powered Productivity Tools for Small Businesses",
+      "slug": "ai-powered-productivity-tools-for-small-businesses-mk9sxkmo",
+      "status": "published"
+    },
+    {
+      "id": "4",
+      "title": "Personalized Nutrition for Gut Health",
+      "slug": "personalized-nutrition-for-gut-health-mk9sy1pi",
+      "status": "published"
+    },
+    {
+      "id": "6",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "slug": "sustainable-home-gardening-urban-farming-mk9tl6ib",
+      "status": "published"
+    },
+    {
+      "id": "7",
+      "title": "AI-Powered Productivity Tools for Small Business",
+      "slug": "ai-powered-productivity-tools-for-small-business-mk9tlu1d",
+      "status": "published"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tslug\tstatus\n2\tSustainable Home Gardening & Urban Farming\tsustainable-home-gardening-urban-farming-mk9swxmt\tpublished\n3\tAI-Powered Productivity Tools for Small Businesses\tai-powered-productivity-tools-for-small-businesses-mk9sxkmo\tpublished\n4\tPersonalized Nutrition for Gut Health\tpersonalized-nutrition-for-gut-health-mk9sy1pi\tpublished\n6\tSustainable Home Gardening & Urban Farming\tsustainable-home-gardening-urban-farming-mk9tl6ib\tpublished\n7\tAI-Powered Productivity Tools for Small Business\tai-powered-productivity-tools-for-small-business-mk9tlu1d\tpublished\n",
+  "stderr": "",
+  "execution_time_ms": 546
+}
