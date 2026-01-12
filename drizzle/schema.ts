@@ -238,7 +238,7 @@ export const automationSettings = mysqlTable("automation_settings", {
   userId: int("userId").notNull().unique(),
   isEnabled: boolean("isEnabled").default(true).notNull(),
   articlesPerCycle: int("articlesPerCycle").default(3).notNull(),
-  cycleIntervalHours: int("cycleIntervalHours").default(24).notNull(), // How often to run
+  cycleIntervalMinutes: int("cycleIntervalMinutes").default(1440).notNull(), // How often to run (in minutes)
   targetNiches: json("targetNiches").$type<string[]>(), // Niches to focus on
   autoPublish: boolean("autoPublish").default(true).notNull(),
   lastRunAt: timestamp("lastRunAt"),
@@ -331,7 +331,7 @@ export const articleDistribution = mysqlTable("article_distribution", {
   platform: mysqlEnum("platform", [
     "medium", "devto", "linkedin", "hashnode", "substack", 
     "reddit", "hackernews", "twitter", "facebook", "pinterest",
-    "press_release", "article_directory", "rss_syndication", "other"
+    "pr_newswire", "prweb", "free_press_release", "article_directory", "rss_syndication", "other"
   ]).notNull(),
   platformName: varchar("platformName", { length: 100 }), // Human readable name
   

@@ -1,0 +1,2 @@
+ALTER TABLE `automation_settings` RENAME COLUMN `cycleIntervalHours` TO `cycleIntervalMinutes`;--> statement-breakpoint
+ALTER TABLE `automation_settings` MODIFY COLUMN `cycleIntervalMinutes` int NOT NULL DEFAULT 1440;

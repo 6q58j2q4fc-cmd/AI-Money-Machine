@@ -53,8 +53,8 @@ export default function AutomationCenter() {
     if (settings) {
       setSchedulerEnabled(settings.isEnabled);
       setSchedulerArticles(settings.articlesPerCycle);
-      // Convert hours to minutes for backwards compatibility
-      setSchedulerIntervalMinutes(settings.cycleIntervalHours * 60);
+      // Use minutes directly from database
+      setSchedulerIntervalMinutes(settings.cycleIntervalMinutes);
       setSchedulerNiches(settings.targetNiches || []);
       setSchedulerAutoPublish(settings.autoPublish);
     }

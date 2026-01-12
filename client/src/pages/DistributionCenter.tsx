@@ -34,12 +34,12 @@ const PLATFORMS = [
 ] as const;
 
 export default function DistributionCenter() {
-  const [selectedArticle, setSelectedArticle] = useState<number | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<string>("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
 
   const { data: stats, isLoading: statsLoading } = trpc.distribution.stats.useQuery();
   const { data: distributions, isLoading: distLoading, refetch } = trpc.distribution.list.useQuery({});
-  const { data: articles } = trpc.articles.list.useQuery({});
+  const { data: articles, isLoading: articlesLoading } = trpc.articles.list.useQuery({});
 
   const distributeMutation = trpc.distribution.distributeArticle.useMutation({
     onSuccess: () => {
@@ -60,7 +60,7 @@ export default function DistributionCenter() {
       return;
     }
     distributeMutation.mutate({
-      articleId: selectedArticle,
+      articleId: parseInt(selectedArticle),
       platforms: selectedPlatforms as any[],
     });
   };
@@ -71,6 +71,22 @@ export default function DistributionCenter() {
         ? prev.filter(p => p !== platformId)
         : [...prev, platformId]
     );
+  };
+
+  const selectAllPlatforms = () => {
+    setSelectedPlatforms(PLATFORMS.map(p => p.id));
+  };
+
+  const clearAllPlatforms = () => {
+    setSelectedPlatforms([]);
+  };
+
+  const selectPressReleasesOnly = () => {
+    setSelectedPlatforms(['pr_newswire', 'prweb', 'free_press_release']);
+  };
+
+  const selectSocialMediaOnly = () => {
+    setSelectedPlatforms(['twitter', 'facebook', 'linkedin', 'pinterest', 'reddit']);
   };
 
   const getStatusBadge = (status: string) => {
@@ -164,101 +180,90 @@ export default function DistributionCenter() {
             {/* Article Selection */}
             <div>
               <label className="text-sm font-medium mb-2 block">Select Article</label>
-              <Select 
-                value={selectedArticle?.toString() || ""} 
-                onValueChange={(v) => setSelectedArticle(parseInt(v))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose an article to distribute" />
-                </SelectTrigger>
-                <SelectContent>
-                  {publishedArticles.map(article => (
-                    <SelectItem key={article.id} value={article.id.toString()}>
-                      {article.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {publishedArticles.length === 0 && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  No published articles yet. Publish an article first to distribute it.
-                </p>
+              {articlesLoading ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading articles...
+                </div>
+              ) : publishedArticles.length === 0 ? (
+                <div className="text-muted-foreground p-4 border border-dashed rounded-lg text-center">
+                  No published articles available. Create and publish an article first.
+                </div>
+              ) : (
+                <Select 
+                  value={selectedArticle} 
+                  onValueChange={setSelectedArticle}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choose an article to distribute" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {publishedArticles.map(article => (
+                      <SelectItem key={article.id} value={article.id.toString()}>
+                        {article.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             </div>
 
             {/* Platform Selection */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Select Platforms ({selectedPlatforms.length} selected)</label>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <label className="text-sm font-medium mb-2 block">
+                Select Platforms ({selectedPlatforms.length} selected)
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {PLATFORMS.map(platform => (
-                  <button
+                  <Button
                     key={platform.id}
-                    onClick={() => togglePlatform(platform.id)}
-                    className={`p-3 rounded-lg border text-left transition-all ${
-                      selectedPlatforms.includes(platform.id)
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/50'
+                    variant={selectedPlatforms.includes(platform.id) ? "default" : "outline"}
+                    className={`h-auto py-3 flex flex-col items-center gap-1 ${
+                      selectedPlatforms.includes(platform.id) 
+                        ? "bg-primary/20 border-primary text-primary" 
+                        : "hover:bg-primary/10"
                     }`}
+                    onClick={() => togglePlatform(platform.id)}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{platform.icon}</span>
-                      <div>
-                        <p className="font-medium text-sm">{platform.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{platform.description}</p>
-                      </div>
-                    </div>
-                  </button>
+                    <span className="text-xl">{platform.icon}</span>
+                    <span className="text-xs font-medium">{platform.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{platform.description}</span>
+                  </Button>
                 ))}
+              </div>
+
+              {/* Quick Select Buttons */}
+              <div className="flex flex-wrap gap-2 mt-4">
+                <Button variant="outline" size="sm" onClick={selectAllPlatforms}>
+                  Select All ({PLATFORMS.length})
+                </Button>
+                <Button variant="outline" size="sm" onClick={clearAllPlatforms}>
+                  Clear All
+                </Button>
+                <Button variant="outline" size="sm" onClick={selectPressReleasesOnly}>
+                  Press Releases Only
+                </Button>
+                <Button variant="outline" size="sm" onClick={selectSocialMediaOnly}>
+                  Social Media Only
+                </Button>
               </div>
             </div>
 
-            {/* Quick Select */}
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setSelectedPlatforms(PLATFORMS.map(p => p.id))}
-              >
-                Select All ({PLATFORMS.length})
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setSelectedPlatforms([])}
-              >
-                Clear All
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setSelectedPlatforms(['pr_newswire', 'prweb', 'free_press_release'])}
-              >
-                Press Releases Only
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setSelectedPlatforms(['twitter', 'facebook', 'linkedin', 'pinterest'])}
-              >
-                Social Media Only
-              </Button>
-            </div>
-
-            {/* Submit */}
+            {/* Distribute Button */}
             <Button 
+              className="w-full" 
+              size="lg"
               onClick={handleDistribute}
               disabled={!selectedArticle || selectedPlatforms.length === 0 || distributeMutation.isPending}
-              className="w-full btn-glow"
-              size="lg"
             >
               {distributeMutation.isPending ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Queuing Distribution...
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Distributing...
                 </>
               ) : (
                 <>
-                  <Globe className="w-5 h-5 mr-2" />
+                  <Globe className="w-4 h-4 mr-2" />
                   Distribute to {selectedPlatforms.length} Platform{selectedPlatforms.length !== 1 ? 's' : ''}
                 </>
               )}
@@ -266,7 +271,7 @@ export default function DistributionCenter() {
           </CardContent>
         </Card>
 
-        {/* Distribution History with Confirmed URLs */}
+        {/* Distribution History */}
         <Card className="card-glow">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -274,7 +279,9 @@ export default function DistributionCenter() {
                 <Link2 className="w-5 h-5 text-primary" />
                 Distribution History & Confirmed Destinations
               </CardTitle>
-              <CardDescription>Track where your articles have been distributed with live URLs</CardDescription>
+              <CardDescription>
+                Track where your articles have been distributed with live URLs
+              </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -286,98 +293,73 @@ export default function DistributionCenter() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
-            ) : distributions && distributions.length > 0 ? (
+            ) : !distributions || distributions.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg">No distributions yet</p>
+                <p className="text-sm">Start distributing your articles to reach more readers</p>
+              </div>
+            ) : (
               <div className="space-y-4">
                 {distributions.map((dist: any) => {
-                  const confirmedUrl = getConfirmedUrl(dist);
                   const platform = PLATFORMS.find(p => p.id === dist.platform);
-                  
+                  const confirmedUrl = getConfirmedUrl(dist);
                   return (
-                    <div 
-                      key={dist.id}
-                      className="p-4 rounded-xl bg-card/50 border border-border hover:border-primary/30 transition-all"
-                    >
+                    <div key={dist.id} className="border rounded-lg p-4 hover:bg-accent/5 transition-colors">
                       <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-4 flex-1">
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-2xl">
-                            {platform?.icon || '📄'}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xl">{platform?.icon || '🔗'}</span>
+                            <span className="font-medium">{platform?.name || dist.platformName || dist.platform}</span>
+                            {getStatusBadge(dist.status)}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-bold text-lg">
-                                {platform?.name || dist.platform}
-                              </p>
-                              {getStatusBadge(dist.status)}
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-2 truncate">
-                              {getArticleTitle(dist.articleId)}
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Article: <span className="text-foreground">{getArticleTitle(dist.articleId)}</span>
+                          </p>
+                          {confirmedUrl && (
+                            <a 
+                              href={confirmedUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-primary hover:underline flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              {confirmedUrl}
+                            </a>
+                          )}
+                          {dist.submittedAt && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Submitted: {format(new Date(dist.submittedAt), 'PPp')}
                             </p>
-                            
-                            {/* Confirmed Destination URL */}
-                            {confirmedUrl && (
-                              <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
-                                <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                                <a 
-                                  href={confirmedUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-green-400 hover:underline truncate flex-1"
-                                >
-                                  {confirmedUrl}
-                                </a>
-                                <Button variant="ghost" size="sm" className="flex-shrink-0" asChild>
-                                  <a href={confirmedUrl} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="w-4 h-4" />
-                                  </a>
-                                </Button>
-                              </div>
-                            )}
-                            
-                            {!confirmedUrl && dist.status === 'pending' && (
-                              <div className="flex items-center gap-2 p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-                                <Clock className="w-4 h-4 text-yellow-400" />
-                                <span className="text-sm text-yellow-400">
-                                  Awaiting confirmation - URL will appear once published
-                                </span>
-                              </div>
-                            )}
-                            
-                            {/* Stats */}
-                            <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Eye className="w-4 h-4" />
-                                {dist.views || 0} views
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <MousePointer className="w-4 h-4" />
-                                {dist.clicks || 0} clicks
-                              </span>
-                              {dist.distributedAt && (
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-4 h-4" />
-                                  {format(new Date(dist.distributedAt), "MMM d, yyyy h:mm a")}
-                                </span>
-                              )}
-                            </div>
+                          )}
+                        </div>
+                        <div className="text-right text-sm">
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Eye className="w-3 h-3" />
+                            {dist.views || 0} views
                           </div>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <MousePointer className="w-3 h-3" />
+                            {dist.clicks || 0} clicks
+                          </div>
+                          {dist.referralTraffic > 0 && (
+                            <div className="flex items-center gap-1 text-green-400">
+                              <TrendingUp className="w-3 h-3" />
+                              {dist.referralTraffic} referrals
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <Globe className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">No distributions yet</p>
-                <p className="text-sm">Start distributing your articles to reach more readers</p>
-              </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Platform Info Card */}
-        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+        {/* Platform Guide */}
+        <Card className="card-glow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" />
@@ -387,7 +369,7 @@ export default function DistributionCenter() {
           <CardContent>
             <div className="grid md:grid-cols-3 gap-6">
               <div>
-                <h4 className="font-semibold mb-2 text-green-400">🟢 Free Platforms (No Signup)</h4>
+                <h4 className="font-semibold text-green-400 mb-2">🟢 Free Platforms (No Signup)</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• Free Press Release - instant distribution</li>
                   <li>• Article Directories - content syndication</li>
@@ -395,7 +377,7 @@ export default function DistributionCenter() {
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold mb-2 text-blue-400">🔵 Social Platforms</h4>
+                <h4 className="font-semibold text-blue-400 mb-2">🔵 Social Platforms</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• Twitter/X - viral potential</li>
                   <li>• LinkedIn - professional audience</li>
@@ -404,7 +386,7 @@ export default function DistributionCenter() {
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold mb-2 text-purple-400">🟣 Press Release Wires</h4>
+                <h4 className="font-semibold text-purple-400 mb-2">🟣 Press Release Wires</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• PR Newswire - major news outlets</li>
                   <li>• PRWeb - wide distribution</li>

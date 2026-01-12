@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, title, status FROM articles WHERE status = 'published' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, status FROM articles WHERE status = 'published' LIMIT 10;",
+  "rows": [
+    {
+      "id": "2",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "status": "published"
+    },
+    {
+      "id": "3",
+      "title": "AI-Powered Productivity Tools for Small Businesses",
+      "status": "published"
+    },
+    {
+      "id": "4",
+      "title": "Personalized Nutrition for Gut Health",
+      "status": "published"
+    },
+    {
+      "id": "6",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "status": "published"
+    },
+    {
+      "id": "7",
+      "title": "AI-Powered Productivity Tools for Small Business",
+      "status": "published"
+    },
+    {
+      "id": "8",
+      "title": "Personalized Nutrition & Gut Health Optimization",
+      "status": "published"
+    },
+    {
+      "id": "9",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "status": "published"
+    },
+    {
+      "id": "10",
+      "title": "AI-Powered Personal Productivity Tools",
+      "status": "published"
+    },
+    {
+      "id": "11",
+      "title": "Budget-Friendly Financial Planning for Gen Z/Millennials",
+      "status": "published"
+    },
+    {
+      "id": "12",
+      "title": "Sustainable Home Gardening for Small Spaces",
+      "status": "published"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tstatus\n2\tSustainable Home Gardening & Urban Farming\tpublished\n3\tAI-Powered Productivity Tools for Small Businesses\tpublished\n4\tPersonalized Nutrition for Gut Health\tpublished\n6\tSustainable Home Gardening & Urban Farming\tpublished\n7\tAI-Powered Productivity Tools for Small Business\tpublished\n8\tPersonalized Nutrition & Gut Health Optimization\tpublished\n9\tSustainable Home Gardening & Urban Farming\tpublished\n10\tAI-Powered Personal Productivity Tools\tpublished\n11\tBudget-Friendly Financial Planning for Gen Z/Millennials\tpublished\n12\tSustainable Home Gardening for Small Spaces\tpublished\n",
+  "stderr": "",
+  "execution_time_ms": 403
+}

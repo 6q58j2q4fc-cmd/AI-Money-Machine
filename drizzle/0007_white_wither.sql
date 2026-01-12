@@ -1,0 +1,1 @@
+ALTER TABLE `article_distribution` MODIFY COLUMN `platform` enum('medium','devto','linkedin','hashnode','substack','reddit','hackernews','twitter','facebook','pinterest','pr_newswire','prweb','free_press_release','article_directory','rss_syndication','other') NOT NULL;

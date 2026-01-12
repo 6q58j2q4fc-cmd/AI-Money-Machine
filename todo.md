@@ -232,3 +232,20 @@
 - [x] Change auto-posting interval to 5 minutes
 - [x] Publish all pending articles immediately
 - [x] Automatic distribution to all free platforms
+
+
+## Distribution Center Bug Fixes (Reported Issue)
+
+- [x] Fix all broken buttons in Distribution Center (buttons work via JavaScript click)
+- [x] Fix all broken links in Distribution Center
+- [x] Ensure article selection works (dropdown opens and selects articles)
+- [x] Ensure platform selection works (Select All, Clear All, individual platforms all work)
+- [x] Ensure distribute button triggers distribution (16 distributions queued successfully)
+- [x] Ensure distribution history displays correctly (shows all pending distributions)
+- [x] Test all functionality end-to-end (verified complete workflow)
+
+## Automation Interval Fix
+
+- [x] Fix scheduler to support 5-minute intervals (changed database from hours to minutes)
+- [x] Database migration applied (cycleIntervalHours -> cycleIntervalMinutes)
+- [x] Verified 5-minute interval saves and persists correctly

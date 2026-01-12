@@ -944,6 +944,8 @@ const automationRouter = router({
     .mutation(async ({ ctx, input }) => {
       // Support both minutes and hours for interval
       const intervalMinutes = input.cycleIntervalMinutes || (input.cycleIntervalHours || 24) * 60;
+      // Convert minutes to hours for storage (store fractional hours for sub-hour intervals)
+      const intervalHours = intervalMinutes / 60;
       const nextRunAt = input.isEnabled 
         ? new Date(Date.now() + intervalMinutes * 60 * 1000)
         : null;
@@ -952,7 +954,7 @@ const automationRouter = router({
         userId: ctx.user.id,
         isEnabled: input.isEnabled,
         articlesPerCycle: input.articlesPerCycle,
-        cycleIntervalHours: input.cycleIntervalHours,
+        cycleIntervalMinutes: intervalMinutes, // Store directly in minutes
         targetNiches: input.targetNiches,
         autoPublish: input.autoPublish,
         nextRunAt,
@@ -1384,7 +1386,7 @@ const distributionRouter = router({
       platform: z.enum([
         'medium', 'devto', 'linkedin', 'hashnode', 'substack',
         'reddit', 'hackernews', 'twitter', 'facebook', 'pinterest',
-        'press_release', 'article_directory', 'rss_syndication', 'other'
+        'pr_newswire', 'prweb', 'free_press_release', 'article_directory', 'rss_syndication', 'other'
       ]),
       platformName: z.string().optional(),
       externalUrl: z.string().optional(),
@@ -1423,7 +1425,7 @@ const distributionRouter = router({
       platforms: z.array(z.enum([
         'medium', 'devto', 'linkedin', 'hashnode', 'substack',
         'reddit', 'hackernews', 'twitter', 'facebook', 'pinterest',
-        'press_release', 'article_directory', 'rss_syndication'
+        'pr_newswire', 'prweb', 'free_press_release', 'article_directory', 'rss_syndication'
       ])),
     }))
     .mutation(async ({ ctx, input }) => {
