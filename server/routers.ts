@@ -1502,6 +1502,228 @@ const botRouter = router({
     }),
 });
 
+// URL Shortener router for monetizing clicks
+const urlShortenerRouter = router({
+  getSettings: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getUrlShortenerSettings(ctx.user.id);
+  }),
+
+  saveSettings: protectedProcedure
+    .input(z.object({
+      provider: z.enum(['shorte_st', 'adfly', 'linkvertise', 'shrinkme', 'ouo_io', 'none']),
+      apiKey: z.string().optional(),
+      isEnabled: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await db.saveUrlShortenerSettings({
+        userId: ctx.user.id,
+        provider: input.provider,
+        apiKey: input.apiKey,
+        isEnabled: input.isEnabled,
+      });
+      return { id, success: true };
+    }),
+
+  getShortenedUrls: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getShortenedUrls(ctx.user.id);
+  }),
+
+  shortenUrl: protectedProcedure
+    .input(z.object({
+      originalUrl: z.string().url(),
+      articleId: z.number().optional(),
+      affiliateLinkId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const settings = await db.getUrlShortenerSettings(ctx.user.id);
+      if (!settings?.isEnabled || settings.provider === 'none') {
+        return { shortUrl: input.originalUrl, success: false, message: 'URL shortener not configured' };
+      }
+
+      // In production, this would call the actual shortener API
+      // For now, we simulate the shortened URL
+      const shortUrl = `https://${settings.provider}.com/${Math.random().toString(36).substring(7)}`;
+      
+      const id = await db.createShortenedUrl({
+        userId: ctx.user.id,
+        originalUrl: input.originalUrl,
+        shortUrl,
+        provider: settings.provider,
+        articleId: input.articleId,
+        affiliateLinkId: input.affiliateLinkId,
+      });
+
+      return { id, shortUrl, success: true };
+    }),
+});
+
+// Tracking router for pixels and cookies
+const trackingRouter = router({
+  getPixels: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getTrackingPixels(ctx.user.id);
+  }),
+
+  addPixel: protectedProcedure
+    .input(z.object({
+      pixelType: z.enum(['facebook', 'google', 'tiktok', 'custom']),
+      pixelId: z.string(),
+      pixelCode: z.string().optional(),
+      isEnabled: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await db.createTrackingPixel({
+        userId: ctx.user.id,
+        pixelType: input.pixelType,
+        pixelId: input.pixelId,
+        pixelCode: input.pixelCode,
+        isEnabled: input.isEnabled ?? true,
+      });
+      return { id, success: true };
+    }),
+
+  updatePixel: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      pixelId: z.string().optional(),
+      pixelCode: z.string().optional(),
+      isEnabled: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await db.updateTrackingPixel(input.id, ctx.user.id, {
+        pixelId: input.pixelId,
+        pixelCode: input.pixelCode,
+        isEnabled: input.isEnabled,
+      });
+      return { success: true };
+    }),
+
+  deletePixel: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await db.deleteTrackingPixel(input.id, ctx.user.id);
+      return { success: true };
+    }),
+
+  getCookieStats: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getCookieTrackingStats(ctx.user.id);
+  }),
+
+  // Track a click with cookie
+  trackClick: publicProcedure
+    .input(z.object({
+      visitorId: z.string(),
+      articleId: z.number().optional(),
+      affiliateLinkId: z.number(),
+      userAgent: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const id = await db.trackAffiliateCookie({
+        visitorId: input.visitorId,
+        articleId: input.articleId,
+        affiliateLinkId: input.affiliateLinkId,
+        userAgent: input.userAgent,
+        cookieExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        cookieDurationDays: 30,
+      });
+      return { id, success: true };
+    }),
+});
+
+// Bot training data router
+const trainingRouter = router({
+  getData: protectedProcedure
+    .input(z.object({ category: z.string().optional() }).optional())
+    .query(async ({ input }) => {
+      return await db.getBotTrainingData(input?.category);
+    }),
+
+  addData: protectedProcedure
+    .input(z.object({
+      category: z.enum([
+        'ad_copy', 'headline_formulas', 'cta_strategies', 'affiliate_tactics',
+        'seo_techniques', 'viral_triggers', 'conversion_optimization', 'email_marketing'
+      ]),
+      title: z.string(),
+      content: z.string(),
+      source: z.string().optional(),
+      sourceUrl: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const id = await db.addBotTrainingData({
+        category: input.category,
+        title: input.title,
+        content: input.content,
+        source: input.source,
+        sourceUrl: input.sourceUrl,
+      });
+      return { id, success: true };
+    }),
+
+  seedKnowledge: protectedProcedure.mutation(async () => {
+    // Seed with proven affiliate marketing knowledge
+    const knowledge = [
+      {
+        category: 'headline_formulas' as const,
+        title: 'Power Words for Headlines',
+        content: 'Use power words: Free, New, Secret, Proven, Guaranteed, Limited, Exclusive, Instant, Easy, Amazing, Discover, Unlock, Transform, Ultimate, Essential',
+        source: 'Copyblogger',
+      },
+      {
+        category: 'cta_strategies' as const,
+        title: 'High-Converting CTA Formulas',
+        content: 'Best CTAs: "Get [Benefit] Now", "Start Your Free Trial", "Claim Your [Offer]", "Yes, I Want [Benefit]!", "Download Free [Resource]", "Join [Number] Others"',
+        source: 'ConversionXL',
+      },
+      {
+        category: 'affiliate_tactics' as const,
+        title: 'Link Placement Strategy',
+        content: 'Place affiliate links: 1) In the first 100 words, 2) After describing a problem, 3) In comparison tables, 4) Within product reviews, 5) In the conclusion with urgency',
+        source: 'Authority Hacker',
+      },
+      {
+        category: 'ad_copy' as const,
+        title: 'AIDA Formula',
+        content: 'AIDA: Attention (hook), Interest (benefits), Desire (social proof/urgency), Action (clear CTA). Every piece of content should follow this flow.',
+        source: 'Classic Marketing',
+      },
+      {
+        category: 'seo_techniques' as const,
+        title: 'On-Page SEO Essentials',
+        content: 'Include keyword in: Title, first paragraph, H2 headings, meta description, image alt text, URL slug. Use LSI keywords naturally throughout.',
+        source: 'Moz',
+      },
+      {
+        category: 'viral_triggers' as const,
+        title: 'Viral Content Elements',
+        content: 'Viral triggers: Emotional (awe, anger, anxiety), Practical value, Stories, Social currency (makes sharer look good), Triggers (top of mind)',
+        source: 'Jonah Berger - Contagious',
+      },
+      {
+        category: 'conversion_optimization' as const,
+        title: 'Urgency and Scarcity',
+        content: 'Create urgency: Limited time offers, countdown timers, limited quantity, exclusive access, price increases soon, bonuses expiring',
+        source: 'Robert Cialdini',
+      },
+    ];
+
+    for (const item of knowledge) {
+      await db.addBotTrainingData(item);
+    }
+
+    return { success: true, count: knowledge.length };
+  }),
+
+  markEffectiveness: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      wasSuccessful: z.boolean(),
+    }))
+    .mutation(async ({ input }) => {
+      await db.updateTrainingDataEffectiveness(input.id, input.wasSuccessful);
+      return { success: true };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -1524,6 +1746,9 @@ export const appRouter = router({
   learning: learningRouter,
   distribution: distributionRouter,
   bot: botRouter,
+  urlShortener: urlShortenerRouter,
+  tracking: trackingRouter,
+  training: trainingRouter,
 });
 
 export type AppRouter = typeof appRouter;

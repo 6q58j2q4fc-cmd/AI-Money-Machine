@@ -19,6 +19,7 @@ import Blog from "./pages/Blog";
 import PublicArticle from "./pages/PublicArticle";
 import DistributionCenter from "./pages/DistributionCenter";
 import BotIntelligence from "./pages/BotIntelligence";
+import Settings from "./pages/Settings";
 
 function Router() {
   return (
@@ -42,6 +43,7 @@ function Router() {
       <Route path="/automation" component={AutomationCenter} />
       <Route path="/distribution" component={DistributionCenter} />
       <Route path="/bot" component={BotIntelligence} />
+      <Route path="/settings" component={Settings} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

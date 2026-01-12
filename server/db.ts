@@ -9,7 +9,12 @@ import {
   analyticsEvents, InsertAnalyticsEvent,
   savedTopics, InsertSavedTopic,
   articleDistribution, InsertArticleDistribution,
-  botLearning, InsertBotLearning
+  botLearning, InsertBotLearning,
+  urlShortenerSettings, InsertUrlShortenerSettings, UrlShortenerSettings,
+  shortenedUrls, InsertShortenedUrl, ShortenedUrl,
+  trackingPixels, InsertTrackingPixel, TrackingPixel,
+  botTrainingData, InsertBotTrainingData, BotTrainingData,
+  affiliateCookieTracking, InsertAffiliateCookieTracking, AffiliateCookieTracking
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -997,4 +1002,218 @@ export async function getRecentBotDecisions(userId: number, limit: number = 10) 
     .where(eq(botLearning.userId, userId))
     .orderBy(desc(botLearning.createdAt))
     .limit(limit);
+}
+
+
+// ============ URL SHORTENER FUNCTIONS ============
+export async function getUrlShortenerSettings(userId: number): Promise<UrlShortenerSettings | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(urlShortenerSettings)
+    .where(eq(urlShortenerSettings.userId, userId))
+    .limit(1);
+
+  return result[0];
+}
+
+export async function saveUrlShortenerSettings(settings: InsertUrlShortenerSettings): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const existing = await getUrlShortenerSettings(settings.userId);
+  
+  if (existing) {
+    await db
+      .update(urlShortenerSettings)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(urlShortenerSettings.userId, settings.userId));
+    return existing.id;
+  } else {
+    const result = await db.insert(urlShortenerSettings).values(settings);
+    return result[0].insertId;
+  }
+}
+
+export async function createShortenedUrl(data: InsertShortenedUrl): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(shortenedUrls).values(data);
+  return result[0].insertId;
+}
+
+export async function getShortenedUrls(userId: number): Promise<ShortenedUrl[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(shortenedUrls)
+    .where(eq(shortenedUrls.userId, userId))
+    .orderBy(desc(shortenedUrls.createdAt));
+}
+
+export async function updateShortenedUrlStats(id: number, clicks: number, earnings: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(shortenedUrls)
+    .set({ 
+      clicks: sql`${shortenedUrls.clicks} + ${clicks}`,
+      earnings: sql`${shortenedUrls.earnings} + ${earnings}`,
+      updatedAt: new Date() 
+    })
+    .where(eq(shortenedUrls.id, id));
+}
+
+// ============ TRACKING PIXEL FUNCTIONS ============
+export async function getTrackingPixels(userId: number): Promise<TrackingPixel[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(trackingPixels)
+    .where(eq(trackingPixels.userId, userId))
+    .orderBy(desc(trackingPixels.createdAt));
+}
+
+export async function createTrackingPixel(data: InsertTrackingPixel): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(trackingPixels).values(data);
+  return result[0].insertId;
+}
+
+export async function updateTrackingPixel(id: number, userId: number, updates: Partial<InsertTrackingPixel>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(trackingPixels)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(and(eq(trackingPixels.id, id), eq(trackingPixels.userId, userId)));
+}
+
+export async function deleteTrackingPixel(id: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.delete(trackingPixels).where(
+    and(eq(trackingPixels.id, id), eq(trackingPixels.userId, userId))
+  );
+}
+
+// ============ BOT TRAINING DATA FUNCTIONS ============
+export async function getBotTrainingData(category?: string): Promise<BotTrainingData[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  if (category) {
+    return await db
+      .select()
+      .from(botTrainingData)
+      .where(eq(botTrainingData.category, category as any))
+      .orderBy(desc(botTrainingData.effectivenessScore));
+  }
+
+  return await db
+    .select()
+    .from(botTrainingData)
+    .orderBy(desc(botTrainingData.effectivenessScore));
+}
+
+export async function addBotTrainingData(data: InsertBotTrainingData): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(botTrainingData).values(data);
+  return result[0].insertId;
+}
+
+export async function updateTrainingDataEffectiveness(id: number, wasSuccessful: boolean): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(botTrainingData)
+    .set({
+      timesApplied: sql`${botTrainingData.timesApplied} + 1`,
+      effectivenessScore: wasSuccessful 
+        ? sql`LEAST(100, ${botTrainingData.effectivenessScore} + 2)`
+        : sql`GREATEST(0, ${botTrainingData.effectivenessScore} - 1)`,
+      updatedAt: new Date()
+    })
+    .where(eq(botTrainingData.id, id));
+}
+
+// ============ AFFILIATE COOKIE TRACKING FUNCTIONS ============
+export async function trackAffiliateCookie(data: InsertAffiliateCookieTracking): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(affiliateCookieTracking).values(data);
+  return result[0].insertId;
+}
+
+export async function getAffiliateCookieByVisitor(visitorId: string): Promise<AffiliateCookieTracking | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(affiliateCookieTracking)
+    .where(eq(affiliateCookieTracking.visitorId, visitorId))
+    .orderBy(desc(affiliateCookieTracking.clickedAt))
+    .limit(1);
+
+  return result[0];
+}
+
+export async function markCookieConverted(id: number, conversionValue: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(affiliateCookieTracking)
+    .set({
+      hasConverted: true,
+      convertedAt: new Date(),
+      conversionValue: conversionValue,
+      updatedAt: new Date()
+    })
+    .where(eq(affiliateCookieTracking.id, id));
+}
+
+export async function getCookieTrackingStats(userId: number): Promise<{
+  totalClicks: number;
+  totalConversions: number;
+  conversionRate: number;
+}> {
+  const db = await getDb();
+  if (!db) return { totalClicks: 0, totalConversions: 0, conversionRate: 0 };
+
+  const result = await db
+    .select({
+      totalClicks: sql<number>`COUNT(*)`,
+      totalConversions: sql<number>`SUM(CASE WHEN hasConverted = 1 THEN 1 ELSE 0 END)`
+    })
+    .from(affiliateCookieTracking)
+    .innerJoin(affiliateLinks, eq(affiliateCookieTracking.affiliateLinkId, affiliateLinks.id))
+    .where(eq(affiliateLinks.userId, userId));
+
+  const stats = result[0];
+  const totalClicks = Number(stats?.totalClicks || 0);
+  const totalConversions = Number(stats?.totalConversions || 0);
+  
+  return {
+    totalClicks,
+    totalConversions,
+    conversionRate: totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0
+  };
 }

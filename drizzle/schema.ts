@@ -398,3 +398,143 @@ export const botLearning = mysqlTable("bot_learning", {
 
 export type BotLearning = typeof botLearning.$inferSelect;
 export type InsertBotLearning = typeof botLearning.$inferInsert;
+
+
+/**
+ * URL Shortener settings for monetizing link clicks
+ */
+export const urlShortenerSettings = mysqlTable("url_shortener_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  
+  // Provider settings
+  provider: mysqlEnum("provider", ["shorte_st", "adfly", "linkvertise", "shrinkme", "ouo_io", "none"]).default("none").notNull(),
+  apiKey: varchar("apiKey", { length: 255 }),
+  isEnabled: boolean("isEnabled").default(false).notNull(),
+  
+  // Earnings tracking
+  totalClicks: int("totalClicks").default(0).notNull(),
+  totalEarnings: decimal("totalEarnings", { precision: 10, scale: 4 }).default("0.0000"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UrlShortenerSettings = typeof urlShortenerSettings.$inferSelect;
+export type InsertUrlShortenerSettings = typeof urlShortenerSettings.$inferInsert;
+
+/**
+ * Shortened URLs tracking
+ */
+export const shortenedUrls = mysqlTable("shortened_urls", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  articleId: int("articleId"),
+  affiliateLinkId: int("affiliateLinkId"),
+  
+  // URLs
+  originalUrl: text("originalUrl").notNull(),
+  shortUrl: text("shortUrl").notNull(),
+  provider: varchar("provider", { length: 50 }).notNull(),
+  
+  // Tracking
+  clicks: int("clicks").default(0).notNull(),
+  earnings: decimal("earnings", { precision: 10, scale: 4 }).default("0.0000"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ShortenedUrl = typeof shortenedUrls.$inferSelect;
+export type InsertShortenedUrl = typeof shortenedUrls.$inferInsert;
+
+/**
+ * Tracking pixels for retargeting
+ */
+export const trackingPixels = mysqlTable("tracking_pixels", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // Pixel configuration
+  pixelType: mysqlEnum("pixelType", ["facebook", "google", "tiktok", "custom"]).notNull(),
+  pixelId: varchar("pixelId", { length: 255 }).notNull(),
+  pixelCode: text("pixelCode"),
+  isEnabled: boolean("isEnabled").default(true).notNull(),
+  
+  // Stats
+  totalFires: int("totalFires").default(0).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TrackingPixel = typeof trackingPixels.$inferSelect;
+export type InsertTrackingPixel = typeof trackingPixels.$inferInsert;
+
+/**
+ * Bot training data - stores marketing knowledge for the AI
+ */
+export const botTrainingData = mysqlTable("bot_training_data", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Training category
+  category: mysqlEnum("category", [
+    "ad_copy", "headline_formulas", "cta_strategies", "affiliate_tactics",
+    "seo_techniques", "viral_triggers", "conversion_optimization", "email_marketing"
+  ]).notNull(),
+  
+  // Training content
+  title: varchar("title", { length: 500 }).notNull(),
+  content: text("content").notNull(),
+  source: varchar("source", { length: 255 }),
+  sourceUrl: text("sourceUrl"),
+  
+  // Effectiveness rating
+  effectivenessScore: int("effectivenessScore").default(50).notNull(), // 0-100
+  timesApplied: int("timesApplied").default(0).notNull(),
+  successRate: decimal("successRate", { precision: 5, scale: 2 }).default("0.00"),
+  
+  isVerified: boolean("isVerified").default(false).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BotTrainingData = typeof botTrainingData.$inferSelect;
+export type InsertBotTrainingData = typeof botTrainingData.$inferInsert;
+
+/**
+ * Affiliate cookie tracking - ensures attribution sticks
+ */
+export const affiliateCookieTracking = mysqlTable("affiliate_cookie_tracking", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Visitor identification
+  visitorId: varchar("visitorId", { length: 64 }).notNull(),
+  ipHash: varchar("ipHash", { length: 64 }), // Hashed for privacy
+  userAgent: text("userAgent"),
+  
+  // Click details
+  articleId: int("articleId"),
+  affiliateLinkId: int("affiliateLinkId").notNull(),
+  clickedAt: timestamp("clickedAt").defaultNow().notNull(),
+  
+  // Cookie info
+  cookieExpiry: timestamp("cookieExpiry"),
+  cookieDurationDays: int("cookieDurationDays").default(30),
+  
+  // Conversion tracking
+  hasConverted: boolean("hasConverted").default(false).notNull(),
+  convertedAt: timestamp("convertedAt"),
+  conversionValue: decimal("conversionValue", { precision: 10, scale: 2 }),
+  
+  // Retargeting
+  retargetingAttempts: int("retargetingAttempts").default(0).notNull(),
+  lastRetargetedAt: timestamp("lastRetargetedAt"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AffiliateCookieTracking = typeof affiliateCookieTracking.$inferSelect;
+export type InsertAffiliateCookieTracking = typeof affiliateCookieTracking.$inferInsert;
