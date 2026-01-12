@@ -24,6 +24,7 @@ import FreePublishingBot from "./pages/FreePublishingBot";
 import DataAccuracy from "./pages/DataAccuracy";
 import AuditLog from "./pages/AuditLog";
 import AICommandCenter from "./pages/AICommandCenter";
+import LLMSettings from "./pages/LLMSettings";
 
 function Router() {
   return (
@@ -52,6 +53,7 @@ function Router() {
       <Route path="/data-accuracy" component={DataAccuracy} />
       <Route path="/audit-log" component={AuditLog} />
       <Route path="/ai-command" component={AICommandCenter} />
+      <Route path="/llm-settings" component={LLMSettings} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

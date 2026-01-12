@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -32,6 +32,7 @@ const menuItems = [
   { icon: Rocket, label: "Automation", path: "/automation" },
   { icon: Brain, label: "Bot Intelligence", path: "/bot" },
   { icon: Cpu, label: "AI Command Center", path: "/ai-command" },
+  { icon: Sparkles, label: "Multi-LLM Intelligence", path: "/llm-settings" },
   { icon: TrendingUp, label: "Trending Topics", path: "/topics" },
   { icon: FileText, label: "Articles", path: "/articles" },
   { icon: Globe, label: "Distribution", path: "/distribution" },

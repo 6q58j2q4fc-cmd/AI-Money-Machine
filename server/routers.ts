@@ -8,6 +8,7 @@ import * as db from "./db";
 import { publishToPlatform, getConfiguredPlatforms } from "./_core/platformPublisher";
 import { searchCJLinks, getJoinedAdvertiserLinks, getNonJoinedAdvertiserLinks, searchCJAdvertisers, getNonJoinedAdvertisers, getJoinedAdvertisers, getCJProgramUrl } from "./_core/cjApi";
 import { createBotpressService, BotCommands } from "./_core/botpressApi";
+import { invokeMultiLLM, generateArticle, optimizeSEO, researchTopics, matchAffiliateProducts, generateHeadlines, getAvailableProviders, type LLMTaskType } from "./_core/multiLlm";
 
 // Slug generator helper
 function generateSlug(title: string): string {
@@ -2236,6 +2237,125 @@ const auditRouter = router({
     }),
 });
 
+// Multi-LLM Router - Intelligent task routing across multiple free LLM providers
+const llmRouter = router({
+  // Get available LLM providers
+  getProviders: protectedProcedure.query(async () => {
+    const providers = getAvailableProviders();
+    return {
+      available: providers,
+      count: providers.length,
+      configured: providers.length > 0,
+    };
+  }),
+
+  // Generate article using optimized LLM routing
+  generateArticle: protectedProcedure
+    .input(z.object({
+      topic: z.string(),
+      keywords: z.array(z.string()).optional(),
+      wordCount: z.number().min(500).max(5000).optional(),
+      style: z.enum(["informative", "persuasive", "conversational", "technical"]).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const result = await generateArticle(
+        input.topic,
+        input.keywords || [],
+        input.wordCount || 2000,
+        input.style || "informative"
+      );
+      return {
+        content: result.content,
+        provider: result.provider,
+        model: result.model,
+        usage: result.usage,
+      };
+    }),
+
+  // Optimize content for SEO
+  optimizeSEO: protectedProcedure
+    .input(z.object({
+      content: z.string(),
+      targetKeyword: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      return await optimizeSEO(input.content, input.targetKeyword);
+    }),
+
+  // Research trending topics
+  researchTopics: protectedProcedure
+    .input(z.object({
+      niche: z.string(),
+      count: z.number().min(1).max(20).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      return await researchTopics(input.niche, input.count || 10);
+    }),
+
+  // Match affiliate products to content
+  matchAffiliates: protectedProcedure
+    .input(z.object({
+      articleContent: z.string(),
+      products: z.array(z.object({
+        name: z.string(),
+        category: z.string(),
+        description: z.string(),
+      })),
+    }))
+    .mutation(async ({ input }) => {
+      return await matchAffiliateProducts(input.articleContent, input.products);
+    }),
+
+  // Generate headlines
+  generateHeadlines: protectedProcedure
+    .input(z.object({
+      topic: z.string(),
+      count: z.number().min(1).max(10).optional(),
+      style: z.enum(["clickbait", "informative", "question", "listicle"]).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const headlines = await generateHeadlines(
+        input.topic,
+        input.count || 5,
+        input.style || "informative"
+      );
+      return { headlines };
+    }),
+
+  // Direct LLM invoke for custom tasks
+  invoke: protectedProcedure
+    .input(z.object({
+      taskType: z.enum([
+        "article_generation", "seo_optimization", "topic_research",
+        "affiliate_matching", "content_rewriting", "headline_generation",
+        "performance_analysis", "quick_task", "deep_reasoning", "code_generation"
+      ]),
+      systemPrompt: z.string(),
+      userPrompt: z.string(),
+      temperature: z.number().min(0).max(2).optional(),
+      maxTokens: z.number().min(100).max(8000).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const result = await invokeMultiLLM(
+        input.taskType as LLMTaskType,
+        [
+          { role: "system", content: input.systemPrompt },
+          { role: "user", content: input.userPrompt },
+        ],
+        {
+          temperature: input.temperature,
+          maxTokens: input.maxTokens,
+        }
+      );
+      return {
+        content: result.content,
+        provider: result.provider,
+        model: result.model,
+        usage: result.usage,
+      };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -2262,6 +2382,7 @@ export const appRouter = router({
   tracking: trackingRouter,
   training: trainingRouter,
   audit: auditRouter,
+  llm: llmRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -13,4 +13,9 @@ export const ENV = {
   copymaticApiKey: process.env.COPYMATIC_AI_API_KEY ?? "",
   cjApiKey: process.env.CJ_API_KEY ?? "",
   botpressApiKey: process.env.BOTPRESS_API ?? "",
+  // Multi-LLM API Keys (all FREE tiers)
+  groqApiKey: process.env.GROQ_API_KEY ?? "",
+  cerebrasApiKey: process.env.CEREBRAS_API_KEY ?? "",
+  openrouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
+  googleAiApiKey: process.env.GOOGLE_AI_API_KEY ?? "",
 };
