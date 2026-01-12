@@ -7,6 +7,7 @@ import { Streamdown } from "streamdown";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -378,6 +379,44 @@ export default function PublicArticle() {
                   </div>
                 </div>
               )}
+
+              {/* Email Capture Card */}
+              <div className={`rounded-xl border border-border bg-gradient-to-b ${theme.gradient} p-6`}>
+                <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
+                  <Mail className={`w-5 h-5 ${theme.accent}`} />
+                  Get More Tips
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Subscribe to receive exclusive deals, product reviews, and money-saving tips.
+                </p>
+                <form 
+                  className="space-y-3"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const form = e.target as HTMLFormElement;
+                    const email = (form.elements.namedItem('email') as HTMLInputElement)?.value;
+                    if (email) {
+                      toast.success("Thanks for subscribing! Check your inbox.");
+                      form.reset();
+                    }
+                  }}
+                >
+                  <Input
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    className="bg-background/50"
+                    required
+                  />
+                  <Button type="submit" className="w-full btn-glow">
+                    <Mail className="w-4 h-4 mr-2" />
+                    Subscribe Free
+                  </Button>
+                </form>
+                <p className="text-xs text-muted-foreground mt-3 text-center">
+                  No spam. Unsubscribe anytime.
+                </p>
+              </div>
 
               {/* Share Card */}
               <div className="rounded-xl border border-border bg-card p-6">

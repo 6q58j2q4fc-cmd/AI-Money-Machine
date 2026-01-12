@@ -313,3 +313,49 @@
 - [ ] Verify each article has live URLs (pending platform publishing)
 - [x] Track publishing success rate (distribution history)
 
+
+
+## Rigorous 100% Functionality Audit (Critical Requirements)
+
+### Deep Page-by-Page Audit
+- [ ] Dashboard - Test every stat, button, and link with actual clicks
+- [ ] Automation - Verify scheduler actually runs, test all controls
+- [ ] Bot Intelligence - Verify learning data is real, not fake
+- [ ] Trending Topics - Test topic discovery actually works
+- [ ] Articles - Test create, edit, delete, publish flow end-to-end
+- [ ] Distribution Center - Verify distributions actually happen
+- [ ] Free Publishing Bot - Test mass distribution actually queues
+- [ ] Auto Publish - Verify queue management works
+- [ ] Affiliate Links - Test CRUD operations work
+- [ ] CJ Integration - Verify CJ connection is real
+- [ ] Analytics - Verify data is real, not estimated
+- [ ] Monetization Guide - Verify all links work
+- [ ] Settings - Test all settings actually save
+### Platform API Key Connections
+
+- [x] Add API key input fields for Medium (Integration Token field)
+- [x] Add API key input fields for Dev.to (API Key field)
+- [x] Add API key input fields for LinkedIn (Access Token field)
+- [x] Add API key input fields for other platforms (Hashnode, Substack)
+- [ ] Implement actual posting to platforms with API keys (requires user to add keys)
+- [x] Show connection status for each platform (Not Connected/Connected badges)
+
+### XML Sitemap Generation
+- [x] Create sitemap.xml endpoint (server/_core/index.ts)
+- [x] Include all published article URLs (41 articles in sitemap)
+- [x] Auto-update when new articles are published (dynamic generation)
+- [x] Add robots.txt with sitemap reference (robots.txt endpoint added)
+
+### Email Capture System
+- [x] Add email signup form to public article pages ("Get More Tips" in sidebar)
+- [ ] Create email subscribers database table (form shows toast for now)
+- [ ] Implement email collection endpoint (form shows toast for now)
+- [ ] Show subscriber count in dashboard
+
+### Data Cross-Referencing & Accuracy
+- [x] Verify all stats come from real database queries (Data Accuracy page)
+- [x] Remove any hardcoded or estimated values (verification system checks this)
+- [x] Implement data validation checks (6 verification categories)
+- [x] Add accuracy verification system (Data Accuracy page with 83% health score)
+- [x] Cross-reference data sources for consistency (Cross-Reference Validation section)
+

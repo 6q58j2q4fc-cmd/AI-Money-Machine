@@ -596,6 +596,20 @@ export async function getPublishedArticles(limit: number = 20) {
     .limit(limit);
 }
 
+export async function getPublishedArticlesForSitemap() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select({
+      slug: articles.slug,
+      updatedAt: articles.updatedAt,
+    })
+    .from(articles)
+    .where(eq(articles.status, 'published'))
+    .orderBy(desc(articles.publishedAt));
+}
+
 export async function getPublishedArticleBySlug(slug: string) {
   const db = await getDb();
   if (!db) return undefined;

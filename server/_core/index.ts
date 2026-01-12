@@ -35,6 +35,48 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  
+  // Sitemap.xml for SEO
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      const { getPublishedArticlesForSitemap } = await import('../db');
+      const articles = await getPublishedArticlesForSitemap();
+      const baseUrl = req.protocol + '://' + req.get('host');
+      
+      let sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      sitemap += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+      
+      // Add homepage
+      sitemap += `  <url>\n    <loc>${baseUrl}/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+      
+      // Add all published articles
+      for (const article of articles) {
+        const lastmod = article.updatedAt ? new Date(article.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        sitemap += `  <url>\n`;
+        sitemap += `    <loc>${baseUrl}/blog/${article.slug}</loc>\n`;
+        sitemap += `    <lastmod>${lastmod}</lastmod>\n`;
+        sitemap += `    <changefreq>weekly</changefreq>\n`;
+        sitemap += `    <priority>0.8</priority>\n`;
+        sitemap += `  </url>\n`;
+      }
+      
+      sitemap += `</urlset>`;
+      
+      res.set('Content-Type', 'application/xml');
+      res.send(sitemap);
+    } catch (error) {
+      console.error('Sitemap generation error:', error);
+      res.status(500).send('Error generating sitemap');
+    }
+  });
+  
+  // Robots.txt for SEO
+  app.get('/robots.txt', (req, res) => {
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const robotsTxt = `User-agent: *\nAllow: /\nSitemap: ${baseUrl}/sitemap.xml\n`;
+    res.set('Content-Type', 'text/plain');
+    res.send(robotsTxt);
+  });
   // tRPC API
   app.use(
     "/api/trpc",

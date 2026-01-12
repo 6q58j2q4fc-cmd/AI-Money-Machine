@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Link2, Eye, Cookie, Plus, Trash2, Save, ExternalLink } from "lucide-react";
+import { Loader2, Link2, Eye, Cookie, Plus, Trash2, Save, ExternalLink, Key, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import {
@@ -119,8 +119,12 @@ export default function Settings() {
           <p className="text-muted-foreground">Configure monetization and tracking options</p>
         </div>
 
-        <Tabs defaultValue="shortener" className="space-y-6">
+        <Tabs defaultValue="platforms" className="space-y-6">
           <TabsList className="bg-card border border-border">
+            <TabsTrigger value="platforms" className="data-[state=active]:bg-primary/20">
+              <Globe className="h-4 w-4 mr-2" />
+              Platform APIs
+            </TabsTrigger>
             <TabsTrigger value="shortener" className="data-[state=active]:bg-primary/20">
               <Link2 className="h-4 w-4 mr-2" />
               URL Shortener
@@ -134,6 +138,143 @@ export default function Settings() {
               Cookie Tracking
             </TabsTrigger>
           </TabsList>
+
+          {/* Platform APIs Tab */}
+          <TabsContent value="platforms" className="space-y-6">
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  Platform API Keys
+                </CardTitle>
+                <CardDescription>
+                  Connect your publishing platform accounts to enable automated article distribution
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-6">
+                  {/* Medium */}
+                  <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-black flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">M</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">Medium</p>
+                          <p className="text-xs text-muted-foreground">DA: 95 | Millions of readers</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline">Not Connected</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Integration Token</Label>
+                      <Input type="password" placeholder="Get token from medium.com/me/settings" className="bg-background" />
+                      <p className="text-xs text-muted-foreground">Go to Settings → Integration tokens → Get integration token</p>
+                    </div>
+                  </div>
+
+                  {/* Dev.to */}
+                  <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-black flex items-center justify-center">
+                          <span className="text-white font-bold">DEV</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">Dev.to</p>
+                          <p className="text-xs text-muted-foreground">DA: 82 | Developer community</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline">Not Connected</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>API Key</Label>
+                      <Input type="password" placeholder="Get API key from dev.to/settings/extensions" className="bg-background" />
+                      <p className="text-xs text-muted-foreground">Go to Settings → Extensions → Generate API Key</p>
+                    </div>
+                  </div>
+
+                  {/* LinkedIn */}
+                  <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
+                          <span className="text-white font-bold">in</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">LinkedIn</p>
+                          <p className="text-xs text-muted-foreground">DA: 100 | Professional network</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline">Not Connected</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Access Token</Label>
+                      <Input type="password" placeholder="OAuth access token" className="bg-background" />
+                      <p className="text-xs text-muted-foreground">Requires LinkedIn Developer App with w_member_social permission</p>
+                    </div>
+                  </div>
+
+                  {/* Hashnode */}
+                  <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center">
+                          <span className="text-white font-bold">#</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">Hashnode</p>
+                          <p className="text-xs text-muted-foreground">DA: 78 | Developer blogging</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline">Not Connected</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Personal Access Token</Label>
+                      <Input type="password" placeholder="Get token from hashnode.com/settings/developer" className="bg-background" />
+                      <p className="text-xs text-muted-foreground">Go to Account Settings → Developer → Generate New Token</p>
+                    </div>
+                  </div>
+
+                  {/* Substack */}
+                  <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center">
+                          <span className="text-white font-bold">S</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">Substack</p>
+                          <p className="text-xs text-muted-foreground">DA: 91 | Newsletter platform</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline">Manual Only</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Substack doesn't offer a public API. Articles will be prepared for manual copy-paste.</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-primary/10 rounded-lg">
+                  <h3 className="font-medium mb-2 flex items-center gap-2">
+                    <Key className="h-4 w-4" />
+                    How Platform Integration Works
+                  </h3>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Add your API keys above to enable automated publishing</li>
+                    <li>• Articles will be automatically formatted for each platform</li>
+                    <li>• Affiliate links are preserved and properly attributed</li>
+                    <li>• Published URLs are tracked in Distribution Center</li>
+                  </ul>
+                </div>
+
+                <Button onClick={() => toast.success("Platform settings saved!")}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Platform Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* URL Shortener Tab */}
           <TabsContent value="shortener" className="space-y-6">

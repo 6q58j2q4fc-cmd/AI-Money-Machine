@@ -21,6 +21,7 @@ import DistributionCenter from "./pages/DistributionCenter";
 import BotIntelligence from "./pages/BotIntelligence";
 import Settings from "./pages/Settings";
 import FreePublishingBot from "./pages/FreePublishingBot";
+import DataAccuracy from "./pages/DataAccuracy";
 
 function Router() {
   return (
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/bot" component={BotIntelligence} />
       <Route path="/settings" component={Settings} />
       <Route path="/free-publishing" component={FreePublishingBot} />
+      <Route path="/data-accuracy" component={DataAccuracy} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
