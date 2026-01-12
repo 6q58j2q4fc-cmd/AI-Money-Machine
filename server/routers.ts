@@ -6,6 +6,7 @@ import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
 import * as db from "./db";
 import { publishToPlatform, getConfiguredPlatforms } from "./_core/platformPublisher";
+import { searchCJLinks, getJoinedAdvertiserLinks, getNonJoinedAdvertiserLinks, searchCJAdvertisers, getNonJoinedAdvertisers, getJoinedAdvertisers, getCJProgramUrl } from "./_core/cjApi";
 
 // Slug generator helper
 function generateSlug(title: string): string {
@@ -743,6 +744,188 @@ const cjRouter = router({
 
       return { imported: imported.length, ids: imported };
     }),
+
+  // Fetch real links from CJ API
+  fetchRealLinks: protectedProcedure
+    .input(z.object({
+      keywords: z.string().optional(),
+      category: z.string().optional(),
+    }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const settings = await db.getCJSettings(ctx.user.id);
+      if (!settings?.websiteId) {
+        throw new Error("CJ Website ID not configured. Please set it in CJ Integration settings.");
+      }
+
+      const result = await searchCJLinks({
+        websiteId: settings.websiteId,
+        keywords: input?.keywords,
+        advertiserIds: "joined",
+        recordsPerPage: 50,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch CJ links");
+      }
+
+      return {
+        links: result.links,
+        totalMatched: result.totalMatched,
+      };
+    }),
+
+  // Import real CJ links to affiliate links
+  importRealLinks: protectedProcedure
+    .input(z.object({
+      links: z.array(z.object({
+        advertiserName: z.string(),
+        linkName: z.string(),
+        clickUrl: z.string(),
+        category: z.string(),
+        saleCommission: z.string(),
+      })),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const imported: number[] = [];
+
+      for (const link of input.links) {
+        const shortCode = `cj-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+        const id = await db.createAffiliateLink({
+          userId: ctx.user.id,
+          name: link.linkName || link.advertiserName,
+          url: link.clickUrl,
+          shortCode,
+          category: link.category || "General",
+          program: "Commission Junction",
+          commission: link.saleCommission || "",
+        });
+        imported.push(id);
+      }
+
+      return { imported: imported.length, ids: imported };
+    }),
+
+  // Get all joined advertiser links
+  getJoinedLinks: protectedProcedure.mutation(async ({ ctx }) => {
+    const settings = await db.getCJSettings(ctx.user.id);
+    if (!settings?.websiteId) {
+      throw new Error("CJ Website ID not configured. Please set it in CJ Integration settings.");
+    }
+
+    const result = await getJoinedAdvertiserLinks(settings.websiteId);
+
+    if (!result.success) {
+      throw new Error(result.error || "Failed to fetch joined advertiser links");
+    }
+
+    return {
+      links: result.links,
+      totalMatched: result.totalMatched,
+    };
+  }),
+
+  // Fetch non-joined advertiser links to show available programs
+  fetchAvailableLinks: protectedProcedure
+    .input(z.object({
+      keywords: z.string().optional(),
+      category: z.string().optional(),
+    }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const settings = await db.getCJSettings(ctx.user.id);
+      if (!settings?.websiteId) {
+        throw new Error("CJ Website ID not configured. Please set it in CJ Integration settings.");
+      }
+
+      const result = await getNonJoinedAdvertiserLinks(settings.websiteId, input?.keywords);
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch available links");
+      }
+
+      return {
+        links: result.links,
+        totalMatched: result.totalMatched,
+      };
+    }),
+
+  // Search for advertisers (both joined and non-joined)
+  searchAdvertisers: protectedProcedure
+    .input(z.object({
+      keywords: z.string().optional(),
+      category: z.string().optional(),
+      relationshipStatus: z.enum(["joined", "notjoined", ""]).optional(),
+    }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const settings = await db.getCJSettings(ctx.user.id);
+      if (!settings?.cid) {
+        throw new Error("CJ Account ID (CID) not configured. Please set it in CJ Integration settings.");
+      }
+
+      const result = await searchCJAdvertisers({
+        cid: settings.cid,
+        keywords: input?.keywords,
+        category: input?.category,
+        relationshipStatus: input?.relationshipStatus as "joined" | "notjoined" | "" | undefined,
+        recordsPerPage: 100,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to search advertisers");
+      }
+
+      return {
+        advertisers: result.advertisers,
+        totalMatched: result.totalMatched,
+      };
+    }),
+
+  // Get non-joined advertisers to show available programs to join
+  getAvailableAdvertisers: protectedProcedure
+    .input(z.object({
+      keywords: z.string().optional(),
+    }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const settings = await db.getCJSettings(ctx.user.id);
+      if (!settings?.cid) {
+        throw new Error("CJ Account ID (CID) not configured. Please set it in CJ Integration settings.");
+      }
+
+      const result = await getNonJoinedAdvertisers(settings.cid, input?.keywords);
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch available advertisers");
+      }
+
+      // Add program URLs to each advertiser
+      const advertisersWithUrls = result.advertisers.map(adv => ({
+        ...adv,
+        applyUrl: getCJProgramUrl(adv.advertiserId),
+      }));
+
+      return {
+        advertisers: advertisersWithUrls,
+        totalMatched: result.totalMatched,
+      };
+    }),
+
+  // Get joined advertisers
+  getJoinedAdvertisers: protectedProcedure.mutation(async ({ ctx }) => {
+    const settings = await db.getCJSettings(ctx.user.id);
+    if (!settings?.cid) {
+      throw new Error("CJ Account ID (CID) not configured. Please set it in CJ Integration settings.");
+    }
+
+    const result = await getJoinedAdvertisers(settings.cid);
+
+    if (!result.success) {
+      throw new Error(result.error || "Failed to fetch joined advertisers");
+    }
+
+    return {
+      advertisers: result.advertisers,
+      totalMatched: result.totalMatched,
+    };
+  }),
 });
 
 // Publishing queue router

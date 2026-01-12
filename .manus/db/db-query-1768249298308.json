@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, name, url, category FROM affiliate_links LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, name, url, category FROM affiliate_links LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "NordVPN - Best VPN Service",
+      "url": "https://www.anrdoezrs.net/click-7841523-14908261",
+      "category": "Technology"
+    },
+    {
+      "id": "2",
+      "name": "Bluehost Web Hosting",
+      "url": "https://www.anrdoezrs.net/click-7841523-11634969",
+      "category": "technology"
+    },
+    {
+      "id": "3",
+      "name": "ExpressVPN Premium",
+      "url": "https://www.anrdoezrs.net/click-7841523-13038561",
+      "category": "technology"
+    },
+    {
+      "id": "4",
+      "name": "Grammarly Premium",
+      "url": "https://www.anrdoezrs.net/click-7841523-13943961",
+      "category": "technology"
+    },
+    {
+      "id": "5",
+      "name": "Constant Contact Email",
+      "url": "https://www.anrdoezrs.net/click-7841523-10505961",
+      "category": "business"
+    },
+    {
+      "id": "6",
+      "name": "TurboTax Online",
+      "url": "https://www.anrdoezrs.net/click-7841523-10505962",
+      "category": "finance"
+    },
+    {
+      "id": "7",
+      "name": "Credit Karma Free Scores",
+      "url": "https://www.anrdoezrs.net/click-7841523-10505963",
+      "category": "finance"
+    },
+    {
+      "id": "8",
+      "name": "Noom Weight Loss",
+      "url": "https://www.anrdoezrs.net/click-7841523-10505964",
+      "category": "health"
+    },
+    {
+      "id": "9",
+      "name": "HelloFresh Meals",
+      "url": "https://www.anrdoezrs.net/click-7841523-10505965",
+      "category": "lifestyle"
+    },
+    {
+      "id": "10",
+      "name": "Skillshare Learning",
+      "url": "https://www.anrdoezrs.net/click-7841523-10505966",
+      "category": "education"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\turl\tcategory\n1\tNordVPN - Best VPN Service\thttps://www.anrdoezrs.net/click-7841523-14908261\tTechnology\n2\tBluehost Web Hosting\thttps://www.anrdoezrs.net/click-7841523-11634969\ttechnology\n3\tExpressVPN Premium\thttps://www.anrdoezrs.net/click-7841523-13038561\ttechnology\n4\tGrammarly Premium\thttps://www.anrdoezrs.net/click-7841523-13943961\ttechnology\n5\tConstant Contact Email\thttps://www.anrdoezrs.net/click-7841523-10505961\tbusiness\n6\tTurboTax Online\thttps://www.anrdoezrs.net/click-7841523-10505962\tfinance\n7\tCredit Karma Free Scores\thttps://www.anrdoezrs.net/click-7841523-10505963\tfinance\n8\tNoom Weight Loss\thttps://www.anrdoezrs.net/click-7841523-10505964\thealth\n9\tHelloFresh Meals\thttps://www.anrdoezrs.net/click-7841523-10505965\tlifestyle\n10\tSkillshare Learning\thttps://www.anrdoezrs.net/click-7841523-10505966\teducation\n",
+  "stderr": "",
+  "execution_time_ms": 447
+}

@@ -16,8 +16,27 @@ import {
   Package,
   DollarSign,
   Import,
-  ExternalLink
+  ExternalLink,
+  Users,
+  TrendingUp,
+  Search,
+  Building2
 } from "lucide-react";
+
+interface CJAdvertiser {
+  advertiserId: string;
+  advertiserName: string;
+  category: string;
+  networkRank: string;
+  sevenDayEpc: string;
+  threeMonthEpc: string;
+  programUrl: string;
+  relationshipStatus: string;
+  mobileTrackingCertified: boolean;
+  networkEarnings: string;
+  actionCommission: string;
+  applyUrl?: string;
+}
 
 export default function CJIntegration() {
   const [cid, setCid] = useState("7841523"); // Pre-filled with user's CID
@@ -62,6 +81,73 @@ export default function CJIntegration() {
     },
     onError: (error) => toast.error(error.message)
   });
+
+  const [realLinks, setRealLinks] = useState<any[]>([]);
+  const [selectedRealLinks, setSelectedRealLinks] = useState<Set<number>>(new Set());
+  const [searchKeyword, setSearchKeyword] = useState("");
+
+  // Available advertisers state
+  const [availableAdvertisers, setAvailableAdvertisers] = useState<CJAdvertiser[]>([]);
+  const [advertiserSearchKeyword, setAdvertiserSearchKeyword] = useState("");
+
+  const fetchRealLinksMutation = trpc.cj.fetchRealLinks.useMutation({
+    onSuccess: (data) => {
+      setRealLinks(data.links);
+      if (data.links.length === 0) {
+        toast.info("No joined advertiser links found. Try joining some advertisers first!");
+      } else {
+        toast.success(`Found ${data.links.length} real CJ links!`);
+      }
+    },
+    onError: (error) => toast.error(error.message)
+  });
+
+  const fetchAvailableAdvertisersMutation = trpc.cj.getAvailableAdvertisers.useMutation({
+    onSuccess: (data) => {
+      setAvailableAdvertisers(data.advertisers);
+      if (data.advertisers.length === 0) {
+        toast.info("No advertisers found. Try different keywords.");
+      } else {
+        toast.success(`Found ${data.advertisers.length} available advertisers to join!`);
+      }
+    },
+    onError: (error) => toast.error(error.message)
+  });
+
+  const importRealLinksMutation = trpc.cj.importRealLinks.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Imported ${data.imported} real CJ links!`);
+      setSelectedRealLinks(new Set());
+      setRealLinks([]);
+      utils.affiliate.list.invalidate();
+    },
+    onError: (error) => toast.error(error.message)
+  });
+
+  const handleFetchRealLinks = () => {
+    if (!websiteId) {
+      toast.error("Please enter your Website ID first");
+      return;
+    }
+    fetchRealLinksMutation.mutate({ keywords: searchKeyword || undefined });
+  };
+
+  const handleFetchAvailableAdvertisers = () => {
+    if (!cid) {
+      toast.error("Please enter your CJ Account ID (CID) first");
+      return;
+    }
+    fetchAvailableAdvertisersMutation.mutate({ keywords: advertiserSearchKeyword || undefined });
+  };
+
+  const handleImportRealLinks = () => {
+    const linksToImport = realLinks.filter((_, i) => selectedRealLinks.has(i));
+    if (linksToImport.length === 0) {
+      toast.error("Select links to import");
+      return;
+    }
+    importRealLinksMutation.mutate({ links: linksToImport });
+  };
 
   const handleSaveSettings = () => {
     if (!cid) {
@@ -147,14 +233,17 @@ export default function CJIntegration() {
                 />
               </div>
               <div>
-                <Label htmlFor="websiteId">Website ID</Label>
+                <Label htmlFor="websiteId">Website ID (PID) *</Label>
                 <Input
                   id="websiteId"
                   value={websiteId}
                   onChange={(e) => setWebsiteId(e.target.value)}
-                  placeholder="Optional"
+                  placeholder="e.g., 101630462"
                   className="mt-1"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Find this in CJ Dashboard → Account → Web Properties
+                </p>
               </div>
             </div>
             <div>
@@ -199,6 +288,102 @@ export default function CJIntegration() {
                 </Badge>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Available Advertisers Section - NEW */}
+        <Card className="card-glow border-amber-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-500">
+              <Building2 className="w-5 h-5" />
+              Find Advertisers to Join
+            </CardTitle>
+            <CardDescription>
+              Search for CJ advertisers you can apply to join. Once approved, their affiliate links will be available.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Input
+                  value={advertiserSearchKeyword}
+                  onChange={(e) => setAdvertiserSearchKeyword(e.target.value)}
+                  placeholder="Search by keyword (e.g., 'VPN', 'hosting', 'software', 'travel')"
+                />
+              </div>
+              <Button 
+                onClick={handleFetchAvailableAdvertisers}
+                disabled={fetchAvailableAdvertisersMutation.isPending || !cid}
+                className="bg-amber-600 hover:bg-amber-700"
+              >
+                {fetchAvailableAdvertisersMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4 mr-2" />
+                )}
+                Find Advertisers
+              </Button>
+            </div>
+            {!cid && (
+              <p className="text-sm text-amber-500">
+                ⚠️ Enter your CJ Account ID (CID) above and save settings first
+              </p>
+            )}
+
+            {/* Available Advertisers List */}
+            {availableAdvertisers.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Found {availableAdvertisers.length} Advertisers to Join
+                  </h4>
+                </div>
+                <div className="grid gap-3 max-h-96 overflow-y-auto">
+                  {availableAdvertisers.map((advertiser, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-center gap-4 p-4 rounded-lg border border-border hover:border-amber-500/50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium">{advertiser.advertiserName}</h4>
+                        <p className="text-sm text-muted-foreground">ID: {advertiser.advertiserId}</p>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm">
+                        {advertiser.category && (
+                          <Badge variant="secondary">{advertiser.category}</Badge>
+                        )}
+                        {advertiser.networkRank && (
+                          <Badge variant="outline" className="text-blue-500">
+                            <TrendingUp className="w-3 h-3 mr-1" />
+                            Rank: {advertiser.networkRank}
+                          </Badge>
+                        )}
+                        {advertiser.sevenDayEpc && advertiser.sevenDayEpc !== "N/A" && (
+                          <Badge variant="outline" className="text-green-500">
+                            EPC: ${advertiser.sevenDayEpc}
+                          </Badge>
+                        )}
+                      </div>
+                      <a 
+                        href={advertiser.applyUrl || `https://members.cj.com/member/publisher/home.do#advertiserDetails/cid=${advertiser.advertiserId}`}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="shrink-0"
+                      >
+                        <Button size="sm" className="bg-amber-600 hover:bg-amber-700">
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          Apply to Join
+                        </Button>
+                      </a>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  💡 Click "Apply to Join" to request partnership with each advertiser. Once approved, their links will appear in "Fetch Real Links" section.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -358,6 +543,140 @@ export default function CJIntegration() {
             </CardContent>
           </Card>
         )}
+
+        {/* Real CJ API Links Section */}
+        <Card className="card-glow border-primary/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <ExternalLink className="w-5 h-5" />
+              Fetch Real CJ Affiliate Links (Joined Advertisers)
+            </CardTitle>
+            <CardDescription>
+              Fetch affiliate links from advertisers you've already joined. If you see "No Joined Advertisers", use the section above to find and join advertisers first.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Input
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  placeholder="Search keywords (optional, e.g., 'VPN', 'hosting')"
+                />
+              </div>
+              <Button 
+                onClick={handleFetchRealLinks}
+                disabled={fetchRealLinksMutation.isPending || !websiteId}
+                className="btn-glow"
+              >
+                {fetchRealLinksMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                )}
+                Fetch Real Links
+              </Button>
+            </div>
+            {!websiteId && (
+              <p className="text-sm text-amber-500">
+                ⚠️ Enter your Website ID above and save settings to fetch real links
+              </p>
+            )}
+
+            {/* Real Links List */}
+            {realLinks.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Found {realLinks.length} Real CJ Links</h4>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setSelectedRealLinks(new Set(realLinks.map((_, i) => i)))}
+                    >
+                      Select All
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setSelectedRealLinks(new Set())}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      onClick={handleImportRealLinks}
+                      disabled={selectedRealLinks.size === 0 || importRealLinksMutation.isPending}
+                      className="btn-glow"
+                    >
+                      {importRealLinksMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Import className="w-4 h-4 mr-2" />
+                      )}
+                      Import ({selectedRealLinks.size})
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid gap-3 max-h-96 overflow-y-auto">
+                  {realLinks.map((link, index) => (
+                    <div 
+                      key={index}
+                      className={`flex items-center gap-4 p-4 rounded-lg border transition-colors cursor-pointer ${
+                        selectedRealLinks.has(index) 
+                          ? "border-primary bg-primary/5" 
+                          : "border-border hover:border-primary/50"
+                      }`}
+                      onClick={() => {
+                        setSelectedRealLinks(prev => {
+                          const next = new Set(prev);
+                          if (next.has(index)) next.delete(index);
+                          else next.add(index);
+                          return next;
+                        });
+                      }}
+                    >
+                      <Checkbox 
+                        checked={selectedRealLinks.has(index)}
+                        onCheckedChange={() => {
+                          setSelectedRealLinks(prev => {
+                            const next = new Set(prev);
+                            if (next.has(index)) next.delete(index);
+                            else next.add(index);
+                            return next;
+                          });
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium truncate">{link.linkName || link.advertiserName}</h4>
+                        <p className="text-sm text-muted-foreground">{link.advertiserName}</p>
+                        <p className="text-xs text-muted-foreground truncate mt-1">
+                          {link.clickUrl?.substring(0, 60)}...
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <Badge variant="secondary">{link.category || 'General'}</Badge>
+                        {link.saleCommission && (
+                          <Badge variant="outline" className="text-green-500">
+                            {link.saleCommission}
+                          </Badge>
+                        )}
+                      </div>
+                      <a 
+                        href={link.clickUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-muted-foreground hover:text-primary"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

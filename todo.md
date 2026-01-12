@@ -445,3 +445,35 @@
 ### Copymatic AI Integration
 - [x] Add COPYMATIC_AI_API_KEY to env configuration
 - [ ] Integrate for enhanced content generation (future enhancement)
+
+
+## Affiliate Link Bug Fix (User Reported)
+
+- [ ] Investigate why CJ affiliate links redirect to CJ site and fail
+- [ ] Fix affiliate link URL structure
+- [ ] Verify links properly redirect to merchant sites
+- [ ] Test all affiliate links work correctly
+
+
+## CJ API Integration (User Added API Key)
+
+- [ ] Add CJ_API_KEY to environment configuration
+- [ ] Implement CJ Link Search API to fetch real advertiser links
+- [ ] Replace placeholder affiliate links with real CJ deep links
+- [ ] Test affiliate links redirect properly to merchant sites
+
+## CJ Non-Joined Advertiser Discovery
+- [ ] Update CJ API to search non-joined advertisers
+- [ ] Add UI to display available advertisers to join
+- [ ] Show advertiser details (name, category, commission rates)
+- [ ] Add "Apply to Join" links for each advertiser
+
+
+## CJ Non-Joined Advertiser Discovery (New Feature)
+- [x] Update CJ API to search non-joined advertisers
+- [x] Add UI to display available advertisers to join
+- [x] Test non-joined advertiser search functionality
+- [x] CJ API key validated and working (found 2,958+ advertisers)
+- [x] Find Advertisers button returns real CJ advertiser data
+- [x] Display advertiser EPC, rank, and category information
+- [x] Apply to Join links direct to CJ program pages
