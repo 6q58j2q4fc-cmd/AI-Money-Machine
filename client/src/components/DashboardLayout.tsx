@@ -33,6 +33,7 @@ const menuItems = [
   { icon: Brain, label: "Bot Intelligence", path: "/bot" },
   { icon: Cpu, label: "AI Command Center", path: "/ai-command" },
   { icon: Sparkles, label: "Multi-LLM Intelligence", path: "/llm-settings" },
+  { icon: Zap, label: "Content Pipeline", path: "/content-pipeline" },
   { icon: TrendingUp, label: "Trending Topics", path: "/topics" },
   { icon: FileText, label: "Articles", path: "/articles" },
   { icon: Globe, label: "Distribution", path: "/distribution" },

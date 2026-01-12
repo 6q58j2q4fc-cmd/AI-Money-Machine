@@ -9,6 +9,7 @@ import { publishToPlatform, getConfiguredPlatforms } from "./_core/platformPubli
 import { searchCJLinks, getJoinedAdvertiserLinks, getNonJoinedAdvertiserLinks, searchCJAdvertisers, getNonJoinedAdvertisers, getJoinedAdvertisers, getCJProgramUrl } from "./_core/cjApi";
 import { createBotpressService, BotCommands } from "./_core/botpressApi";
 import { invokeMultiLLM, generateArticle, optimizeSEO, researchTopics, matchAffiliateProducts, generateHeadlines, getAvailableProviders, type LLMTaskType } from "./_core/multiLlm";
+import { runContentPipeline, DEFAULT_PIPELINE_CONFIG, type PipelineConfig, discoverTopics, generateMonetizedArticle, insertAffiliateLinks, calculateContentScore } from "./_core/contentPipeline";
 
 // Slug generator helper
 function generateSlug(title: string): string {
@@ -1587,6 +1588,147 @@ Make it engaging, valuable, and optimized for both readers and search engines.`
         : '{}';
       return JSON.parse(content);
     }),
+
+  // ===== CONTENT PIPELINE ENDPOINTS =====
+  
+  // Get pipeline configuration
+  getPipelineConfig: protectedProcedure.query(async ({ ctx }) => {
+    const settings = await db.getAutomationSettings(ctx.user.id);
+    return {
+      ...DEFAULT_PIPELINE_CONFIG,
+      articlesPerCycle: settings?.articlesPerCycle || DEFAULT_PIPELINE_CONFIG.articlesPerCycle,
+      targetNiches: settings?.targetNiches || DEFAULT_PIPELINE_CONFIG.targetNiches,
+      autoPublish: settings?.autoPublish ?? DEFAULT_PIPELINE_CONFIG.autoPublish,
+    };
+  }),
+
+  // Save pipeline configuration
+  savePipelineConfig: protectedProcedure
+    .input(z.object({
+      articlesPerCycle: z.number().min(1).max(20),
+      wordCountMin: z.number().min(500).max(5000),
+      wordCountMax: z.number().min(1000).max(10000),
+      contentStyle: z.enum(["informative", "persuasive", "review", "comparison", "listicle"]),
+      targetNiches: z.array(z.string()),
+      focusKeywords: z.array(z.string()).optional(),
+      minAffiliateLinks: z.number().min(0).max(10),
+      maxAffiliateLinks: z.number().min(1).max(15),
+      affiliateDensity: z.enum(["low", "medium", "high", "aggressive"]),
+      autoPublish: z.boolean(),
+      autoDistribute: z.boolean(),
+      publishDelay: z.number().min(0).max(60),
+      minSeoScore: z.number().min(0).max(100),
+      temperature: z.number().min(0).max(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Save to automation settings
+      await db.saveAutomationSettings({
+        userId: ctx.user.id,
+        isEnabled: true,
+        articlesPerCycle: input.articlesPerCycle,
+        targetNiches: input.targetNiches,
+        autoPublish: input.autoPublish,
+      });
+      return { success: true };
+    }),
+
+  // Run content pipeline with Multi-LLM
+  runPipeline: protectedProcedure
+    .input(z.object({
+      articlesPerCycle: z.number().min(1).max(20).optional(),
+      contentStyle: z.enum(["informative", "persuasive", "review", "comparison", "listicle"]).optional(),
+      targetNiches: z.array(z.string()).optional(),
+      affiliateDensity: z.enum(["low", "medium", "high", "aggressive"]).optional(),
+      autoPublish: z.boolean().optional(),
+      autoDistribute: z.boolean().optional(),
+    }).optional())
+    .mutation(async ({ ctx, input }) => {
+      // Get existing articles to avoid duplicate topics
+      const existingArticles = await db.getArticles(ctx.user.id);
+      const existingTopics = existingArticles.map(a => a.title);
+
+      // Get affiliate links
+      const affiliateLinks = await db.getAffiliateLinks(ctx.user.id);
+
+      // Build pipeline config
+      const config: PipelineConfig = {
+        ...DEFAULT_PIPELINE_CONFIG,
+        articlesPerCycle: input?.articlesPerCycle || 5,
+        contentStyle: input?.contentStyle || "persuasive",
+        targetNiches: input?.targetNiches || ["technology", "finance", "health"],
+        affiliateDensity: input?.affiliateDensity || "high",
+        autoPublish: input?.autoPublish ?? true,
+        autoDistribute: input?.autoDistribute ?? true,
+      };
+
+      // Run the pipeline
+      const result = await runContentPipeline(
+        config,
+        affiliateLinks.map(l => ({
+          id: l.id,
+          name: l.name,
+          url: l.url,
+          category: l.category || "general",
+          description: l.name, // Use name as description
+        })),
+        existingTopics,
+        async (article) => {
+          // Create the article in the database
+          const slug = generateSlug(article.title);
+          const articleId = await db.createArticle({
+            userId: ctx.user.id,
+            title: article.title,
+            slug: slug + '-' + Date.now().toString(36),
+            content: article.content,
+            status: config.autoPublish ? 'published' : 'draft',
+            keywords: article.seoData.keywords || [],
+            metaTitle: article.seoData.title || article.title.substring(0, 60),
+            metaDescription: article.seoData.metaDescription || `Discover ${article.title}`.substring(0, 160),
+            focusKeyword: article.seoData.focusKeyword || '',
+            seoScore: calculateContentScore(article.content, article.seoData.keywords || []),
+            readabilityScore: 80,
+            publishedAt: config.autoPublish ? new Date() : undefined,
+          });
+
+          // Auto-insert affiliate links into article
+          for (const link of affiliateLinks) {
+            const contentLower = article.content.toLowerCase();
+            const linkKeywords = link.name.toLowerCase().split(' ');
+            if (linkKeywords.some(kw => contentLower.includes(kw))) {
+              await db.addAffiliateLinkToArticle({
+                articleId,
+                affiliateLinkId: link.id,
+                anchorText: link.name,
+                position: 1,
+              });
+            }
+          }
+
+          return articleId;
+        }
+      );
+
+      return result;
+    }),
+
+  // Discover topics using Multi-LLM
+  discoverTopicsMultiLLM: protectedProcedure
+    .input(z.object({
+      niches: z.array(z.string()),
+      count: z.number().min(1).max(20),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const existingArticles = await db.getArticles(ctx.user.id);
+      const existingTopics = existingArticles.map(a => a.title);
+
+      const result = await discoverTopics(input.niches, input.count, existingTopics);
+      return result;
+    }),
+
+  // Get available LLM providers
+  getAvailableLLMProviders: protectedProcedure.query(async () => {
+    return getAvailableProviders();
+  }),
 });
 
 // Self-learning optimization router - learns from performance data

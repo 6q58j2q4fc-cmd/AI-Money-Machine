@@ -25,6 +25,7 @@ import DataAccuracy from "./pages/DataAccuracy";
 import AuditLog from "./pages/AuditLog";
 import AICommandCenter from "./pages/AICommandCenter";
 import LLMSettings from "./pages/LLMSettings";
+import ContentPipeline from "./pages/ContentPipeline";
 
 function Router() {
   return (
@@ -54,6 +55,7 @@ function Router() {
       <Route path="/audit-log" component={AuditLog} />
       <Route path="/ai-command" component={AICommandCenter} />
       <Route path="/llm-settings" component={LLMSettings} />
+      <Route path="/content-pipeline" component={ContentPipeline} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

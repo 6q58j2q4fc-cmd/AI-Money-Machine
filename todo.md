@@ -518,3 +518,13 @@
 - [x] Update article generation to use optimized LLM
 - [x] Update topic research to use optimized LLM
 - [x] Test all LLM integrations
+
+
+## Automated Content Pipeline with Multi-LLM (New)
+- [ ] Crea- [x] Create content generation service using Multi-LLM
+- [x] Implement article outline generation with SEO optimization
+- [x] Add affiliate link injection into generated content
+- [x] Connect pipeline to Auto Publish system
+- [x] Add scheduling options for automated publishing
+- [x] Create pipeline configuration UI
+- [x] Test full automated pipeline flow
