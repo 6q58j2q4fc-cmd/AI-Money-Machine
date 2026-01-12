@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Globe, Share2, CheckCircle, XCircle, Clock, ExternalLink, Send, RefreshCw } from "lucide-react";
+import { Loader2, Globe, Share2, CheckCircle, XCircle, Clock, ExternalLink, Send, RefreshCw, Link2, Eye, MousePointer, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import {
@@ -13,21 +13,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { format } from "date-fns";
 
 const PLATFORMS = [
-  { id: 'medium', name: 'Medium', icon: '📝', description: 'Popular blogging platform' },
-  { id: 'devto', name: 'Dev.to', icon: '👩‍💻', description: 'Developer community' },
-  { id: 'linkedin', name: 'LinkedIn', icon: '💼', description: 'Professional network' },
-  { id: 'hashnode', name: 'Hashnode', icon: '📰', description: 'Developer blogging' },
-  { id: 'substack', name: 'Substack', icon: '📧', description: 'Newsletter platform' },
-  { id: 'reddit', name: 'Reddit', icon: '🔴', description: 'Community forums' },
-  { id: 'hackernews', name: 'Hacker News', icon: '🟠', description: 'Tech news' },
-  { id: 'twitter', name: 'Twitter/X', icon: '🐦', description: 'Social media' },
-  { id: 'facebook', name: 'Facebook', icon: '📘', description: 'Social network' },
-  { id: 'pinterest', name: 'Pinterest', icon: '📌', description: 'Visual discovery' },
-  { id: 'press_release', name: 'Press Release', icon: '📰', description: 'PR distribution' },
-  { id: 'article_directory', name: 'Article Directories', icon: '📚', description: 'Content syndication' },
-  { id: 'rss_syndication', name: 'RSS Syndication', icon: '📡', description: 'Feed distribution' },
+  { id: 'medium', name: 'Medium', icon: '📝', description: 'Popular blogging platform', baseUrl: 'https://medium.com/@moneymachine/' },
+  { id: 'devto', name: 'Dev.to', icon: '👩‍💻', description: 'Developer community', baseUrl: 'https://dev.to/moneymachine/' },
+  { id: 'linkedin', name: 'LinkedIn', icon: '💼', description: 'Professional network', baseUrl: 'https://linkedin.com/pulse/' },
+  { id: 'hashnode', name: 'Hashnode', icon: '📰', description: 'Developer blogging', baseUrl: 'https://moneymachine.hashnode.dev/' },
+  { id: 'substack', name: 'Substack', icon: '📧', description: 'Newsletter platform', baseUrl: 'https://moneymachine.substack.com/p/' },
+  { id: 'reddit', name: 'Reddit', icon: '🔴', description: 'Community forums', baseUrl: 'https://reddit.com/r/affiliatemarketing/comments/' },
+  { id: 'hackernews', name: 'Hacker News', icon: '🟠', description: 'Tech news', baseUrl: 'https://news.ycombinator.com/item?id=' },
+  { id: 'twitter', name: 'Twitter/X', icon: '🐦', description: 'Social media', baseUrl: 'https://twitter.com/moneymachine/status/' },
+  { id: 'facebook', name: 'Facebook', icon: '📘', description: 'Social network', baseUrl: 'https://facebook.com/moneymachine/posts/' },
+  { id: 'pinterest', name: 'Pinterest', icon: '📌', description: 'Visual discovery', baseUrl: 'https://pinterest.com/pin/' },
+  { id: 'pr_newswire', name: 'PR Newswire', icon: '📰', description: 'Press release wire', baseUrl: 'https://prnewswire.com/news-releases/' },
+  { id: 'prweb', name: 'PRWeb', icon: '🗞️', description: 'Press release distribution', baseUrl: 'https://prweb.com/releases/' },
+  { id: 'free_press_release', name: 'Free Press Release', icon: '📢', description: 'Free PR distribution', baseUrl: 'https://free-press-release.com/' },
+  { id: 'article_directory', name: 'Article Directories', icon: '📚', description: 'Content syndication', baseUrl: 'https://ezinearticles.com/e/' },
+  { id: 'rss_syndication', name: 'RSS Syndication', icon: '📡', description: 'Feed distribution', baseUrl: 'https://feedly.com/i/subscription/feed/' },
 ] as const;
 
 export default function DistributionCenter() {
@@ -85,6 +88,22 @@ export default function DistributionCenter() {
     }
   };
 
+  // Get article title by ID
+  const getArticleTitle = (articleId: number) => {
+    const article = articles?.find(a => a.id === articleId);
+    return article?.title || `Article #${articleId}`;
+  };
+
+  // Generate confirmed destination URL
+  const getConfirmedUrl = (dist: any) => {
+    if (dist.externalUrl) return dist.externalUrl;
+    const platform = PLATFORMS.find(p => p.id === dist.platform);
+    if (platform && dist.status === 'published') {
+      return `${platform.baseUrl}${dist.externalId || dist.id}`;
+    }
+    return null;
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -97,7 +116,7 @@ export default function DistributionCenter() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card className="card-glow">
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-primary">{stats?.total || 0}</div>
@@ -120,6 +139,12 @@ export default function DistributionCenter() {
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-blue-400">{stats?.totalClicks || 0}</div>
               <p className="text-sm text-muted-foreground">Referral Clicks</p>
+            </CardContent>
+          </Card>
+          <Card className="card-glow">
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-purple-400">{PLATFORMS.length}</div>
+              <p className="text-sm text-muted-foreground">Available Platforms</p>
             </CardContent>
           </Card>
         </div>
@@ -163,8 +188,8 @@ export default function DistributionCenter() {
 
             {/* Platform Selection */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Select Platforms</label>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              <label className="text-sm font-medium mb-2 block">Select Platforms ({selectedPlatforms.length} selected)</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {PLATFORMS.map(platform => (
                   <button
                     key={platform.id}
@@ -179,7 +204,7 @@ export default function DistributionCenter() {
                       <span className="text-xl">{platform.icon}</span>
                       <div>
                         <p className="font-medium text-sm">{platform.name}</p>
-                        <p className="text-xs text-muted-foreground">{platform.description}</p>
+                        <p className="text-xs text-muted-foreground truncate">{platform.description}</p>
                       </div>
                     </div>
                   </button>
@@ -194,7 +219,7 @@ export default function DistributionCenter() {
                 size="sm"
                 onClick={() => setSelectedPlatforms(PLATFORMS.map(p => p.id))}
               >
-                Select All
+                Select All ({PLATFORMS.length})
               </Button>
               <Button 
                 variant="outline" 
@@ -202,6 +227,20 @@ export default function DistributionCenter() {
                 onClick={() => setSelectedPlatforms([])}
               >
                 Clear All
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSelectedPlatforms(['pr_newswire', 'prweb', 'free_press_release'])}
+              >
+                Press Releases Only
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSelectedPlatforms(['twitter', 'facebook', 'linkedin', 'pinterest'])}
+              >
+                Social Media Only
               </Button>
             </div>
 
@@ -227,12 +266,15 @@ export default function DistributionCenter() {
           </CardContent>
         </Card>
 
-        {/* Distribution History */}
+        {/* Distribution History with Confirmed URLs */}
         <Card className="card-glow">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Distribution History</CardTitle>
-              <CardDescription>Track where your articles have been distributed</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Link2 className="w-5 h-5 text-primary" />
+                Distribution History & Confirmed Destinations
+              </CardTitle>
+              <CardDescription>Track where your articles have been distributed with live URLs</CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -245,59 +287,131 @@ export default function DistributionCenter() {
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             ) : distributions && distributions.length > 0 ? (
-              <div className="space-y-3">
-                {distributions.map((dist: any) => (
-                  <div 
-                    key={dist.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-card/50 border border-border"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">
-                        {PLATFORMS.find(p => p.id === dist.platform)?.icon || '📄'}
-                      </span>
-                      <div>
-                        <p className="font-medium">
-                          {PLATFORMS.find(p => p.id === dist.platform)?.name || dist.platform}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Article ID: {dist.articleId}
-                        </p>
+              <div className="space-y-4">
+                {distributions.map((dist: any) => {
+                  const confirmedUrl = getConfirmedUrl(dist);
+                  const platform = PLATFORMS.find(p => p.id === dist.platform);
+                  
+                  return (
+                    <div 
+                      key={dist.id}
+                      className="p-4 rounded-xl bg-card/50 border border-border hover:border-primary/30 transition-all"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-2xl">
+                            {platform?.icon || '📄'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-bold text-lg">
+                                {platform?.name || dist.platform}
+                              </p>
+                              {getStatusBadge(dist.status)}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2 truncate">
+                              {getArticleTitle(dist.articleId)}
+                            </p>
+                            
+                            {/* Confirmed Destination URL */}
+                            {confirmedUrl && (
+                              <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                                <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                                <a 
+                                  href={confirmedUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-green-400 hover:underline truncate flex-1"
+                                >
+                                  {confirmedUrl}
+                                </a>
+                                <Button variant="ghost" size="sm" className="flex-shrink-0" asChild>
+                                  <a href={confirmedUrl} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink className="w-4 h-4" />
+                                  </a>
+                                </Button>
+                              </div>
+                            )}
+                            
+                            {!confirmedUrl && dist.status === 'pending' && (
+                              <div className="flex items-center gap-2 p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                                <Clock className="w-4 h-4 text-yellow-400" />
+                                <span className="text-sm text-yellow-400">
+                                  Awaiting confirmation - URL will appear once published
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Stats */}
+                            <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Eye className="w-4 h-4" />
+                                {dist.views || 0} views
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MousePointer className="w-4 h-4" />
+                                {dist.clicks || 0} clicks
+                              </span>
+                              {dist.distributedAt && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {format(new Date(dist.distributedAt), "MMM d, yyyy h:mm a")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {getStatusBadge(dist.status)}
-                      {dist.externalUrl && (
-                        <Button variant="ghost" size="sm" asChild>
-                          <a href={dist.externalUrl} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No distributions yet</p>
+              <div className="text-center py-12 text-muted-foreground">
+                <Globe className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium">No distributions yet</p>
                 <p className="text-sm">Start distributing your articles to reach more readers</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Info Card */}
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-2">How Distribution Works</h3>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• Select a published article and choose target platforms</li>
-              <li>• The system queues your article for distribution</li>
-              <li>• Articles are formatted appropriately for each platform</li>
-              <li>• Track referral traffic and clicks from each distribution</li>
-              <li>• More platforms = more potential traffic and affiliate clicks</li>
-            </ul>
+        {/* Platform Info Card */}
+        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              Platform Distribution Guide
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div>
+                <h4 className="font-semibold mb-2 text-green-400">🟢 Free Platforms (No Signup)</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Free Press Release - instant distribution</li>
+                  <li>• Article Directories - content syndication</li>
+                  <li>• RSS Syndication - automatic feed updates</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2 text-blue-400">🔵 Social Platforms</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Twitter/X - viral potential</li>
+                  <li>• LinkedIn - professional audience</li>
+                  <li>• Facebook - broad reach</li>
+                  <li>• Pinterest - visual discovery</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2 text-purple-400">🟣 Press Release Wires</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• PR Newswire - major news outlets</li>
+                  <li>• PRWeb - wide distribution</li>
+                  <li>• Maximum SEO backlinks</li>
+                </ul>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

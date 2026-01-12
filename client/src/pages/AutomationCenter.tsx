@@ -246,7 +246,8 @@ export default function AutomationCenter() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="10">10 minutes (Maximum)</SelectItem>
+                    <SelectItem value="5">5 minutes (Maximum)</SelectItem>
+                    <SelectItem value="10">10 minutes</SelectItem>
                     <SelectItem value="30">30 minutes</SelectItem>
                     <SelectItem value="60">1 hour</SelectItem>
                     <SelectItem value="180">3 hours</SelectItem>

@@ -211,3 +211,24 @@
 - [x] Add meta keywords
 - [x] Add H1 heading (already exists in Home.tsx)
 - [x] Add H2 headings (already exist in Home.tsx)
+
+
+## Professional Article Templates & Distribution (New Requirements)
+
+### Article Design
+- [x] Professional article templates with matching header/footer
+- [x] Product images embedded in articles
+- [x] Affiliate links embedded in images (clickable)
+- [x] Text affiliate links within article body
+- [x] Matching skin/theme for each product category
+
+### Distribution Confirmation
+- [x] Show confirmed destination URLs for each article
+- [x] Track which newswires/press releases received each article
+- [x] Track which blogs/forums received each article
+- [x] Display distribution status with live URLs
+
+### Auto-Posting Enhancement
+- [x] Change auto-posting interval to 5 minutes
+- [x] Publish all pending articles immediately
+- [x] Automatic distribution to all free platforms

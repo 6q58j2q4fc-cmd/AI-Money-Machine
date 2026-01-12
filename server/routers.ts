@@ -936,7 +936,7 @@ const automationRouter = router({
     .input(z.object({
       isEnabled: z.boolean(),
       articlesPerCycle: z.number().min(1).max(50), // Increased to 50 for aggressive mode
-      cycleIntervalMinutes: z.number().min(10).max(10080).optional(), // 10 min to 1 week in minutes
+      cycleIntervalMinutes: z.number().min(5).max(10080).optional(), // 5 min to 1 week in minutes
       cycleIntervalHours: z.number().min(0).max(168).optional(), // Keep for backwards compatibility
       targetNiches: z.array(z.string()).optional(),
       autoPublish: z.boolean(),
