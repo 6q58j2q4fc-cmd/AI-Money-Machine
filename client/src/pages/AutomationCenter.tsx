@@ -41,7 +41,7 @@ export default function AutomationCenter() {
   // Scheduler settings
   const [schedulerEnabled, setSchedulerEnabled] = useState(false);
   const [schedulerArticles, setSchedulerArticles] = useState(10); // Default to 10 for aggressive monetization
-  const [schedulerInterval, setSchedulerInterval] = useState(24);
+  const [schedulerIntervalMinutes, setSchedulerIntervalMinutes] = useState(1440); // Default 24 hours in minutes
   const [schedulerNiches, setSchedulerNiches] = useState<string[]>([]);
   const [schedulerAutoPublish, setSchedulerAutoPublish] = useState(true);
 
@@ -53,7 +53,8 @@ export default function AutomationCenter() {
     if (settings) {
       setSchedulerEnabled(settings.isEnabled);
       setSchedulerArticles(settings.articlesPerCycle);
-      setSchedulerInterval(settings.cycleIntervalHours);
+      // Convert hours to minutes for backwards compatibility
+      setSchedulerIntervalMinutes(settings.cycleIntervalHours * 60);
       setSchedulerNiches(settings.targetNiches || []);
       setSchedulerAutoPublish(settings.autoPublish);
     }
@@ -101,7 +102,7 @@ export default function AutomationCenter() {
     saveSettingsMutation.mutate({
       isEnabled: schedulerEnabled,
       articlesPerCycle: schedulerArticles,
-      cycleIntervalHours: schedulerInterval,
+      cycleIntervalMinutes: schedulerIntervalMinutes,
       targetNiches: schedulerNiches.length > 0 ? schedulerNiches : undefined,
       autoPublish: schedulerAutoPublish,
     });
@@ -238,19 +239,22 @@ export default function AutomationCenter() {
               <div>
                 <Label>Run Every</Label>
                 <Select 
-                  value={schedulerInterval.toString()} 
-                  onValueChange={(v) => setSchedulerInterval(parseInt(v))}
+                  value={schedulerIntervalMinutes.toString()} 
+                  onValueChange={(v) => setSchedulerIntervalMinutes(parseInt(v))}
                 >
                   <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="6">6 hours</SelectItem>
-                    <SelectItem value="12">12 hours</SelectItem>
-                    <SelectItem value="24">24 hours (Daily)</SelectItem>
-                    <SelectItem value="48">48 hours</SelectItem>
-                    <SelectItem value="72">72 hours</SelectItem>
-                    <SelectItem value="168">Weekly</SelectItem>
+                    <SelectItem value="10">10 minutes (Maximum)</SelectItem>
+                    <SelectItem value="30">30 minutes</SelectItem>
+                    <SelectItem value="60">1 hour</SelectItem>
+                    <SelectItem value="180">3 hours</SelectItem>
+                    <SelectItem value="360">6 hours</SelectItem>
+                    <SelectItem value="720">12 hours</SelectItem>
+                    <SelectItem value="1440">24 hours (Daily)</SelectItem>
+                    <SelectItem value="2880">48 hours</SelectItem>
+                    <SelectItem value="10080">Weekly</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

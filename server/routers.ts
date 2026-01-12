@@ -936,13 +936,16 @@ const automationRouter = router({
     .input(z.object({
       isEnabled: z.boolean(),
       articlesPerCycle: z.number().min(1).max(50), // Increased to 50 for aggressive mode
-      cycleIntervalHours: z.number().min(1).max(168),
+      cycleIntervalMinutes: z.number().min(10).max(10080).optional(), // 10 min to 1 week in minutes
+      cycleIntervalHours: z.number().min(0).max(168).optional(), // Keep for backwards compatibility
       targetNiches: z.array(z.string()).optional(),
       autoPublish: z.boolean(),
     }))
     .mutation(async ({ ctx, input }) => {
+      // Support both minutes and hours for interval
+      const intervalMinutes = input.cycleIntervalMinutes || (input.cycleIntervalHours || 24) * 60;
       const nextRunAt = input.isEnabled 
-        ? new Date(Date.now() + input.cycleIntervalHours * 60 * 60 * 1000)
+        ? new Date(Date.now() + intervalMinutes * 60 * 1000)
         : null;
       
       const id = await db.saveAutomationSettings({
