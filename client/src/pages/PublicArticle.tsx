@@ -188,11 +188,40 @@ export default function PublicArticle() {
 
         {/* Content */}
         <div 
-          className="prose prose-lg dark:prose-invert max-w-none"
+          className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-foreground/90 prose-blockquote:border-primary prose-blockquote:text-foreground/80"
           onClick={handleLinkClick}
         >
           <Streamdown>{article.content || ""}</Streamdown>
         </div>
+
+        {/* Affiliate Links Section */}
+        {(article as any).affiliateLinks && ((article as any).affiliateLinks as any[]).length > 0 && (
+          <div className="mt-12 p-6 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <span className="text-2xl">🔥</span> Recommended Products
+            </h3>
+            <div className="grid gap-4">
+              {((article as any).affiliateLinks as any[]).map((linkData: any, i: number) => (
+                <a
+                  key={i}
+                  href={linkData.link?.url || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-4 rounded-lg bg-background/50 hover:bg-background transition-colors group"
+                  onClick={() => trackClickMutation.mutate({ articleId: article.id, linkId: linkData.affiliateLinkId })}
+                >
+                  <div>
+                    <p className="font-semibold group-hover:text-primary transition-colors">{linkData.link?.name || linkData.anchorText}</p>
+                    <p className="text-sm text-muted-foreground">{linkData.link?.category}</p>
+                  </div>
+                  <Button size="sm" className="btn-glow">
+                    Check Price →
+                  </Button>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Social Share Bar */}
         <div className="mt-12 pt-8 border-t border-border">

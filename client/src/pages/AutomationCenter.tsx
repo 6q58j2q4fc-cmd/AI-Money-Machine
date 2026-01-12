@@ -329,15 +329,19 @@ export default function AutomationCenter() {
 
                 <div>
                   <Label htmlFor="count">Number of Articles</Label>
-                  <Input
-                    id="count"
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={articleCount}
-                    onChange={(e) => setArticleCount(parseInt(e.target.value) || 3)}
-                    className="mt-1"
-                  />
+                  <Select 
+                    value={articleCount.toString()} 
+                    onValueChange={(v) => setArticleCount(parseInt(v))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select article count" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 5, 7, 10, 15, 20, 30, 50].map(n => (
+                        <SelectItem key={n} value={n.toString()}>{n} articles</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex items-center justify-between">

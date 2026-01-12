@@ -7,7 +7,9 @@ import {
   affiliateLinks, InsertAffiliateLink, AffiliateLink,
   articleAffiliateLinks, InsertArticleAffiliateLink,
   analyticsEvents, InsertAnalyticsEvent,
-  savedTopics, InsertSavedTopic
+  savedTopics, InsertSavedTopic,
+  articleDistribution, InsertArticleDistribution,
+  botLearning, InsertBotLearning
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -855,4 +857,144 @@ export async function getCategoryPerformance(userId: number): Promise<{category:
   `);
 
   return result[0] as any;
+}
+
+
+// ============ ARTICLE DISTRIBUTION FUNCTIONS ============
+export async function createDistribution(data: InsertArticleDistribution) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(articleDistribution).values(data);
+  return result[0].insertId;
+}
+
+export async function getArticleDistributions(articleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select()
+    .from(articleDistribution)
+    .where(eq(articleDistribution.articleId, articleId))
+    .orderBy(desc(articleDistribution.createdAt));
+}
+
+export async function getUserDistributions(userId: number, limit: number = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select()
+    .from(articleDistribution)
+    .where(eq(articleDistribution.userId, userId))
+    .orderBy(desc(articleDistribution.createdAt))
+    .limit(limit);
+}
+
+export async function updateDistribution(id: number, updates: Partial<InsertArticleDistribution>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .update(articleDistribution)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(articleDistribution.id, id));
+}
+
+export async function getDistributionStats(userId: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, published: 0, pending: 0, failed: 0, totalViews: 0, totalClicks: 0 };
+  
+  const stats = await db
+    .select({
+      total: sql<number>`COUNT(*)`,
+      published: sql<number>`SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END)`,
+      pending: sql<number>`SUM(CASE WHEN status = 'pending' OR status = 'submitted' THEN 1 ELSE 0 END)`,
+      failed: sql<number>`SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END)`,
+      totalViews: sql<number>`COALESCE(SUM(views), 0)`,
+      totalClicks: sql<number>`COALESCE(SUM(clicks), 0)`,
+    })
+    .from(articleDistribution)
+    .where(eq(articleDistribution.userId, userId));
+  
+  return stats[0] || { total: 0, published: 0, pending: 0, failed: 0, totalViews: 0, totalClicks: 0 };
+}
+
+// ============ BOT LEARNING FUNCTIONS ============
+export async function recordBotLearning(data: InsertBotLearning) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(botLearning).values(data);
+  return result[0].insertId;
+}
+
+export async function getBotLearnings(userId: number, category?: string, limit: number = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query = db
+    .select()
+    .from(botLearning)
+    .where(eq(botLearning.userId, userId))
+    .orderBy(desc(botLearning.createdAt))
+    .limit(limit);
+  
+  return await query;
+}
+
+export async function updateBotLearningOutcome(id: number, outcome: string, wasCorrect: boolean, metrics?: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .update(botLearning)
+    .set({ 
+      outcome: outcome as any, 
+      wasCorrect, 
+      outcomeMetrics: metrics,
+      updatedAt: new Date() 
+    })
+    .where(eq(botLearning.id, id));
+}
+
+export async function getBotLearningStats(userId: number) {
+  const db = await getDb();
+  if (!db) return { 
+    totalDecisions: 0, 
+    successfulDecisions: 0, 
+    failedDecisions: 0, 
+    successRate: 0,
+    avgConfidence: 0 
+  };
+  
+  const stats = await db
+    .select({
+      totalDecisions: sql<number>`COUNT(*)`,
+      successfulDecisions: sql<number>`SUM(CASE WHEN outcome = 'success' THEN 1 ELSE 0 END)`,
+      failedDecisions: sql<number>`SUM(CASE WHEN outcome = 'failure' THEN 1 ELSE 0 END)`,
+      avgConfidence: sql<number>`AVG(confidenceScore)`,
+    })
+    .from(botLearning)
+    .where(eq(botLearning.userId, userId));
+  
+  const result = stats[0] || { totalDecisions: 0, successfulDecisions: 0, failedDecisions: 0, avgConfidence: 0 };
+  const successRate = result.totalDecisions > 0 
+    ? Math.round((result.successfulDecisions / result.totalDecisions) * 100) 
+    : 0;
+  
+  return { ...result, successRate };
+}
+
+export async function getRecentBotDecisions(userId: number, limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select()
+    .from(botLearning)
+    .where(eq(botLearning.userId, userId))
+    .orderBy(desc(botLearning.createdAt))
+    .limit(limit);
 }

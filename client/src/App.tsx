@@ -17,6 +17,8 @@ import AutoPublish from "./pages/AutoPublish";
 import AutomationCenter from "./pages/AutomationCenter";
 import Blog from "./pages/Blog";
 import PublicArticle from "./pages/PublicArticle";
+import DistributionCenter from "./pages/DistributionCenter";
+import BotIntelligence from "./pages/BotIntelligence";
 
 function Router() {
   return (
@@ -38,6 +40,8 @@ function Router() {
       <Route path="/cj-integration" component={CJIntegration} />
       <Route path="/auto-publish" component={AutoPublish} />
       <Route path="/automation" component={AutomationCenter} />
+      <Route path="/distribution" component={DistributionCenter} />
+      <Route path="/bot" component={BotIntelligence} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

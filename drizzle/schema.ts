@@ -317,3 +317,84 @@ export const contentGenerationHistory = mysqlTable("content_generation_history",
 
 export type ContentGenerationHistory = typeof contentGenerationHistory.$inferSelect;
 export type InsertContentGenerationHistory = typeof contentGenerationHistory.$inferInsert;
+
+
+/**
+ * Article distribution tracking - tracks where articles have been distributed
+ */
+export const articleDistribution = mysqlTable("article_distribution", {
+  id: int("id").autoincrement().primaryKey(),
+  articleId: int("articleId").notNull(),
+  userId: int("userId").notNull(),
+  
+  // Distribution platform
+  platform: mysqlEnum("platform", [
+    "medium", "devto", "linkedin", "hashnode", "substack", 
+    "reddit", "hackernews", "twitter", "facebook", "pinterest",
+    "press_release", "article_directory", "rss_syndication", "other"
+  ]).notNull(),
+  platformName: varchar("platformName", { length: 100 }), // Human readable name
+  
+  // Distribution details
+  externalUrl: text("externalUrl"), // URL on the external platform
+  externalId: varchar("externalId", { length: 255 }), // ID on external platform
+  status: mysqlEnum("status", ["pending", "submitted", "published", "failed", "removed"]).default("pending").notNull(),
+  
+  // Performance from this distribution
+  views: int("views").default(0).notNull(),
+  clicks: int("clicks").default(0).notNull(),
+  referralTraffic: int("referralTraffic").default(0).notNull(),
+  
+  // Error tracking
+  errorMessage: text("errorMessage"),
+  retryCount: int("retryCount").default(0).notNull(),
+  
+  submittedAt: timestamp("submittedAt"),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ArticleDistribution = typeof articleDistribution.$inferSelect;
+export type InsertArticleDistribution = typeof articleDistribution.$inferInsert;
+
+/**
+ * Optimization bot learning - tracks the bot's learning progress and decisions
+ */
+export const botLearning = mysqlTable("bot_learning", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // Learning session
+  sessionId: varchar("sessionId", { length: 64 }).notNull(),
+  
+  // What was learned
+  learningCategory: mysqlEnum("learningCategory", [
+    "topic_selection", "headline_optimization", "cta_placement", 
+    "affiliate_selection", "timing_optimization", "content_structure",
+    "keyword_targeting", "distribution_strategy"
+  ]).notNull(),
+  
+  // Decision made
+  decision: text("decision").notNull(),
+  reasoning: text("reasoning"),
+  
+  // Outcome
+  outcome: mysqlEnum("outcome", ["success", "failure", "pending", "neutral"]).default("pending").notNull(),
+  outcomeMetrics: json("outcomeMetrics").$type<{
+    clicks?: number;
+    conversions?: number;
+    revenue?: number;
+    engagement?: number;
+  }>(),
+  
+  // Learning score
+  confidenceScore: int("confidenceScore").default(50).notNull(), // 0-100
+  wasCorrect: boolean("wasCorrect"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BotLearning = typeof botLearning.$inferSelect;
+export type InsertBotLearning = typeof botLearning.$inferInsert;

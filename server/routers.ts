@@ -886,6 +886,9 @@ const publicArticlesRouter = router({
       if (article) {
         // Increment views
         await db.incrementArticleViews(article.id);
+        // Get affiliate links for this article
+        const articleLinks = await db.getArticleAffiliateLinks(article.id);
+        return { ...article, affiliateLinks: articleLinks };
       }
       return article;
     }),
@@ -1350,6 +1353,152 @@ Successful Content Patterns: ${successfulPatterns.map(p => p.topic).join(', ')}
     }),
 });
 
+// Distribution router - tracks article distribution across platforms
+const distributionRouter = router({
+  // Get distribution stats
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getDistributionStats(ctx.user.id);
+  }),
+
+  // Get all distributions for user
+  list: protectedProcedure
+    .input(z.object({ limit: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      return await db.getUserDistributions(ctx.user.id, input?.limit || 50);
+    }),
+
+  // Get distributions for specific article
+  forArticle: protectedProcedure
+    .input(z.object({ articleId: z.number() }))
+    .query(async ({ input }) => {
+      return await db.getArticleDistributions(input.articleId);
+    }),
+
+  // Create a distribution record
+  create: protectedProcedure
+    .input(z.object({
+      articleId: z.number(),
+      platform: z.enum([
+        'medium', 'devto', 'linkedin', 'hashnode', 'substack',
+        'reddit', 'hackernews', 'twitter', 'facebook', 'pinterest',
+        'press_release', 'article_directory', 'rss_syndication', 'other'
+      ]),
+      platformName: z.string().optional(),
+      externalUrl: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await db.createDistribution({
+        ...input,
+        userId: ctx.user.id,
+        status: 'pending',
+      });
+      return { id, success: true };
+    }),
+
+  // Update distribution status
+  updateStatus: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      status: z.enum(['pending', 'submitted', 'published', 'failed', 'removed']),
+      externalUrl: z.string().optional(),
+      errorMessage: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      await db.updateDistribution(input.id, {
+        status: input.status,
+        externalUrl: input.externalUrl,
+        errorMessage: input.errorMessage,
+        publishedAt: input.status === 'published' ? new Date() : undefined,
+      });
+      return { success: true };
+    }),
+
+  // Distribute article to multiple platforms
+  distributeArticle: protectedProcedure
+    .input(z.object({
+      articleId: z.number(),
+      platforms: z.array(z.enum([
+        'medium', 'devto', 'linkedin', 'hashnode', 'substack',
+        'reddit', 'hackernews', 'twitter', 'facebook', 'pinterest',
+        'press_release', 'article_directory', 'rss_syndication'
+      ])),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const results = [];
+      for (const platform of input.platforms) {
+        const id = await db.createDistribution({
+          articleId: input.articleId,
+          userId: ctx.user.id,
+          platform,
+          status: 'pending',
+        });
+        results.push({ platform, id, status: 'pending' });
+      }
+      return { distributions: results, success: true };
+    }),
+});
+
+// Bot learning router - tracks the optimization bot's decisions and learning
+const botRouter = router({
+  // Get bot stats
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getBotLearningStats(ctx.user.id);
+  }),
+
+  // Get recent bot decisions
+  recentDecisions: protectedProcedure
+    .input(z.object({ limit: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      return await db.getRecentBotDecisions(ctx.user.id, input?.limit || 10);
+    }),
+
+  // Record a bot decision
+  recordDecision: protectedProcedure
+    .input(z.object({
+      sessionId: z.string(),
+      learningCategory: z.enum([
+        'topic_selection', 'headline_optimization', 'cta_placement',
+        'affiliate_selection', 'timing_optimization', 'content_structure',
+        'keyword_targeting', 'distribution_strategy'
+      ]),
+      decision: z.string(),
+      reasoning: z.string().optional(),
+      confidenceScore: z.number().min(0).max(100).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await db.recordBotLearning({
+        userId: ctx.user.id,
+        ...input,
+        confidenceScore: input.confidenceScore || 50,
+        outcome: 'pending',
+      });
+      return { id, success: true };
+    }),
+
+  // Update decision outcome
+  updateOutcome: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      outcome: z.enum(['success', 'failure', 'neutral']),
+      wasCorrect: z.boolean(),
+      metrics: z.object({
+        clicks: z.number().optional(),
+        conversions: z.number().optional(),
+        revenue: z.number().optional(),
+        engagement: z.number().optional(),
+      }).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      await db.updateBotLearningOutcome(
+        input.id,
+        input.outcome,
+        input.wasCorrect,
+        input.metrics
+      );
+      return { success: true };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -1370,6 +1519,8 @@ export const appRouter = router({
   publicArticles: publicArticlesRouter,
   automation: automationRouter,
   learning: learningRouter,
+  distribution: distributionRouter,
+  bot: botRouter,
 });
 
 export type AppRouter = typeof appRouter;
