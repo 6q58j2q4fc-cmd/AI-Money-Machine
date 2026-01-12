@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
 import * as db from "./db";
+import { publishToPlatform, getConfiguredPlatforms } from "./_core/platformPublisher";
 
 // Slug generator helper
 function generateSlug(title: string): string {
@@ -1513,18 +1514,77 @@ const distributionRouter = router({
       ])),
     }))
     .mutation(async ({ ctx, input }) => {
-      const results = [];
+      // Get the article data for publishing
+      const article = await db.getArticleById(input.articleId, ctx.user.id);
+      if (!article) {
+        throw new Error('Article not found');
+      }
+
+      // Get configured platforms that can auto-publish
+      const configuredPlatforms = getConfiguredPlatforms();
+      const results: Array<{platform: string; id: number; status: string; url?: string; error?: string}> = [];
+
       for (const platform of input.platforms) {
+        // Create distribution record first
         const id = await db.createDistribution({
           articleId: input.articleId,
           userId: ctx.user.id,
           platform,
           status: 'pending',
         });
-        results.push({ platform, id, status: 'pending' });
+
+        // Check if this platform has API key configured for auto-publishing
+        if (configuredPlatforms.includes(platform)) {
+          try {
+            // Get article tags from keywords
+            const keywordsStr = Array.isArray(article.keywords) ? article.keywords.join(',') : (article.keywords || '');
+            const tags = keywordsStr.split(',').map((k: string) => k.trim()).filter(Boolean);
+            
+            // Attempt actual publishing
+            const publishResult = await publishToPlatform(platform, {
+              title: article.title,
+              content: article.content || '',
+              tags: tags.slice(0, 5),
+              canonicalUrl: `https://manus.space/blog/${article.slug}`,
+            });
+
+            if (publishResult.success && publishResult.url) {
+              // Update distribution with success
+              await db.updateDistribution(id, {
+                status: 'published',
+                externalUrl: publishResult.url,
+                publishedAt: new Date(),
+              });
+              results.push({ platform, id, status: 'published', url: publishResult.url });
+              console.log(`[Distribution] Successfully published to ${platform}: ${publishResult.url}`);
+            } else {
+              // Update distribution with failure
+              await db.updateDistribution(id, {
+                status: 'failed',
+                errorMessage: publishResult.error || 'Unknown error',
+              });
+              results.push({ platform, id, status: 'failed', error: publishResult.error });
+              console.log(`[Distribution] Failed to publish to ${platform}: ${publishResult.error}`);
+            }
+          } catch (error) {
+            await db.updateDistribution(id, {
+              status: 'failed',
+              errorMessage: String(error),
+            });
+            results.push({ platform, id, status: 'failed', error: String(error) });
+          }
+        } else {
+          // No API key configured, leave as pending for manual publishing
+          results.push({ platform, id, status: 'pending' });
+        }
       }
       return { distributions: results, success: true };
     }),
+
+  // Get platforms with configured API keys
+  getConfiguredPlatforms: protectedProcedure.query(async () => {
+    return getConfiguredPlatforms();
+  }),
 });
 
 // Bot learning router - tracks the optimization bot's decisions and learning
