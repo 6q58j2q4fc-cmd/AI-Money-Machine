@@ -447,6 +447,33 @@ const affiliateRouter = router({
       return { success: true };
     }),
 
+  // Bulk import CJ affiliate links
+  bulkImport: protectedProcedure
+    .input(z.array(z.object({
+      name: z.string(),
+      url: z.string(),
+      category: z.string(),
+      program: z.string().optional(),
+      commission: z.string().optional(),
+    })))
+    .mutation(async ({ ctx, input }) => {
+      const imported: number[] = [];
+      for (const link of input) {
+        const shortCode = `cj-${Math.random().toString(36).substring(2, 8)}`;
+        const id = await db.createAffiliateLink({
+          userId: ctx.user.id,
+          name: link.name,
+          url: link.url,
+          shortCode,
+          category: link.category,
+          program: link.program || 'Commission Junction',
+          commission: link.commission || '',
+        });
+        imported.push(id);
+      }
+      return { imported: imported.length, ids: imported };
+    }),
+
   trackClick: publicProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
@@ -1783,6 +1810,61 @@ const trainingRouter = router({
     }),
 });
 
+// Audit log router - comprehensive activity tracking
+const auditRouter = router({
+  list: protectedProcedure
+    .input(z.object({
+      eventType: z.string().optional(),
+      articleId: z.number().optional(),
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+    }).optional())
+    .query(async ({ ctx, input }) => {
+      return await db.getAuditLogs(ctx.user.id, input);
+    }),
+
+  getArticleLog: protectedProcedure
+    .input(z.object({ articleId: z.number() }))
+    .query(async ({ input }) => {
+      return await db.getArticleAuditLog(input.articleId);
+    }),
+
+  getStats: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getAuditLogStats(ctx.user.id);
+  }),
+
+  create: protectedProcedure
+    .input(z.object({
+      eventType: z.enum([
+        "article_created", "article_published", "article_updated", "article_deleted",
+        "distribution_queued", "distribution_published", "distribution_failed",
+        "affiliate_link_added", "affiliate_link_clicked", "affiliate_conversion",
+        "automation_cycle_started", "automation_cycle_completed", "automation_cycle_failed",
+        "topic_discovered", "topic_saved",
+        "bot_decision", "bot_learning", "bot_optimization",
+        "seo_indexed", "seo_ping_sent",
+        "user_action", "system_event"
+      ]),
+      articleId: z.number().optional(),
+      affiliateLinkId: z.number().optional(),
+      distributionId: z.number().optional(),
+      topicId: z.number().optional(),
+      action: z.string(),
+      description: z.string().optional(),
+      metadata: z.record(z.string(), z.unknown()).optional(),
+      wasSuccessful: z.boolean().optional(),
+      errorMessage: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await db.createAuditLog({
+        userId: ctx.user.id,
+        ...input,
+        metadata: input.metadata as any,
+      });
+      return { id };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -1808,6 +1890,7 @@ export const appRouter = router({
   urlShortener: urlShortenerRouter,
   tracking: trackingRouter,
   training: trainingRouter,
+  audit: auditRouter,
 });
 
 export type AppRouter = typeof appRouter;

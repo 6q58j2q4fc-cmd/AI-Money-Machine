@@ -22,6 +22,8 @@ import BotIntelligence from "./pages/BotIntelligence";
 import Settings from "./pages/Settings";
 import FreePublishingBot from "./pages/FreePublishingBot";
 import DataAccuracy from "./pages/DataAccuracy";
+import AuditLog from "./pages/AuditLog";
+import AICommandCenter from "./pages/AICommandCenter";
 
 function Router() {
   return (
@@ -48,6 +50,8 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/free-publishing" component={FreePublishingBot} />
       <Route path="/data-accuracy" component={DataAccuracy} />
+      <Route path="/audit-log" component={AuditLog} />
+      <Route path="/ai-command" component={AICommandCenter} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

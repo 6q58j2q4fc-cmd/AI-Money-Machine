@@ -14,7 +14,8 @@ import {
   shortenedUrls, InsertShortenedUrl, ShortenedUrl,
   trackingPixels, InsertTrackingPixel, TrackingPixel,
   botTrainingData, InsertBotTrainingData, BotTrainingData,
-  affiliateCookieTracking, InsertAffiliateCookieTracking, AffiliateCookieTracking
+  affiliateCookieTracking, InsertAffiliateCookieTracking, AffiliateCookieTracking,
+  auditLog, InsertAuditLog, AuditLog
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1229,5 +1230,104 @@ export async function getCookieTrackingStats(userId: number): Promise<{
     totalClicks,
     totalConversions,
     conversionRate: totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0
+  };
+}
+
+
+// ============ AUDIT LOG FUNCTIONS ============
+
+export async function createAuditLog(data: Omit<InsertAuditLog, 'id' | 'createdAt'>): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const result = await db.insert(auditLog).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getAuditLogs(
+  userId: number, 
+  options?: { 
+    eventType?: string; 
+    articleId?: number;
+    limit?: number;
+    offset?: number;
+  }
+): Promise<AuditLog[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query = db.select().from(auditLog);
+  
+  const conditions = [];
+  if (userId) conditions.push(eq(auditLog.userId, userId));
+  if (options?.eventType) conditions.push(eq(auditLog.eventType, options.eventType as any));
+  if (options?.articleId) conditions.push(eq(auditLog.articleId, options.articleId));
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+  
+  return await query
+    .orderBy(desc(auditLog.createdAt))
+    .limit(options?.limit || 100)
+    .offset(options?.offset || 0);
+}
+
+export async function getArticleAuditLog(articleId: number): Promise<AuditLog[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(auditLog)
+    .where(eq(auditLog.articleId, articleId))
+    .orderBy(desc(auditLog.createdAt));
+}
+
+export async function getAuditLogStats(userId: number): Promise<{
+  totalEvents: number;
+  articlesCreated: number;
+  articlesPublished: number;
+  distributionsQueued: number;
+  distributionsPublished: number;
+  affiliateClicks: number;
+  automationCycles: number;
+  botDecisions: number;
+}> {
+  const db = await getDb();
+  if (!db) return {
+    totalEvents: 0,
+    articlesCreated: 0,
+    articlesPublished: 0,
+    distributionsQueued: 0,
+    distributionsPublished: 0,
+    affiliateClicks: 0,
+    automationCycles: 0,
+    botDecisions: 0
+  };
+  
+  const result = await db
+    .select({
+      totalEvents: sql<number>`COUNT(*)`,
+      articlesCreated: sql<number>`SUM(CASE WHEN eventType = 'article_created' THEN 1 ELSE 0 END)`,
+      articlesPublished: sql<number>`SUM(CASE WHEN eventType = 'article_published' THEN 1 ELSE 0 END)`,
+      distributionsQueued: sql<number>`SUM(CASE WHEN eventType = 'distribution_queued' THEN 1 ELSE 0 END)`,
+      distributionsPublished: sql<number>`SUM(CASE WHEN eventType = 'distribution_published' THEN 1 ELSE 0 END)`,
+      affiliateClicks: sql<number>`SUM(CASE WHEN eventType = 'affiliate_link_clicked' THEN 1 ELSE 0 END)`,
+      automationCycles: sql<number>`SUM(CASE WHEN eventType = 'automation_cycle_completed' THEN 1 ELSE 0 END)`,
+      botDecisions: sql<number>`SUM(CASE WHEN eventType = 'bot_decision' THEN 1 ELSE 0 END)`
+    })
+    .from(auditLog)
+    .where(eq(auditLog.userId, userId));
+  
+  const stats = result[0];
+  return {
+    totalEvents: Number(stats?.totalEvents || 0),
+    articlesCreated: Number(stats?.articlesCreated || 0),
+    articlesPublished: Number(stats?.articlesPublished || 0),
+    distributionsQueued: Number(stats?.distributionsQueued || 0),
+    distributionsPublished: Number(stats?.distributionsPublished || 0),
+    affiliateClicks: Number(stats?.affiliateClicks || 0),
+    automationCycles: Number(stats?.automationCycles || 0),
+    botDecisions: Number(stats?.botDecisions || 0)
   };
 }

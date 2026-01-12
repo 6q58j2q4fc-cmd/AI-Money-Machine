@@ -538,3 +538,66 @@ export const affiliateCookieTracking = mysqlTable("affiliate_cookie_tracking", {
 
 export type AffiliateCookieTracking = typeof affiliateCookieTracking.$inferSelect;
 export type InsertAffiliateCookieTracking = typeof affiliateCookieTracking.$inferInsert;
+
+
+/**
+ * Comprehensive audit log - tracks all system activities for bot learning
+ */
+export const auditLog = mysqlTable("audit_log", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  
+  // Event type
+  eventType: mysqlEnum("eventType", [
+    "article_created", "article_published", "article_updated", "article_deleted",
+    "distribution_queued", "distribution_published", "distribution_failed",
+    "affiliate_link_added", "affiliate_link_clicked", "affiliate_conversion",
+    "automation_cycle_started", "automation_cycle_completed", "automation_cycle_failed",
+    "topic_discovered", "topic_saved",
+    "bot_decision", "bot_learning", "bot_optimization",
+    "seo_indexed", "seo_ping_sent",
+    "user_action", "system_event"
+  ]).notNull(),
+  
+  // Related entities
+  articleId: int("articleId"),
+  affiliateLinkId: int("affiliateLinkId"),
+  distributionId: int("distributionId"),
+  topicId: int("topicId"),
+  
+  // Event details
+  action: varchar("action", { length: 255 }).notNull(),
+  description: text("description"),
+  
+  // Metadata for bot learning
+  metadata: json("metadata").$type<{
+    platform?: string;
+    externalUrl?: string;
+    linksUsed?: number[];
+    seoScore?: number;
+    performance?: {
+      views?: number;
+      clicks?: number;
+      conversions?: number;
+      revenue?: number;
+    };
+    botDecision?: string;
+    botReasoning?: string;
+    searchEngines?: string[];
+    cycleResults?: {
+      articlesGenerated?: number;
+      articlesPublished?: number;
+      distributionsQueued?: number;
+    };
+  }>(),
+  
+  // Success tracking
+  wasSuccessful: boolean("wasSuccessful").default(true).notNull(),
+  errorMessage: text("errorMessage"),
+  
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AuditLog = typeof auditLog.$inferSelect;
+export type InsertAuditLog = typeof auditLog.$inferInsert;

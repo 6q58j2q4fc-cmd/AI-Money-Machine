@@ -381,3 +381,31 @@
 - [x] Verify IndexNow submits URLs to search engines (integrated in publish flow)
 - [ ] Confirm articles appear in sitemap
 - [ ] Test complete end-to-end flow
+
+
+## New Requirements (User Request)
+
+### CJ Affiliate Links Transfer
+- [x] Transfer all known CJ affiliate links to website database (12 links in database)
+- [x] Make links easily accessible for bot content generation (affiliate router integrated)
+- [x] Organize links by category for smart selection (categories: VPN, Finance, Health, etc.)
+
+### Automation Tab Button Fixes
+- [x] Fix all unclickable buttons on Automation page (tested - all working)
+- [x] Ensure all controls are fully functional (Start Cycle Now, Save Settings work)
+- [x] Test each button works correctly (verified via browser testing)
+
+### Comprehensive Audit Log System
+- [x] Create audit log for each article written (auditLog database table)
+- [x] Log auto-publishing events with timestamps (automation_cycle events)
+- [x] Track where each article was published (distribution events)
+- [x] Track which affiliate links were used in each article (affiliate events)
+- [x] Make audit data available for bot learning (How Bots Use This Data section)
+- [x] Display audit log in UI (AuditLog.tsx page with filters and export)
+
+### Advanced AI LLM Control System
+- [x] Integrate advanced LLM for bot guidance (AICommandCenter.tsx)
+- [x] LLM controls all site pages and features (6 bot modules managed)
+- [x] LLM directs bots to perform duties (Primary AI Directives)
+- [x] Implement intelligent decision making (AI Command Interface with chat)
+- [x] Auto-optimize based on performance data (continuous learning mode)
