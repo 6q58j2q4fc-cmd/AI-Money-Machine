@@ -7,6 +7,7 @@ import { invokeLLM } from "./_core/llm";
 import * as db from "./db";
 import { publishToPlatform, getConfiguredPlatforms } from "./_core/platformPublisher";
 import { searchCJLinks, getJoinedAdvertiserLinks, getNonJoinedAdvertiserLinks, searchCJAdvertisers, getNonJoinedAdvertisers, getJoinedAdvertisers, getCJProgramUrl } from "./_core/cjApi";
+import { syncApprovedCJLinks, getApprovedAdvertiserIds, getApprovedAdvertiserNames, isLinkApproved } from "./_core/cjSync";
 import { createBotpressService, BotCommands } from "./_core/botpressApi";
 import { invokeMultiLLM, generateArticle, optimizeSEO, researchTopics, matchAffiliateProducts, generateHeadlines, getAvailableProviders, type LLMTaskType } from "./_core/multiLlm";
 import { runContentPipeline, DEFAULT_PIPELINE_CONFIG, type PipelineConfig, discoverTopics, generateMonetizedArticle, insertAffiliateLinks, calculateContentScore } from "./_core/contentPipeline";
@@ -1005,6 +1006,45 @@ const cjRouter = router({
       websiteId: settings?.websiteId || null,
     };
   }),
+
+  // Sync only approved CJ affiliate links (removes unapproved, imports approved)
+  syncApprovedLinks: protectedProcedure.mutation(async ({ ctx }) => {
+    const result = await syncApprovedCJLinks();
+    
+    if (!result.success) {
+      throw new Error(result.error || "Failed to sync approved CJ links");
+    }
+    
+    return {
+      success: true,
+      message: `Synced approved CJ links: removed ${result.removedCount} unapproved, added ${result.addedCount} approved links.`,
+      removedCount: result.removedCount,
+      addedCount: result.addedCount,
+      approvedAdvertisers: result.approvedAdvertisers,
+    };
+  }),
+
+  // Get list of approved advertiser IDs
+  getApprovedAdvertisers: protectedProcedure.query(async () => {
+    const ids = await getApprovedAdvertiserIds();
+    const names = await getApprovedAdvertiserNames();
+    
+    return {
+      count: ids.length,
+      advertisers: ids.map(id => ({
+        id,
+        name: names.get(id) || "Unknown",
+      })),
+    };
+  }),
+
+  // Check if a specific link is from an approved advertiser
+  checkLinkApproval: protectedProcedure
+    .input(z.object({ url: z.string() }))
+    .query(async ({ input }) => {
+      const approved = await isLinkApproved(input.url);
+      return { approved };
+    }),
 });
 
 // Publishing queue router
@@ -1671,8 +1711,28 @@ Make it engaging, valuable, and optimized for both readers and search engines.`
       const existingArticles = await db.getArticles(ctx.user.id);
       const existingTopics = existingArticles.map(a => a.title);
 
-      // Get affiliate links
-      const affiliateLinks = await db.getAffiliateLinks(ctx.user.id);
+      // Get affiliate links - filter to only use approved CJ links
+      const allAffiliateLinks = await db.getAffiliateLinks(ctx.user.id);
+      
+      // Filter to only include CJ links from approved advertisers
+      const approvedAdvertiserIds = await getApprovedAdvertiserIds();
+      const affiliateLinks = allAffiliateLinks.filter(link => {
+        // Check if it's a CJ link and from an approved advertiser
+        if (link.url.includes('anrdoezrs.net') || link.url.includes('dpbolvw.net') || link.url.includes('jdoqocy.com') || link.url.includes('kqzyfj.com') || link.url.includes('tkqlhce.com')) {
+          // Extract advertiser ID from CJ link URL
+          const match = link.url.match(/click-\d+-([\d]+)/);
+          if (match) {
+            const advertiserId = match[1];
+            return approvedAdvertiserIds.includes(advertiserId);
+          }
+          // If we can't extract advertiser ID, check if it was synced from approved list
+          return link.shortCode?.startsWith('cj-');
+        }
+        // Non-CJ links are allowed
+        return true;
+      });
+      
+      console.log(`[ContentPipeline] Using ${affiliateLinks.length} approved affiliate links (filtered from ${allAffiliateLinks.length} total)`);
 
       // Build pipeline config
       const config: PipelineConfig = {

@@ -1,0 +1,79 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "affiliate_cookie_tracking"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "affiliate_links"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "analytics_events"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "article_affiliate_links"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "article_distribution"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "articles"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "audit_log"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "automation_settings"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "bot_learning"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "bot_training_data"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "cj_products"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "cj_settings"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "content_generation_history"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "content_queue"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "performance_learning"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "publishing_queue"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "saved_topics"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "shortened_urls"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "tracking_pixels"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "trending_topics"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "url_shortener_settings"
+    },
+    {
+      "Tables_in_RymVrvaM7i66nf7Xs2w9Hu": "users"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_RymVrvaM7i66nf7Xs2w9Hu\n__drizzle_migrations\naffiliate_cookie_tracking\naffiliate_links\nanalytics_events\narticle_affiliate_links\narticle_distribution\narticles\naudit_log\nautomation_settings\nbot_learning\nbot_training_data\ncj_products\ncj_settings\ncontent_generation_history\ncontent_queue\nperformance_learning\npublishing_queue\nsaved_topics\nshortened_urls\ntracking_pixels\ntrending_topics\nurl_shortener_settings\nusers\n",
+  "stderr": "",
+  "execution_time_ms": 386
+}

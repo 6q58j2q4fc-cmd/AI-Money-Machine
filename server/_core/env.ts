@@ -13,6 +13,8 @@ export const ENV = {
   hastewireApiKey: process.env.HASTEWIRE_API ?? "",
   copymaticApiKey: process.env.COPYMATIC_AI_API_KEY ?? "",
   cjApiKey: process.env.CJ_API_KEY ?? "",
+  cjCid: process.env.CJ_CID ?? "7841523",
+  cjWebsiteId: process.env.CJ_WEBSITE_ID ?? "101630462",
   botpressApiKey: process.env.BOTPRESS_API ?? "",
   // Multi-LLM API Keys (all FREE tiers)
   groqApiKey: process.env.GROQ_API_KEY ?? "",
