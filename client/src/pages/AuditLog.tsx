@@ -9,10 +9,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Streamdown } from "streamdown";
 import { 
   FileText, Link2, Send, Bot, Search, Clock, CheckCircle, XCircle, 
   Activity, TrendingUp, Zap, RefreshCw, Filter, Download, Brain,
-  MessageSquare, Sparkles, AlertCircle, Play
+  MessageSquare, Sparkles, AlertCircle, Play, Power, PowerOff,
+  Database, Eye, ShoppingBag, Settings, Loader2
 } from "lucide-react";
 
 const eventTypeIcons: Record<string, React.ReactNode> = {
@@ -69,7 +71,12 @@ export default function AuditLog() {
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("all");
   const [hiveMindQuery, setHiveMindQuery] = useState("");
-  const [hiveMindResponse, setHiveMindResponse] = useState<string | null>(null);
+  const [hiveMindResponse, setHiveMindResponse] = useState<{
+    response: string;
+    dataUsed: string[];
+    recommendations: string[];
+    actions: string[];
+  } | null>(null);
   const [isQuerying, setIsQuerying] = useState(false);
   
   const { data: logs, isLoading, refetch } = trpc.audit.list.useQuery({
@@ -79,10 +86,24 @@ export default function AuditLog() {
   
   const { data: stats } = trpc.audit.getStats.useQuery();
   const { data: hiveMindState } = trpc.hiveMind.getState.useQuery();
+  const { data: autonomousState, refetch: refetchAutonomous } = trpc.hiveMind.getAutonomousState.useQuery();
+  const { data: fullSystemData } = trpc.hiveMind.getFullSystemData.useQuery();
+  const { data: approvedVendors } = trpc.hiveMind.getApprovedVendors.useQuery();
   
   const logEventMutation = trpc.hiveMind.logEvent.useMutation();
-  const chatMutation = trpc.hiveMind.chat.useMutation();
+  const askWithFullContextMutation = trpc.hiveMind.askWithFullContext.useMutation();
   const syncAllMutation = trpc.hiveMind.syncAll.useMutation();
+  const syncCJVendorsMutation = trpc.hiveMind.syncCJVendors.useMutation();
+  const startAutonomousMutation = trpc.hiveMind.startAutonomous.useMutation();
+  const stopAutonomousMutation = trpc.hiveMind.stopAutonomous.useMutation();
+  const autoWakeMutation = trpc.hiveMind.autoWake.useMutation();
+  const runAllBotsMutation = trpc.hiveMind.runAllBots.useMutation();
+  const startSchedulerMutation = trpc.hiveMind.startScheduler.useMutation();
+  const stopSchedulerMutation = trpc.hiveMind.stopScheduler.useMutation();
+  
+  const { data: botStates, refetch: refetchBotStates } = trpc.hiveMind.getBotStates.useQuery();
+  const { data: schedulerState, refetch: refetchScheduler } = trpc.hiveMind.getSchedulerState.useQuery();
+  const { data: unifiedData, refetch: refetchUnifiedData } = trpc.hiveMind.getUnifiedData.useQuery();
   
   // Auto-log page visit
   useEffect(() => {
@@ -113,16 +134,16 @@ export default function AuditLog() {
     if (!hiveMindQuery.trim()) return;
     
     setIsQuerying(true);
+    setHiveMindResponse(null);
     try {
-      const result = await chatMutation.mutateAsync({
-        pageId: 'audit-log',
-        query: hiveMindQuery,
-        context: { logs: logs?.slice(0, 20), stats }
+      const result = await askWithFullContextMutation.mutateAsync({
+        question: hiveMindQuery,
       });
-      setHiveMindResponse(result.response);
-      toast.success("Hive Mind responded");
-    } catch (error) {
-      toast.error("Failed to query Hive Mind");
+      setHiveMindResponse(result);
+      toast.success("Hive Mind analyzed your question with full system data");
+    } catch (error: any) {
+      console.error('Hive Mind query error:', error);
+      toast.error(`Failed to query Hive Mind: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsQuerying(false);
     }
@@ -135,6 +156,94 @@ export default function AuditLog() {
       refetch();
     } catch (error) {
       toast.error("Failed to sync pages");
+    }
+  };
+  
+  const handleSyncCJVendors = async () => {
+    try {
+      const result = await syncCJVendorsMutation.mutateAsync();
+      if (result.success) {
+        toast.success(`Synced ${result.vendorsFound} CJ vendors with ${result.linksFound} links`);
+        if (result.newVendors.length > 0) {
+          toast.info(`New vendors: ${result.newVendors.join(', ')}`);
+        }
+      } else {
+        toast.error("CJ sync failed");
+      }
+      refetchAutonomous();
+    } catch (error) {
+      toast.error("Failed to sync CJ vendors");
+    }
+  };
+  
+  const handleStartAutonomous = async () => {
+    try {
+      const result = await startAutonomousMutation.mutateAsync();
+      toast.success(result.message);
+      refetchAutonomous();
+    } catch (error) {
+      toast.error("Failed to start autonomous operation");
+    }
+  };
+  
+  const handleStopAutonomous = async () => {
+    try {
+      const result = await stopAutonomousMutation.mutateAsync();
+      toast.success(result.message);
+      refetchAutonomous();
+    } catch (error) {
+      toast.error("Failed to stop autonomous operation");
+    }
+  };
+  
+  const handleAutoWake = async () => {
+    try {
+      const result = await autoWakeMutation.mutateAsync();
+      if (result.success) {
+        toast.success(`Auto-wake completed: ${result.operations.length} operations`);
+      } else {
+        toast.warning(`Auto-wake completed with errors: ${result.errors.join(', ')}`);
+      }
+      refetch();
+      refetchAutonomous();
+    } catch (error) {
+      toast.error("Failed to auto-wake system");
+    }
+  };
+  
+  const handleRunAllBots = async () => {
+    try {
+      const result = await runAllBotsMutation.mutateAsync();
+      if (result.success) {
+        toast.success(`All bots completed: ${result.totalActions} total actions`);
+      } else {
+        toast.warning('Some bots encountered errors');
+      }
+      refetch();
+      refetchBotStates();
+      refetchUnifiedData();
+    } catch (error) {
+      toast.error('Failed to run all bots');
+    }
+  };
+  
+  const handleStartScheduler = async () => {
+    try {
+      const result = await startSchedulerMutation.mutateAsync();
+      toast.success(result.message);
+      refetchScheduler();
+    } catch (error) {
+      toast.error('Failed to start scheduler');
+    }
+  };
+  
+  const handleStopScheduler = async () => {
+    try {
+      const result = await stopSchedulerMutation.mutateAsync();
+      toast.success(result.message);
+      refetchScheduler();
+    } catch (error) {
+      toast.error('Failed to stop scheduler');
     }
   };
   
@@ -166,87 +275,353 @@ export default function AuditLog() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Activity className="h-8 w-8 text-primary" />
-            Audit Log
+            <Brain className="h-8 w-8 text-primary" />
+            Autonomous Hive Mind
           </h1>
           <p className="text-muted-foreground mt-1">
-            Complete activity log with Hive Mind LLM integration
+            Central AI with full system awareness - runs autonomously
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleSyncAll} disabled={syncAllMutation.isPending}>
-            <Brain className="h-4 w-4 mr-2" />
-            {syncAllMutation.isPending ? "Syncing..." : "Sync Hive Mind"}
+          {autonomousState?.isRunning ? (
+            <Button variant="destructive" onClick={handleStopAutonomous} disabled={stopAutonomousMutation.isPending}>
+              <PowerOff className="h-4 w-4 mr-2" />
+              {stopAutonomousMutation.isPending ? "Stopping..." : "Stop Autonomous"}
+            </Button>
+          ) : (
+            <Button variant="default" onClick={handleStartAutonomous} disabled={startAutonomousMutation.isPending}>
+              <Power className="h-4 w-4 mr-2" />
+              {startAutonomousMutation.isPending ? "Starting..." : "Start Autonomous"}
+            </Button>
+          )}
+          <Button variant="outline" onClick={handleAutoWake} disabled={autoWakeMutation.isPending}>
+            <Zap className="h-4 w-4 mr-2" />
+            {autoWakeMutation.isPending ? "Waking..." : "Auto-Wake"}
           </Button>
-          <Button variant="outline" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+          <Button variant="secondary" onClick={handleRunAllBots} disabled={runAllBotsMutation.isPending}>
+            <Bot className="h-4 w-4 mr-2" />
+            {runAllBotsMutation.isPending ? "Running..." : "Run All Bots"}
           </Button>
           <Button variant="outline" onClick={exportLogs}>
             <Download className="h-4 w-4 mr-2" />
-            Export CSV
+            Export
           </Button>
         </div>
       </div>
       
-      {/* Hive Mind Status */}
+      {/* Autonomous Status Banner */}
+      <Card className={`border-2 ${autonomousState?.isRunning ? 'border-green-500 bg-green-500/5' : 'border-yellow-500 bg-yellow-500/5'}`}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`w-3 h-3 rounded-full ${autonomousState?.isRunning ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
+              <div>
+                <div className="font-semibold">
+                  {autonomousState?.isRunning ? 'Autonomous Mode Active' : 'Autonomous Mode Inactive'}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Last wake: {autonomousState?.lastWakeTime ? formatDate(autonomousState.lastWakeTime) : 'Never'}
+                  {' | '}
+                  CJ Sync: {autonomousState?.lastCJSync ? formatDate(autonomousState.lastCJSync) : 'Never'}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-4 text-sm">
+              <div className="text-center">
+                <div className="font-bold text-primary">{autonomousState?.approvedVendorsCount || 0}</div>
+                <div className="text-muted-foreground">CJ Vendors</div>
+              </div>
+              <div className="text-center">
+                <div className="font-bold text-green-500">{fullSystemData?.articles?.stats?.published || 0}</div>
+                <div className="text-muted-foreground">Published</div>
+              </div>
+              <div className="text-center">
+                <div className="font-bold text-blue-500">{fullSystemData?.distribution?.stats?.published || 0}</div>
+                <div className="text-muted-foreground">Distributed</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Bot Status Panel */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-purple-500" />
+                Bot Network Status
+              </CardTitle>
+              <CardDescription>
+                All bots communicate through the Hive Mind for coordinated operation
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              {schedulerState?.isRunning ? (
+                <Button variant="destructive" size="sm" onClick={handleStopScheduler} disabled={stopSchedulerMutation.isPending}>
+                  <PowerOff className="h-4 w-4 mr-2" />
+                  Stop Scheduler
+                </Button>
+              ) : (
+                <Button variant="default" size="sm" onClick={handleStartScheduler} disabled={startSchedulerMutation.isPending}>
+                  <Play className="h-4 w-4 mr-2" />
+                  Start Scheduler
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {botStates?.map((bot) => (
+              <div key={bot.type} className={`p-3 rounded-lg border ${bot.isActive ? 'bg-green-500/5 border-green-500/30' : 'bg-gray-500/5 border-gray-500/30'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-2 h-2 rounded-full ${bot.isActive ? 'bg-green-500' : 'bg-gray-500'}`} />
+                  <span className="text-sm font-medium capitalize">{bot.type.replace('_', ' ')}</span>
+                </div>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div>Tasks: {bot.completedTasks}</div>
+                  <div>Errors: {bot.errors}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {schedulerState && (
+            <div className="mt-4 p-3 rounded-lg bg-background/50 border">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span>Scheduler: {schedulerState.isRunning ? 'Running' : 'Stopped'}</span>
+                </div>
+                <div className="text-muted-foreground">
+                  Cycles: {schedulerState.cycleCount} | 
+                  Wake interval: {schedulerState.autoWakeIntervalMs / 60000}min | 
+                  CJ sync: {schedulerState.cjSyncIntervalMs / 60000}min
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* Hive Mind Query Interface */}
       <Card className="border-primary/50 bg-gradient-to-r from-primary/5 to-purple-500/5">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
-            Hive Mind Central Intelligence
+            Ask the Hive Mind (Full System Awareness)
           </CardTitle>
           <CardDescription>
-            Central bot coordinating all LLMs with shared memory across pages
+            Query the AI with complete access to all system data: articles, affiliate links, distributions, analytics, CJ vendors, and more
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="p-3 rounded-lg bg-background/50 border">
-              <div className="text-sm text-muted-foreground">Active Pages</div>
-              <div className="text-2xl font-bold text-primary">
-                {Object.keys(hiveMindState?.pageContexts || {}).length || 12}
+          <div className="space-y-4">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <FileText className="h-4 w-4" />
+                  Articles
+                </div>
+                <div className="text-xl font-bold">{fullSystemData?.articles?.stats?.total || 0}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Link2 className="h-4 w-4" />
+                  Affiliate Links
+                </div>
+                <div className="text-xl font-bold">{fullSystemData?.affiliateLinks?.stats?.total || 0}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Send className="h-4 w-4" />
+                  Distributions
+                </div>
+                <div className="text-xl font-bold">{fullSystemData?.distribution?.stats?.total || 0}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Eye className="h-4 w-4" />
+                  Total Views
+                </div>
+                <div className="text-xl font-bold">{fullSystemData?.analytics?.totalViews || 0}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <ShoppingBag className="h-4 w-4" />
+                  CJ Vendors
+                </div>
+                <div className="text-xl font-bold">{approvedVendors?.length || 0}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Activity className="h-4 w-4" />
+                  Events
+                </div>
+                <div className="text-xl font-bold">{stats?.totalEvents || 0}</div>
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-background/50 border">
-              <div className="text-sm text-muted-foreground">Memory Items</div>
-              <div className="text-2xl font-bold text-green-500">
-                {hiveMindState?.objectivesCount || 0}
-              </div>
-            </div>
-            <div className="p-3 rounded-lg bg-background/50 border">
-              <div className="text-sm text-muted-foreground">LLM Calls Today</div>
-              <div className="text-2xl font-bold text-purple-500">
-                {hiveMindState?.conversationCount || 0}
-              </div>
-            </div>
-          </div>
-          
-          {/* Hive Mind Chat */}
-          <div className="space-y-3">
+            
+            {/* Query Input */}
             <div className="flex gap-2">
               <Input
-                placeholder="Ask the Hive Mind about system activity, patterns, or recommendations..."
+                placeholder="Ask anything about your system: performance, articles, affiliate links, CJ vendors, recommendations..."
                 value={hiveMindQuery}
                 onChange={(e) => setHiveMindQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleHiveMindQuery()}
+                className="flex-1"
               />
               <Button onClick={handleHiveMindQuery} disabled={isQuerying}>
-                <MessageSquare className="h-4 w-4 mr-2" />
-                {isQuerying ? "Thinking..." : "Ask"}
+                {isQuerying ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                )}
+                {isQuerying ? "Analyzing..." : "Ask"}
               </Button>
             </div>
             
+            {/* Quick Questions */}
+            <div className="flex flex-wrap gap-2">
+              <Badge 
+                variant="outline" 
+                className="cursor-pointer hover:bg-primary/10"
+                onClick={() => {
+                  setHiveMindQuery("What are my top performing articles and why?");
+                }}
+              >
+                Top performing articles
+              </Badge>
+              <Badge 
+                variant="outline" 
+                className="cursor-pointer hover:bg-primary/10"
+                onClick={() => {
+                  setHiveMindQuery("Which CJ affiliate links should I focus on for more revenue?");
+                }}
+              >
+                Best CJ links
+              </Badge>
+              <Badge 
+                variant="outline" 
+                className="cursor-pointer hover:bg-primary/10"
+                onClick={() => {
+                  setHiveMindQuery("How can I improve my content distribution strategy?");
+                }}
+              >
+                Distribution strategy
+              </Badge>
+              <Badge 
+                variant="outline" 
+                className="cursor-pointer hover:bg-primary/10"
+                onClick={() => {
+                  setHiveMindQuery("Give me a complete system health report with recommendations");
+                }}
+              >
+                System health report
+              </Badge>
+              <Badge 
+                variant="outline" 
+                className="cursor-pointer hover:bg-primary/10"
+                onClick={() => {
+                  setHiveMindQuery("What new articles should I create based on trending topics and available CJ vendors?");
+                }}
+              >
+                Content recommendations
+              </Badge>
+            </div>
+            
+            {/* Response */}
             {hiveMindResponse && (
-              <div className="p-4 rounded-lg bg-background border">
-                <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
+              <div className="space-y-4 p-4 rounded-lg bg-background border">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  Hive Mind Response
+                  Hive Mind Response (using data from: {hiveMindResponse.dataUsed.join(', ')})
                 </div>
-                <p className="text-sm">{hiveMindResponse}</p>
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <Streamdown>{hiveMindResponse.response}</Streamdown>
+                </div>
+                
+                {hiveMindResponse.recommendations.length > 0 && (
+                  <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                      Recommendations
+                    </div>
+                    <ul className="text-sm space-y-1">
+                      {hiveMindResponse.recommendations.map((rec, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {hiveMindResponse.actions.length > 0 && (
+                  <div className="mt-4 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
+                    <div className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-blue-500" />
+                      Suggested Actions
+                    </div>
+                    <ul className="text-sm space-y-1">
+                      {hiveMindResponse.actions.map((action, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <Play className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+                          {action}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+      
+      {/* CJ Vendor Sync */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingBag className="h-5 w-5 text-purple-500" />
+                CJ Affiliate Vendors
+              </CardTitle>
+              <CardDescription>
+                Approved vendors with active affiliate links
+              </CardDescription>
+            </div>
+            <Button variant="outline" onClick={handleSyncCJVendors} disabled={syncCJVendorsMutation.isPending}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${syncCJVendorsMutation.isPending ? 'animate-spin' : ''}`} />
+              {syncCJVendorsMutation.isPending ? "Syncing..." : "Sync CJ Vendors"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {approvedVendors && approvedVendors.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {approvedVendors.slice(0, 9).map((vendor, i) => (
+                <div key={i} className="p-3 rounded-lg border bg-background/50">
+                  <div className="font-medium truncate">{vendor.advertiserName}</div>
+                  <div className="text-sm text-muted-foreground">{vendor.category}</div>
+                  <div className="flex items-center justify-between mt-2">
+                    <Badge variant="outline">{vendor.links.length} links</Badge>
+                    <span className="text-sm text-green-500">EPC: ${vendor.epc}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <ShoppingBag className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>No CJ vendors synced yet</p>
+              <p className="text-sm">Click "Sync CJ Vendors" to fetch approved affiliate programs</p>
+            </div>
+          )}
         </CardContent>
       </Card>
       
@@ -302,104 +677,92 @@ export default function AuditLog() {
         </Card>
       </div>
       
-      {/* Filters */}
+      {/* Activity Timeline */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filter Events
-            </CardTitle>
-            <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All Events" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Events</SelectItem>
-                <SelectItem value="article_created">Article Created</SelectItem>
-                <SelectItem value="article_published">Article Published</SelectItem>
-                <SelectItem value="distribution_queued">Distribution Queued</SelectItem>
-                <SelectItem value="distribution_published">Distribution Published</SelectItem>
-                <SelectItem value="affiliate_link_clicked">Affiliate Clicks</SelectItem>
-                <SelectItem value="automation_cycle_completed">Automation Cycles</SelectItem>
-                <SelectItem value="bot_decision">Bot Decisions</SelectItem>
-                <SelectItem value="seo_indexed">SEO Indexed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-      </Card>
-      
-      {/* Activity Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-7 w-full">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="articles">Articles</TabsTrigger>
-          <TabsTrigger value="distribution">Distribution</TabsTrigger>
-          <TabsTrigger value="affiliate">Affiliate</TabsTrigger>
-          <TabsTrigger value="automation">Automation</TabsTrigger>
-          <TabsTrigger value="bot">Bot AI</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value={activeTab} className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Activity Timeline</CardTitle>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Activity Timeline
+              </CardTitle>
               <CardDescription>
                 {filteredLogs?.length || 0} events found
               </CardDescription>
-            </CardHeader>
-            <CardContent>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleSyncAll} disabled={syncAllMutation.isPending}>
+                <Brain className="h-4 w-4 mr-2" />
+                {syncAllMutation.isPending ? "Syncing..." : "Sync Hive Mind"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="articles">Articles</TabsTrigger>
+              <TabsTrigger value="distribution">Distribution</TabsTrigger>
+              <TabsTrigger value="affiliate">Affiliate</TabsTrigger>
+              <TabsTrigger value="automation">Automation</TabsTrigger>
+              <TabsTrigger value="bot">Bot AI</TabsTrigger>
+              <TabsTrigger value="seo">SEO</TabsTrigger>
+            </TabsList>
+            
+            <ScrollArea className="h-[400px]">
               {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading audit logs...</div>
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
               ) : filteredLogs && filteredLogs.length > 0 ? (
-                <ScrollArea className="h-[600px]">
-                  <div className="space-y-3">
-                    {filteredLogs.map((log) => (
-                      <div key={log.id} className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
-                        <div className="mt-1">
-                          {eventTypeIcons[log.eventType] || <Activity className="h-4 w-4" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant={log.wasSuccessful ? "default" : "destructive"}>
-                              {eventTypeLabels[log.eventType] || log.eventType}
-                            </Badge>
-                            {log.articleId && (
-                              <Badge variant="outline">Article #{log.articleId}</Badge>
-                            )}
-                          </div>
-                          <p className="text-sm mt-1">{log.action}</p>
-                          {log.description && (
-                            <p className="text-xs text-muted-foreground mt-1">{log.description}</p>
-                          )}
-                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {formatDate(log.createdAt)}
-                          </div>
-                        </div>
+                <div className="space-y-2">
+                  {filteredLogs.map((log) => (
+                    <div 
+                      key={log.id} 
+                      className="flex items-start gap-3 p-3 rounded-lg border bg-background/50 hover:bg-background/80 transition-colors"
+                    >
+                      <div className="mt-1">
+                        {eventTypeIcons[log.eventType] || <Activity className="h-4 w-4" />}
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {eventTypeLabels[log.eventType] || log.eventType}
+                          </Badge>
+                          {log.wasSuccessful ? (
+                            <CheckCircle className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <XCircle className="h-3 w-3 text-red-500" />
+                          )}
+                        </div>
+                        <div className="text-sm mt-1">{log.action}</div>
+                        {log.description && (
+                          <div className="text-xs text-muted-foreground mt-1 truncate">
+                            {log.description}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground whitespace-nowrap">
+                        {formatDate(log.createdAt)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <div className="text-center py-12">
-                  <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Events Yet</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Events will appear here as you use the system. Try running the Content Pipeline or Automation to generate events.
-                  </p>
-                  <Button variant="outline" onClick={handleSyncAll}>
-                    <Play className="h-4 w-4 mr-2" />
-                    Initialize Hive Mind
-                  </Button>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Activity className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No events found</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </ScrollArea>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }

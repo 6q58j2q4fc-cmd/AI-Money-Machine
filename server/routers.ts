@@ -2893,6 +2893,254 @@ const hiveMindRouter = router({
       });
       return result;
     }),
+
+  // Ask Hive Mind with full system context
+  askWithFullContext: protectedProcedure
+    .input(z.object({
+      question: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { askHiveMindWithFullContext } = await import('./_core/autonomousHiveMind');
+      return await askHiveMindWithFullContext(ctx.user.id, input.question);
+    }),
+
+  // Get full system data
+  getFullSystemData: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getFullSystemData } = await import('./_core/autonomousHiveMind');
+      return await getFullSystemData(ctx.user.id);
+    }),
+
+  // Sync CJ approved vendors
+  syncCJVendors: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { syncCJApprovedVendors } = await import('./_core/autonomousHiveMind');
+      return await syncCJApprovedVendors(ctx.user.id);
+    }),
+
+  // Verify article affiliate links
+  verifyArticleLinks: protectedProcedure
+    .input(z.object({
+      articleId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { verifyArticleAffiliateLinks } = await import('./_core/autonomousHiveMind');
+      return await verifyArticleAffiliateLinks(ctx.user.id, input.articleId);
+    }),
+
+  // Start autonomous operation
+  startAutonomous: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { startAutonomousOperation } = await import('./_core/autonomousHiveMind');
+      return await startAutonomousOperation(ctx.user.id);
+    }),
+
+  // Stop autonomous operation
+  stopAutonomous: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { stopAutonomousOperation } = await import('./_core/autonomousHiveMind');
+      return await stopAutonomousOperation(ctx.user.id);
+    }),
+
+  // Get autonomous state
+  getAutonomousState: protectedProcedure
+    .query(async () => {
+      const { getAutonomousState } = await import('./_core/autonomousHiveMind');
+      return getAutonomousState();
+    }),
+
+  // Auto-wake the system
+  autoWake: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { autoWake } = await import('./_core/autonomousHiveMind');
+      return await autoWake(ctx.user.id);
+    }),
+
+  // Get approved vendors for content
+  getApprovedVendors: protectedProcedure
+    .query(async () => {
+      const { getApprovedVendorsForContent } = await import('./_core/autonomousHiveMind');
+      return getApprovedVendorsForContent();
+    }),
+
+  // Start auto-wake scheduler
+  startScheduler: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { startAutoWakeScheduler } = await import('./_core/autoWakeScheduler');
+      return await startAutoWakeScheduler(ctx.user.id);
+    }),
+
+  // Stop auto-wake scheduler
+  stopScheduler: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { stopAutoWakeScheduler } = await import('./_core/autoWakeScheduler');
+      return await stopAutoWakeScheduler(ctx.user.id);
+    }),
+
+  // Get scheduler state
+  getSchedulerState: protectedProcedure
+    .query(async () => {
+      const { getSchedulerState } = await import('./_core/autoWakeScheduler');
+      return getSchedulerState();
+    }),
+
+  // Run manual wake cycle
+  runManualCycle: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { runManualWakeCycle } = await import('./_core/autoWakeScheduler');
+      return await runManualWakeCycle(ctx.user.id);
+    }),
+
+  // Get articles needing CJ links
+  getArticlesNeedingLinks: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getArticlesNeedingCJLinks } = await import('./_core/autoWakeScheduler');
+      return await getArticlesNeedingCJLinks(ctx.user.id);
+    }),
+
+  // Auto-insert CJ links into article
+  autoInsertLinks: protectedProcedure
+    .input(z.object({
+      articleId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { autoInsertCJLinks } = await import('./_core/autoWakeScheduler');
+      return await autoInsertCJLinks(ctx.user.id, input.articleId);
+    }),
+
+  // Get approved CJ vendors with links
+  getApprovedCJVendors: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getApprovedCJVendors } = await import('./_core/cjContentIntegration');
+      return await getApprovedCJVendors(ctx.user.id);
+    }),
+
+  // Get CJ content suggestions
+  getCJContentSuggestions: protectedProcedure
+    .input(z.object({
+      count: z.number().optional().default(5),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { getCJContentSuggestions } = await import('./_core/cjContentIntegration');
+      return await getCJContentSuggestions(ctx.user.id, input.count);
+    }),
+
+  // Check if topic has CJ links
+  checkTopicCJLinks: protectedProcedure
+    .input(z.object({
+      topic: z.string(),
+      keywords: z.array(z.string()).optional().default([]),
+    }))
+    .query(async ({ input }) => {
+      const { checkTopicHasCJLinks } = await import('./_core/cjContentIntegration');
+      return await checkTopicHasCJLinks(input.topic, input.keywords);
+    }),
+
+  // Cache CJ products
+  cacheCJProducts: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { cacheCJProducts } = await import('./_core/cjContentIntegration');
+      return await cacheCJProducts(ctx.user.id);
+    }),
+
+  // Get cached CJ products
+  getCachedCJProducts: protectedProcedure
+    .input(z.object({
+      category: z.string().optional(),
+      limit: z.number().optional().default(50),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { getCachedCJProducts } = await import('./_core/cjContentIntegration');
+      return await getCachedCJProducts(ctx.user.id, input.category, input.limit);
+    }),
+
+  // Link CJ products to article
+  linkCJToArticle: protectedProcedure
+    .input(z.object({
+      articleId: z.number(),
+      cjProductIds: z.array(z.number()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { linkCJToArticle } = await import('./_core/cjContentIntegration');
+      return await linkCJToArticle(ctx.user.id, input.articleId, input.cjProductIds);
+    }),
+
+  // Verify article CJ links
+  verifyArticleCJLinks: protectedProcedure
+    .input(z.object({
+      articleId: z.number(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { verifyArticleCJLinks } = await import('./_core/cjContentIntegration');
+      return await verifyArticleCJLinks(ctx.user.id, input.articleId);
+    }),
+
+  // Get new CJ vendor opportunities
+  getNewCJVendorOpportunities: protectedProcedure
+    .input(z.object({
+      category: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { getNewCJVendorOpportunities } = await import('./_core/cjContentIntegration');
+      return await getNewCJVendorOpportunities(ctx.user.id, input.category);
+    }),
+
+  // Get unified system data
+  getUnifiedData: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getUnifiedSystemData } = await import('./_core/unifiedBotSystem');
+      return await getUnifiedSystemData(ctx.user.id);
+    }),
+
+  // Get all bot states
+  getBotStates: protectedProcedure
+    .query(async () => {
+      const { getAllBotStates } = await import('./_core/unifiedBotSystem');
+      return getAllBotStates();
+    }),
+
+  // Run all bots
+  runAllBots: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { runAllBots } = await import('./_core/unifiedBotSystem');
+      return await runAllBots(ctx.user.id);
+    }),
+
+  // Run specific bot
+  runBot: protectedProcedure
+    .input(z.object({
+      botType: z.enum(['content_bot', 'seo_bot', 'distribution_bot', 'affiliate_bot', 'analytics_bot', 'learning_bot']),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const botModule = await import('./_core/unifiedBotSystem');
+      switch (input.botType) {
+        case 'content_bot':
+          return await botModule.runContentBot(ctx.user.id);
+        case 'seo_bot':
+          return await botModule.runSEOBot(ctx.user.id);
+        case 'distribution_bot':
+          return await botModule.runDistributionBot(ctx.user.id);
+        case 'affiliate_bot':
+          return await botModule.runAffiliateBot(ctx.user.id);
+        case 'analytics_bot':
+          return await botModule.runAnalyticsBot(ctx.user.id);
+        case 'learning_bot':
+          return await botModule.runLearningBot(ctx.user.id);
+        default:
+          throw new Error('Unknown bot type');
+      }
+    }),
+
+  // Get bot messages
+  getBotMessages: protectedProcedure
+    .input(z.object({
+      botType: z.enum(['content_bot', 'seo_bot', 'distribution_bot', 'affiliate_bot', 'analytics_bot', 'learning_bot']),
+      limit: z.number().optional().default(50),
+    }))
+    .query(async ({ input }) => {
+      const { getBotMessages } = await import('./_core/unifiedBotSystem');
+      return getBotMessages(input.botType, input.limit);
+    }),
 });
 
 export const appRouter = router({
