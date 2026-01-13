@@ -35,6 +35,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={PublicArticle} />
+      <Route path="/article/:slug" component={PublicArticle} />
       
       {/* Dashboard routes */}
       <Route path="/dashboard" component={Dashboard} />

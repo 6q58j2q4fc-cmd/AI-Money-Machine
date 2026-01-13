@@ -349,7 +349,29 @@ export async function invokeMultiLLM(
     }
   }
   
-  throw new Error("No LLM providers available. Please configure at least one API key.");
+  // Fall back to built-in Manus LLM
+  console.log(`[MultiLLM] Falling back to built-in Manus LLM`);
+  try {
+    const { invokeLLM } = await import("./llm");
+    const response = await invokeLLM({
+      messages: messages.map(m => ({ role: m.role, content: m.content })),
+    });
+    const messageContent = response.choices?.[0]?.message?.content;
+    const content = typeof messageContent === 'string' ? messageContent : '';
+    return {
+      content,
+      provider: 'manus',
+      model: 'manus-default',
+      usage: response.usage ? {
+        promptTokens: response.usage.prompt_tokens || 0,
+        completionTokens: response.usage.completion_tokens || 0,
+        totalTokens: response.usage.total_tokens || 0,
+      } : undefined,
+    };
+  } catch (error) {
+    console.error(`[MultiLLM] Manus LLM fallback failed:`, error);
+    throw new Error("No LLM providers available. Please configure at least one API key.");
+  }
 }
 
 /**

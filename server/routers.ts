@@ -11,6 +11,7 @@ import { createBotpressService, BotCommands } from "./_core/botpressApi";
 import { invokeMultiLLM, generateArticle, optimizeSEO, researchTopics, matchAffiliateProducts, generateHeadlines, getAvailableProviders, type LLMTaskType } from "./_core/multiLlm";
 import { runContentPipeline, DEFAULT_PIPELINE_CONFIG, type PipelineConfig, discoverTopics, generateMonetizedArticle, insertAffiliateLinks, calculateContentScore } from "./_core/contentPipeline";
 import { runDailyOptimization, checkAllProvidersHealth, checkFeatureHealth, routeTask, recordUsage, getProviderStats, getUsageHistory, getApiRegistry, type OptimizationResult, type HealthCheckResult, type FeatureHealth, type TaskRoutingDecision } from "./_core/dailyOptimizer";
+import { auditPage, auditAllPages, learnPageContext, generateFixRecommendations, verifyArticlePosting, generateInternalLinks, PAGE_DEFINITIONS, type PageAuditResult } from "./_core/pageAuditor";
 
 // Slug generator helper
 function generateSlug(title: string): string {
@@ -1177,7 +1178,29 @@ const publicArticlesRouter = router({
         await db.incrementArticleViews(article.id);
         // Get affiliate links for this article
         const articleLinks = await db.getArticleAffiliateLinks(article.id);
-        return { ...article, affiliateLinks: articleLinks };
+        // Get external distribution links
+        const distributions = await db.getArticleDistributions(article.id);
+        const externalLinks = distributions
+          .filter(d => d.status === 'published' && d.externalUrl)
+          .map(d => ({ platform: d.platform, url: d.externalUrl! }));
+        return { ...article, affiliateLinks: articleLinks, externalLinks };
+      }
+      return article;
+    }),
+
+  // Alias for getBySlug
+  getBySlug: publicProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ input }) => {
+      const article = await db.getPublishedArticleBySlug(input.slug);
+      if (article) {
+        await db.incrementArticleViews(article.id);
+        const articleLinks = await db.getArticleAffiliateLinks(article.id);
+        const distributions = await db.getArticleDistributions(article.id);
+        const externalLinks = distributions
+          .filter(d => d.status === 'published' && d.externalUrl)
+          .map(d => ({ platform: d.platform, url: d.externalUrl! }));
+        return { ...article, affiliateLinks: articleLinks, externalLinks };
       }
       return article;
     }),
@@ -2377,6 +2400,71 @@ const auditRouter = router({
         metadata: input.metadata as any,
       });
       return { id };
+    }),
+
+  // Page audit endpoints
+  auditPage: protectedProcedure
+    .input(z.object({
+      pageName: z.string(),
+      pageContent: z.string(),
+      actualBehavior: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      return await auditPage(input.pageName, input.pageContent, input.actualBehavior);
+    }),
+
+  auditAllPages: protectedProcedure
+    .query(async () => {
+      return await auditAllPages();
+    }),
+
+  learnPageContext: protectedProcedure
+    .input(z.object({
+      pageName: z.string(),
+      pageContent: z.string(),
+      userInteractions: z.array(z.string()),
+    }))
+    .mutation(async ({ input }) => {
+      return await learnPageContext(input.pageName, input.pageContent, input.userInteractions);
+    }),
+
+  getFixRecommendations: protectedProcedure
+    .input(z.object({
+      pageName: z.string(),
+      brokenFeatures: z.array(z.object({
+        name: z.string(),
+        description: z.string(),
+        status: z.enum(['working', 'not_working', 'needs_improvement']),
+        issue: z.string().optional(),
+        fix: z.string().optional(),
+      })),
+    }))
+    .mutation(async ({ input }) => {
+      return await generateFixRecommendations(input.pageName, input.brokenFeatures);
+    }),
+
+  verifyArticlePosting: protectedProcedure
+    .input(z.object({ articleId: z.number() }))
+    .query(async ({ input }) => {
+      const distributions = await db.getArticleDistributions(input.articleId);
+      return await verifyArticlePosting(input.articleId, distributions);
+    }),
+
+  generateInternalLinks: protectedProcedure
+    .query(async ({ ctx }) => {
+      const articles = await db.getArticles(ctx.user.id);
+      const articlesWithKeywords = articles.map(a => ({
+        id: a.id,
+        title: a.title,
+        slug: a.slug || '',
+        keywords: a.keywords || [],
+      }));
+      return generateInternalLinks(articlesWithKeywords);
+    }),
+
+  getPageDefinitions: publicProcedure
+    .query(() => {
+      return PAGE_DEFINITIONS;
     }),
 });
 
