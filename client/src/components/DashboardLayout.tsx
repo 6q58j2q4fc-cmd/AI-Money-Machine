@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package, Crown, Network } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -41,6 +41,8 @@ const menuItems = [
   { icon: Bot, label: "Free Publishing Bot", path: "/free-publishing" },
   { icon: Shield, label: "Data Accuracy", path: "/data-accuracy" },
   { icon: Activity, label: "Audit Log", path: "/audit-log" },
+  { icon: Crown, label: "Hive Mind Center", path: "/hive-mind" },
+  { icon: Network, label: "Network Connections", path: "/network-connections" },
   { icon: Package, label: "Product Pages", path: "/product-pages" },
   { icon: Zap, label: "Auto Publish", path: "/auto-publish" },
   { icon: Link2, label: "Affiliate Links", path: "/affiliate-links" },

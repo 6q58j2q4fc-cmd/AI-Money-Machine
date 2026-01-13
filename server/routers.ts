@@ -3452,6 +3452,170 @@ const hiveMindRouter = router({
       const { getSystemHealthScore } = await import('./_core/selfOptimizingSystem');
       return await getSystemHealthScore(ctx.user.id);
     }),
+
+  // Real Page Publishing
+  getFreePlatforms: protectedProcedure
+    .query(async () => {
+      const { getFreePlatforms } = await import('./_core/realPagePublisher');
+      return getFreePlatforms();
+    }),
+
+  getPaymentConfig: protectedProcedure
+    .query(async () => {
+      const { getPaymentConfig } = await import('./_core/realPagePublisher');
+      return getPaymentConfig();
+    }),
+
+  generateSEOPage: protectedProcedure
+    .input(z.object({ articleId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const { generateSEOOptimizedPage } = await import('./_core/realPagePublisher');
+      return await generateSEOOptimizedPage(input.articleId, ctx.user.id);
+    }),
+
+  publishToFreePlatform: protectedProcedure
+    .input(z.object({
+      articleId: z.number(),
+      platformId: z.string(),
+      credentials: z.record(z.string(), z.string()).optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { publishToPlatform } = await import('./_core/realPagePublisher');
+      const creds: Record<string, string> | undefined = input.credentials;
+      return await publishToPlatform(input.articleId, input.platformId, ctx.user.id, creds);
+    }),
+
+  autoPublishToAll: protectedProcedure
+    .input(z.object({
+      articleId: z.number(),
+      credentials: z.record(z.string(), z.record(z.string(), z.string())).optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { autoPublishToAllPlatforms } = await import('./_core/realPagePublisher');
+      const creds: Record<string, Record<string, string>> = input.credentials || {};
+      return await autoPublishToAllPlatforms(input.articleId, ctx.user.id, creds);
+    }),
+
+  discoverPublishingOpportunities: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { discoverPublishingOpportunities } = await import('./_core/realPagePublisher');
+      return await discoverPublishingOpportunities(ctx.user.id);
+    }),
+
+  getArticlesReadyForPublishing: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getArticlesReadyForPublishing } = await import('./_core/realPagePublisher');
+      return await getArticlesReadyForPublishing(ctx.user.id);
+    }),
+
+  setupPayPalRouting: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { setupPayPalRouting } = await import('./_core/realPagePublisher');
+      return await setupPayPalRouting(ctx.user.id);
+    }),
+
+  getPublishingStats: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getPublishingStats } = await import('./_core/realPagePublisher');
+      return await getPublishingStats(ctx.user.id);
+    }),
+
+  // Platform Discovery procedures
+  discoverPlatforms: protectedProcedure
+    .mutation(async () => {
+      const { discoverNewPlatforms } = await import('./_core/platformDiscovery');
+      return await discoverNewPlatforms();
+    }),
+
+  getPlatformStatuses: protectedProcedure
+    .query(async () => {
+      const { getPlatformStatuses } = await import('./_core/platformDiscovery');
+      return await getPlatformStatuses();
+    }),
+
+  selectBestPlatforms: protectedProcedure
+    .input(z.object({ articleId: z.number() }))
+    .query(async ({ input }) => {
+      const { selectBestPlatforms } = await import('./_core/platformDiscovery');
+      return await selectBestPlatforms(input.articleId);
+    }),
+
+  scanMonetization: protectedProcedure
+    .mutation(async () => {
+      const { scanMonetizationOpportunities } = await import('./_core/platformDiscovery');
+      return await scanMonetizationOpportunities();
+    }),
+
+  autoIntegratePlatform: protectedProcedure
+    .input(z.object({ platformId: z.string(), paypalEmail: z.string() }))
+    .mutation(async ({ input }) => {
+      const { autoIntegratePlatform } = await import('./_core/platformDiscovery');
+      return await autoIntegratePlatform(input.platformId, input.paypalEmail);
+    }),
+
+  getAllPlatformsSummary: protectedProcedure
+    .query(async () => {
+      const { getAllPlatformsSummary } = await import('./_core/platformDiscovery');
+      return await getAllPlatformsSummary();
+    }),
+
+  // PayPal Routing procedures
+  getPayPalConfig: protectedProcedure
+    .query(async () => {
+      const { getPayPalConfig } = await import('./_core/paypalRouting');
+      return getPayPalConfig();
+    }),
+
+  setupPayPalForSource: protectedProcedure
+    .input(z.object({ sourceId: z.string() }))
+    .mutation(async ({ input }) => {
+      const { setupPayPalForSource } = await import('./_core/paypalRouting');
+      return await setupPayPalForSource(input.sourceId);
+    }),
+
+  recordIncome: protectedProcedure
+    .input(z.object({ sourceId: z.string(), amount: z.number(), currency: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const { recordIncome } = await import('./_core/paypalRouting');
+      return await recordIncome(input.sourceId, input.amount, input.currency);
+    }),
+
+  getIncomeRecords: protectedProcedure
+    .query(async () => {
+      const { getIncomeRecords } = await import('./_core/paypalRouting');
+      return getIncomeRecords();
+    }),
+
+  getIncomeSummary: protectedProcedure
+    .query(async () => {
+      const { getIncomeSummary } = await import('./_core/paypalRouting');
+      return getIncomeSummary();
+    }),
+
+  autoSetupAllPayPalSources: protectedProcedure
+    .mutation(async () => {
+      const { autoSetupAllSources } = await import('./_core/paypalRouting');
+      return await autoSetupAllSources();
+    }),
+
+  getPayPalMeLink: protectedProcedure
+    .input(z.object({ amount: z.number().optional() }))
+    .query(async ({ input }) => {
+      const { getPayPalMeLink } = await import('./_core/paypalRouting');
+      return { link: getPayPalMeLink(input.amount) };
+    }),
+
+  generateTipButton: protectedProcedure
+    .query(async () => {
+      const { generateTipButtonHtml } = await import('./_core/paypalRouting');
+      return { html: generateTipButtonHtml() };
+    }),
+
+  getPayPalOpportunities: protectedProcedure
+    .query(async () => {
+      const { getPayPalMonetizationOpportunities } = await import('./_core/paypalRouting');
+      return getPayPalMonetizationOpportunities();
+    }),
 });
 
 export const appRouter = router({

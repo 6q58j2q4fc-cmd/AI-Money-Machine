@@ -28,6 +28,8 @@ import LLMSettings from "./pages/LLMSettings";
 import ContentPipeline from "./pages/ContentPipeline";
 import SystemOptimizer from "./pages/SystemOptimizer";
 import ProductPages from "./pages/ProductPages";
+import HiveMindCenter from "./pages/HiveMindCenter";
+import NetworkConnections from "./pages/NetworkConnections";
 
 function Router() {
   return (
@@ -61,6 +63,8 @@ function Router() {
       <Route path="/llm-settings" component={LLMSettings} />
       <Route path="/content-pipeline" component={ContentPipeline} />
       <Route path="/product-pages" component={ProductPages} />
+      <Route path="/hive-mind" component={HiveMindCenter} />
+      <Route path="/network-connections" component={NetworkConnections} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
