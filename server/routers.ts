@@ -3824,6 +3824,101 @@ const awinRouter = router({
     }),
 });
 
+// NFT Automation Router - Generate, value, and sell NFTs automatically
+const nftRouter = router({
+  // Generate a single NFT with AI artwork
+  generate: protectedProcedure
+    .input(z.object({
+      style: z.string().optional(),
+      customPrompt: z.string().optional(),
+      collectionName: z.string().optional(),
+    }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const { generateNFT } = await import('./_core/nftAutomation');
+      return generateNFT(ctx.user.id, input);
+    }),
+
+  // Auto-list NFT on all marketplaces
+  autoList: protectedProcedure
+    .input(z.object({
+      nftId: z.string(),
+      price: z.number().optional(),
+      marketplaces: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { autoListNFT } = await import('./_core/nftAutomation');
+      return autoListNFT(ctx.user.id, input.nftId, {
+        price: input.price,
+        marketplaces: input.marketplaces,
+      });
+    }),
+
+  // Batch generate and list NFTs
+  batchGenerate: protectedProcedure
+    .input(z.object({
+      count: z.number().min(1).max(50),
+      collectionName: z.string().optional(),
+      style: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { batchGenerateAndList } = await import('./_core/nftAutomation');
+      return batchGenerateAndList(ctx.user.id, input.count, {
+        collectionName: input.collectionName,
+        style: input.style,
+      });
+    }),
+
+  // Get optimal pricing for a style
+  getOptimalPricing: protectedProcedure
+    .input(z.object({ style: z.string() }))
+    .query(async ({ input }) => {
+      const { getOptimalPricing } = await import('./_core/nftAutomation');
+      return getOptimalPricing(input.style);
+    }),
+
+  // Get market intelligence
+  getMarketIntelligence: protectedProcedure
+    .query(async () => {
+      const { getNFTMarketIntelligence } = await import('./_core/nftAutomation');
+      return getNFTMarketIntelligence();
+    }),
+
+  // Get all generated NFTs
+  getAllNFTs: protectedProcedure
+    .query(async () => {
+      const { getAllNFTs } = await import('./_core/nftAutomation');
+      return getAllNFTs();
+    }),
+
+  // Get available marketplaces
+  getMarketplaces: protectedProcedure
+    .query(async () => {
+      const { getMarketplaces } = await import('./_core/nftAutomation');
+      return getMarketplaces();
+    }),
+
+  // Get available art styles
+  getArtStyles: protectedProcedure
+    .query(async () => {
+      const { getArtStyles } = await import('./_core/nftAutomation');
+      return getArtStyles();
+    }),
+
+  // Learn from a sale
+  learnFromSale: protectedProcedure
+    .input(z.object({
+      nftId: z.string(),
+      marketplace: z.string(),
+      soldPrice: z.number(),
+      buyerAddress: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { learnFromSales } = await import('./_core/nftAutomation');
+      await learnFromSales(ctx.user.id, input);
+      return { success: true };
+    }),
+});
+
 // Always Awake Router - Keeps the money machine running 24/7
 const alwaysAwakeRouter = router({
   // Start the always-awake system
@@ -3900,6 +3995,7 @@ export const appRouter = router({
   hiveMind: hiveMindRouter,
   awin: awinRouter,
   alwaysAwake: alwaysAwakeRouter,
+  nft: nftRouter,
 });
 
 export type AppRouter = typeof appRouter;

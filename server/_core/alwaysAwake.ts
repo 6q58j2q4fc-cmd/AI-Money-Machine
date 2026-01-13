@@ -7,6 +7,7 @@
 import { logEvent, getHiveMindState } from "./hiveMind";
 import { syncAwinProgrammes, getAwinCommissionSummary } from "./awinApi";
 import { scanForOpportunities, autoClaimRewards, getAllCryptoOpportunities } from "./autoCryptoEarner";
+import { batchGenerateAndList, getNFTMarketIntelligence } from "./nftAutomation";
 
 // Operation intervals (in milliseconds)
 const INTERVALS = {
@@ -71,6 +72,7 @@ export async function startAlwaysAwake(userId: number): Promise<{
   scheduleTask("faucetClaim", INTERVALS.FAUCET_CLAIM, () => claimAllFaucets(userId));
   scheduleTask("airdropCheck", INTERVALS.AIRDROP_CHECK, () => checkAllAirdrops(userId));
   scheduleTask("awinSync", INTERVALS.AWIN_SYNC, () => syncAwin(userId));
+  scheduleTask("nftGeneration", INTERVALS.CONTENT_GENERATION, () => generateNFTs(userId));
   scheduleTask("fullOptimization", INTERVALS.FULL_OPTIMIZATION, () => runFullOptimization(userId));
 
   // Run initial operations immediately
@@ -197,6 +199,7 @@ async function runInitialOperations(userId: number): Promise<void> {
   await scanCrypto(userId);
   await syncAffiliates(userId);
   await syncAwin(userId);
+  await generateNFTs(userId);
 
   await logEvent(userId, "system_event", {
     message: "✅ Initial operations complete - System fully operational",
@@ -316,6 +319,28 @@ async function syncAwin(userId: number): Promise<void> {
 }
 
 /**
+ * Generate NFTs automatically
+ */
+async function generateNFTs(userId: number): Promise<void> {
+  try {
+    const result = await batchGenerateAndList(userId, 2, {
+      collectionName: "AutoGen Collection"
+    });
+
+    await logEvent(userId, "system_event", {
+      message: `🎨 Auto-generated ${result.generated} NFTs, listed on ${result.listed} marketplaces`,
+      metadata: {
+        type: "nft_generation",
+        generated: result.generated,
+        listed: result.listed,
+      },
+    });
+  } catch (error) {
+    console.error("NFT generation failed:", error);
+  }
+}
+
+/**
  * Run full system optimization
  */
 async function runFullOptimization(userId: number): Promise<void> {
@@ -364,6 +389,9 @@ export async function forceRunAll(userId: number): Promise<{
 
     await checkAllAirdrops(userId);
     results.push("✓ Airdrop check");
+
+    await generateNFTs(userId);
+    results.push("✓ NFT generation");
 
     await syncAffiliates(userId);
     results.push("✓ Affiliate sync");
