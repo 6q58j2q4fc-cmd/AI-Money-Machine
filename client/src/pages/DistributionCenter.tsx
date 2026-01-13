@@ -3,9 +3,10 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Globe, Share2, CheckCircle, XCircle, Clock, ExternalLink, Send, RefreshCw, Link2, Eye, MousePointer, TrendingUp } from "lucide-react";
+import { Loader2, Globe, Share2, CheckCircle, XCircle, Clock, ExternalLink, Send, RefreshCw, Link2, Eye, MousePointer, TrendingUp, Bug, Zap, Bot, AlertTriangle, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -41,6 +42,44 @@ export default function DistributionCenter() {
   const { data: stats, isLoading: statsLoading } = trpc.distribution.stats.useQuery();
   const { data: distributions, isLoading: distLoading, refetch } = trpc.distribution.list.useQuery({});
   const { data: articles, isLoading: articlesLoading } = trpc.articles.list.useQuery({});
+  const { data: realUrls, isLoading: realUrlsLoading, refetch: refetchRealUrls } = trpc.hiveMind.getRealDistributionUrls.useQuery({ limit: 100 });
+  const { data: debugState, refetch: refetchDebugState } = trpc.hiveMind.getDebugBotState.useQuery();
+  
+  const autoFixUrlsMutation = trpc.hiveMind.autoFixDistributionUrls.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Fixed ${result.fixed} distribution URLs`);
+      refetch();
+      refetchRealUrls();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+  
+  const runDebugScanMutation = trpc.hiveMind.runDebugScan.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Scan complete: ${result.issuesFound} issues found, ${result.issuesFixed} fixed`);
+      refetchDebugState();
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+  
+  const startMonitoringMutation = trpc.hiveMind.startDebugMonitoring.useMutation({
+    onSuccess: () => {
+      toast.success('Debug bot monitoring started');
+      refetchDebugState();
+    },
+  });
+  
+  const stopMonitoringMutation = trpc.hiveMind.stopDebugMonitoring.useMutation({
+    onSuccess: () => {
+      toast.success('Debug bot monitoring stopped');
+      refetchDebugState();
+    },
+  });
 
   const distributeMutation = trpc.distribution.distributeArticle.useMutation({
     onSuccess: () => {
@@ -125,12 +164,77 @@ export default function DistributionCenter() {
     <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold">Distribution Center</h1>
-          <p className="text-muted-foreground mt-1">
-            Distribute your articles across multiple platforms to maximize reach and traffic
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Distribution Center</h1>
+            <p className="text-muted-foreground mt-1">
+              Distribute your articles across multiple platforms to maximize reach and traffic
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => autoFixUrlsMutation.mutate()}
+              disabled={autoFixUrlsMutation.isPending}
+            >
+              {autoFixUrlsMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Wrench className="w-4 h-4 mr-2" />}
+              Auto-Fix URLs
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => runDebugScanMutation.mutate()}
+              disabled={runDebugScanMutation.isPending}
+            >
+              {runDebugScanMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Bug className="w-4 h-4 mr-2" />}
+              Debug Scan
+            </Button>
+          </div>
         </div>
+
+        {/* Debug Bot Status */}
+        {debugState && (
+          <Card className="card-glow border-purple-500/30 bg-purple-500/5">
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Bot className={`w-8 h-8 ${debugState.isActive ? 'text-green-400 animate-pulse' : 'text-muted-foreground'}`} />
+                  <div>
+                    <h3 className="font-semibold">Autonomous Debug Bot</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {debugState.isActive ? 'Actively monitoring and fixing issues' : 'Monitoring paused'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-blue-400">{debugState.issuesDetected}</div>
+                    <div className="text-xs text-muted-foreground">Detected</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-green-400">{debugState.issuesFixed}</div>
+                    <div className="text-xs text-muted-foreground">Fixed</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-purple-400">{debugState.learnings}</div>
+                    <div className="text-xs text-muted-foreground">Learnings</div>
+                  </div>
+                  {debugState.isActive ? (
+                    <Button variant="outline" size="sm" onClick={() => stopMonitoringMutation.mutate()}>
+                      Stop Monitoring
+                    </Button>
+                  ) : (
+                    <Button variant="default" size="sm" onClick={() => startMonitoringMutation.mutate()}>
+                      <Zap className="w-4 h-4 mr-2" />
+                      Start Monitoring
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

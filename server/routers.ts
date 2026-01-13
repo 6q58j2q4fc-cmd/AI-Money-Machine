@@ -3616,6 +3616,71 @@ const hiveMindRouter = router({
       const { getPayPalMonetizationOpportunities } = await import('./_core/paypalRouting');
       return getPayPalMonetizationOpportunities();
     }),
+
+  // Autonomous Debug Bot
+  initDebugBot: protectedProcedure
+    .mutation(async () => {
+      const { initializeDebugBot } = await import('./_core/autonomousDebugBot');
+      return initializeDebugBot();
+    }),
+
+  runDebugScan: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { runFullSystemScan } = await import('./_core/autonomousDebugBot');
+      return runFullSystemScan(String(ctx.user.id));
+    }),
+
+  getDebugBotState: protectedProcedure
+    .query(async () => {
+      const { getDebugBotState } = await import('./_core/autonomousDebugBot');
+      return getDebugBotState();
+    }),
+
+  autoFixDistributionUrls: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { autoFixDistributionUrls } = await import('./_core/autonomousDebugBot');
+      return autoFixDistributionUrls(String(ctx.user.id));
+    }),
+
+  getRealDistributionUrls: protectedProcedure
+    .input(z.object({ limit: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const { getRealDistributionUrls } = await import('./_core/autonomousDebugBot');
+      return getRealDistributionUrls(String(ctx.user.id), input?.limit || 50);
+    }),
+
+  startDebugMonitoring: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { startContinuousMonitoring } = await import('./_core/autonomousDebugBot');
+      await startContinuousMonitoring(String(ctx.user.id));
+      return { success: true, message: 'Debug bot monitoring started' };
+    }),
+
+  stopDebugMonitoring: protectedProcedure
+    .mutation(async () => {
+      const { stopContinuousMonitoring } = await import('./_core/autonomousDebugBot');
+      stopContinuousMonitoring();
+      return { success: true, message: 'Debug bot monitoring stopped' };
+    }),
+
+  learnFromFeedback: protectedProcedure
+    .input(z.object({
+      issueId: z.string(),
+      wasSuccessful: z.boolean()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { learnFromFeedback } = await import('./_core/autonomousDebugBot');
+      await learnFromFeedback(input.issueId, input.wasSuccessful, String(ctx.user.id));
+      return { success: true };
+    }),
+
+  consultHiveMindDebug: protectedProcedure
+    .input(z.object({ query: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { consultHiveMind } = await import('./_core/autonomousDebugBot');
+      const response = await consultHiveMind(input.query, String(ctx.user.id));
+      return { response };
+    }),
 });
 
 export const appRouter = router({
