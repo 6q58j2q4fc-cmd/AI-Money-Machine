@@ -3681,6 +3681,57 @@ const hiveMindRouter = router({
       const response = await consultHiveMind(input.query, String(ctx.user.id));
       return { response };
     }),
+
+  // Crypto Earning
+  getCryptoState: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getCryptoEarningState } = await import('./_core/autoCryptoEarner');
+      return getCryptoEarningState(ctx.user.id);
+    }),
+
+  getCryptoOpportunities: protectedProcedure
+    .query(async () => {
+      const { getAllCryptoOpportunities } = await import('./_core/autoCryptoEarner');
+      return getAllCryptoOpportunities();
+    }),
+
+  scanCryptoOpportunities: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { scanForOpportunities } = await import('./_core/autoCryptoEarner');
+      return scanForOpportunities(ctx.user.id);
+    }),
+
+  autoClaimCrypto: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { autoClaimRewards } = await import('./_core/autoCryptoEarner');
+      return autoClaimRewards(ctx.user.id);
+    }),
+
+  setupCryptoWallet: protectedProcedure
+    .input(z.object({ walletAddress: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { setupWallet } = await import('./_core/autoCryptoEarner');
+      return setupWallet(ctx.user.id, input.walletAddress);
+    }),
+
+  getCryptoReferrals: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getReferralLinks } = await import('./_core/autoCryptoEarner');
+      return getReferralLinks(ctx.user.id);
+    }),
+
+  optimizeCryptoEarnings: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { optimizeCryptoEarnings } = await import('./_core/autoCryptoEarner');
+      return optimizeCryptoEarnings(ctx.user.id);
+    }),
+
+  generateCryptoContent: protectedProcedure
+    .input(z.object({ topic: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { generateCryptoContent } = await import('./_core/autoCryptoEarner');
+      return generateCryptoContent(ctx.user.id, input.topic);
+    }),
 });
 
 export const appRouter = router({

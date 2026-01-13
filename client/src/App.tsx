@@ -30,6 +30,8 @@ import SystemOptimizer from "./pages/SystemOptimizer";
 import ProductPages from "./pages/ProductPages";
 import HiveMindCenter from "./pages/HiveMindCenter";
 import NetworkConnections from "./pages/NetworkConnections";
+import FreeIncome from "./pages/FreeIncome";
+import NFTGallery from "./pages/NFTGallery";
 
 function Router() {
   return (
@@ -65,6 +67,8 @@ function Router() {
       <Route path="/product-pages" component={ProductPages} />
       <Route path="/hive-mind" component={HiveMindCenter} />
       <Route path="/network-connections" component={NetworkConnections} />
+      <Route path="/free-income" component={FreeIncome} />
+      <Route path="/nft-gallery" component={NFTGallery} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

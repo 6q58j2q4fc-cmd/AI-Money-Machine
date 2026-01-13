@@ -836,3 +836,35 @@
 - [x] Start/Stop Monitoring controls
 - [x] Debug Scan button for manual scans
 - [x] Issues detected/fixed/learnings tracking
+
+
+## Free Income & Crypto Features (New Requirements)
+
+### Free Income Discovery Page
+- [x] Aggregate legitimate free income opportunities
+- [x] Cashback programs integration
+- [x] Survey/micro-task platforms
+- [x] Referral program tracking
+- [x] Auto-discover new opportunities
+- [x] Track earnings from all sources
+
+### NFT Gallery
+- [x] AI art generation for NFTs
+- [x] NFT showcase/gallery display
+- [x] Marketplace listing features
+- [x] Connect to OpenSea/Rarible APIs
+- [x] Track NFT sales and value
+
+### Automatic Crypto Earning
+- [x] Crypto faucet aggregator
+- [x] Airdrop tracker and claimer
+- [x] Staking referral programs
+- [x] Brave browser rewards integration
+- [x] Auto-claim where possible
+
+### Crypto Wallet Dashboard
+- [x] MetaMask/WalletConnect integration
+- [x] Multi-chain wallet support
+- [x] Balance tracking across chains
+- [x] Transaction history
+- [x] Auto-deposit to user wallet
