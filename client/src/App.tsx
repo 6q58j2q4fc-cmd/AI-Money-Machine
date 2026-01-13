@@ -32,6 +32,7 @@ import HiveMindCenter from "./pages/HiveMindCenter";
 import NetworkConnections from "./pages/NetworkConnections";
 import FreeIncome from "./pages/FreeIncome";
 import NFTGallery from "./pages/NFTGallery";
+import AwinIntegration from "./pages/AwinIntegration";
 
 function Router() {
   return (
@@ -69,6 +70,7 @@ function Router() {
       <Route path="/network-connections" component={NetworkConnections} />
       <Route path="/free-income" component={FreeIncome} />
       <Route path="/nft-gallery" component={NFTGallery} />
+      <Route path="/awin-integration" component={AwinIntegration} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

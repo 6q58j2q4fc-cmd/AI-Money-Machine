@@ -21,4 +21,6 @@ export const ENV = {
   cerebrasApiKey: process.env.CEREBRAS_API_KEY ?? "",
   openrouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
   googleAiApiKey: process.env.GOOGLE_AI_API_KEY ?? "",
+  // Awin Affiliate Network
+  awinApiKey: process.env.AWIN_API_KEY ?? "",
 };

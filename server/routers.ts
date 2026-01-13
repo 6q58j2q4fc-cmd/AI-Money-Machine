@@ -3734,6 +3734,141 @@ const hiveMindRouter = router({
     }),
 });
 
+// Awin Affiliate Network Router
+const awinRouter = router({
+  // Get API status
+  getStatus: protectedProcedure
+    .query(async () => {
+      const { checkAwinApiStatus } = await import('./_core/awinApi');
+      return checkAwinApiStatus();
+    }),
+
+  // Get all programmes
+  getProgrammes: protectedProcedure
+    .input(z.object({
+      relationship: z.enum(["joined", "pending", "suspended", "rejected", "not joined"]).optional(),
+      countryCode: z.string().optional(),
+    }).optional())
+    .query(async ({ input }) => {
+      const { getAwinProgrammes } = await import('./_core/awinApi');
+      return getAwinProgrammes(undefined, input || {});
+    }),
+
+  // Get joined programmes only
+  getJoinedProgrammes: protectedProcedure
+    .query(async () => {
+      const { getJoinedAwinProgrammes } = await import('./_core/awinApi');
+      return getJoinedAwinProgrammes();
+    }),
+
+  // Search programmes
+  searchProgrammes: protectedProcedure
+    .input(z.object({ keyword: z.string() }))
+    .query(async ({ input }) => {
+      const { searchAwinProgrammes } = await import('./_core/awinApi');
+      return searchAwinProgrammes(input.keyword);
+    }),
+
+  // Create affiliate link
+  createLink: protectedProcedure
+    .input(z.object({
+      advertiserId: z.number(),
+      destinationUrl: z.string().url(),
+    }))
+    .mutation(async ({ input }) => {
+      const { createAwinLink } = await import('./_core/awinApi');
+      return createAwinLink(undefined, input.advertiserId, input.destinationUrl);
+    }),
+
+  // Get commission summary
+  getCommissionSummary: protectedProcedure
+    .input(z.object({ days: z.number().optional() }).optional())
+    .query(async ({ input }) => {
+      const { getAwinCommissionSummary } = await import('./_core/awinApi');
+      return getAwinCommissionSummary(undefined, input?.days || 30);
+    }),
+
+  // Get top advertisers
+  getTopAdvertisers: protectedProcedure
+    .input(z.object({ limit: z.number().optional() }).optional())
+    .query(async ({ input }) => {
+      const { getTopAwinAdvertisers } = await import('./_core/awinApi');
+      return getTopAwinAdvertisers(undefined, input?.limit || 10);
+    }),
+
+  // Sync programmes to database
+  syncProgrammes: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { syncAwinProgrammes } = await import('./_core/awinApi');
+      return syncAwinProgrammes(ctx.user.id);
+    }),
+
+  // Import links to database
+  importLinks: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { getAwinProgrammes, importAwinLinksToDatabase } = await import('./_core/awinApi');
+      const programmes = await getAwinProgrammes();
+      return importAwinLinksToDatabase(ctx.user.id, programmes);
+    }),
+
+  // Get transactions
+  getTransactions: protectedProcedure
+    .input(z.object({
+      startDate: z.string(),
+      endDate: z.string(),
+      status: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const { getAwinTransactions } = await import('./_core/awinApi');
+      return getAwinTransactions(undefined, input.startDate, input.endDate, { status: input.status });
+    }),
+});
+
+// Always Awake Router - Keeps the money machine running 24/7
+const alwaysAwakeRouter = router({
+  // Start the always-awake system
+  start: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { startAlwaysAwake } = await import('./_core/alwaysAwake');
+      return startAlwaysAwake(ctx.user.id);
+    }),
+
+  // Stop the always-awake system
+  stop: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { stopAlwaysAwake } = await import('./_core/alwaysAwake');
+      return stopAlwaysAwake(ctx.user.id);
+    }),
+
+  // Get current status
+  getStatus: protectedProcedure
+    .query(async () => {
+      const { getAlwaysAwakeStatus } = await import('./_core/alwaysAwake');
+      return getAlwaysAwakeStatus();
+    }),
+
+  // Force run all operations
+  forceRunAll: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { forceRunAll } = await import('./_core/alwaysAwake');
+      return forceRunAll(ctx.user.id);
+    }),
+
+  // Get earnings summary
+  getEarnings: protectedProcedure
+    .query(async () => {
+      const { getEarningsSummary } = await import('./_core/alwaysAwake');
+      return getEarningsSummary();
+    }),
+
+  // Wake up the system
+  wakeUp: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { wakeUp } = await import('./_core/alwaysAwake');
+      return wakeUp(ctx.user.id);
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -3763,6 +3898,8 @@ export const appRouter = router({
   llm: llmRouter,
   optimizer: optimizerRouter,
   hiveMind: hiveMindRouter,
+  awin: awinRouter,
+  alwaysAwake: alwaysAwakeRouter,
 });
 
 export type AppRouter = typeof appRouter;

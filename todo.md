@@ -868,3 +868,49 @@
 - [x] Balance tracking across chains
 - [x] Transaction history
 - [x] Auto-deposit to user wallet
+
+
+## Awin Affiliate Integration (New Requirements)
+
+### Awin API Integration
+- [ ] Create Awin API service for affiliate link fetching
+- [ ] Fetch available Awin advertisers and programs
+- [ ] Import Awin affiliate links into system
+- [ ] Track Awin commissions and conversions
+- [ ] Add Awin Integration page to UI
+- [ ] Connect Awin links to content pipeline
+
+### Always-Awake Autonomous Operation
+- [ ] Implement aggressive auto-wake scheduler (1-minute cycles)
+- [ ] Continuous content generation without sleep
+- [ ] Self-healing system that restarts on failures
+- [ ] Maximum article output mode
+- [ ] 24/7 affiliate link distribution
+- [ ] Empire-building cash generation mode
+
+
+## Awin Affiliate Integration (Completed)
+- [x] Awin API service integration
+- [x] Programme fetching and search
+- [x] Affiliate link creation
+- [x] Commission tracking
+- [x] Awin Integration page UI
+- [x] Import Awin links to database
+- [x] Top advertisers tracking
+- [x] Unit tests for Awin features (8 tests passing)
+
+## Always Awake System (Completed)
+- [x] 24/7 autonomous operation
+- [x] Aggressive scheduling for income generation
+- [x] Heartbeat monitoring (1 minute intervals)
+- [x] Auto content generation scheduling (15 minute intervals)
+- [x] Affiliate sync scheduling (30 minute intervals)
+- [x] Crypto opportunity scanning (10 minute intervals)
+- [x] Faucet auto-claiming (1 hour intervals)
+- [x] Airdrop checking (2 hour intervals)
+- [x] Awin programme syncing (4 hour intervals)
+- [x] Full system optimization (6 hour intervals)
+- [x] Force run all operations
+- [x] Wake up functionality
+- [x] Earnings summary tracking
+- [x] Unit tests for Always Awake (7 tests passing)
