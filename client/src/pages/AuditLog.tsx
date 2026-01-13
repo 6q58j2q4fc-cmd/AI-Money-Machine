@@ -14,7 +14,8 @@ import {
   FileText, Link2, Send, Bot, Search, Clock, CheckCircle, XCircle, 
   Activity, TrendingUp, Zap, RefreshCw, Filter, Download, Brain,
   MessageSquare, Sparkles, AlertCircle, Play, Power, PowerOff,
-  Database, Eye, ShoppingBag, Settings, Loader2
+  Database, Eye, ShoppingBag, Settings, Loader2, Mic, MicOff, Volume2,
+  Rocket, Target, DollarSign, Globe, Cpu
 } from "lucide-react";
 
 const eventTypeIcons: Record<string, React.ReactNode> = {
@@ -100,6 +101,21 @@ export default function AuditLog() {
   const runAllBotsMutation = trpc.hiveMind.runAllBots.useMutation();
   const startSchedulerMutation = trpc.hiveMind.startScheduler.useMutation();
   const stopSchedulerMutation = trpc.hiveMind.stopScheduler.useMutation();
+  
+  // Ultimate Hive Mind mutations
+  const voiceCommandMutation = trpc.hiveMind.voiceCommand.useMutation();
+  const globalAutoWakeMutation = trpc.hiveMind.globalAutoWake.useMutation();
+  const runOptimizationMutation = trpc.hiveMind.runOptimization.useMutation();
+  const { data: ultimateStatus, refetch: refetchUltimateStatus } = trpc.hiveMind.getUltimateStatus.useQuery();
+  const { data: monetizationPlatforms } = trpc.hiveMind.getMonetizationPlatforms.useQuery();
+  
+  // Voice control state
+  const [isListening, setIsListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [voiceResponse, setVoiceResponse] = useState<{
+    response: string;
+    actionsExecuted: string[];
+  } | null>(null);
   
   const { data: botStates, refetch: refetchBotStates } = trpc.hiveMind.getBotStates.useQuery();
   const { data: schedulerState, refetch: refetchScheduler } = trpc.hiveMind.getSchedulerState.useQuery();
@@ -247,6 +263,92 @@ export default function AuditLog() {
     }
   };
   
+  // Voice control handlers
+  const handleVoiceCommand = async (command: string) => {
+    try {
+      const result = await voiceCommandMutation.mutateAsync({ command });
+      setVoiceResponse(result);
+      toast.success(`Executed: ${result.actionsExecuted.join(', ')}`);
+      refetch();
+      refetchUltimateStatus();
+      
+      // Speak the response if speech synthesis is available
+      if ('speechSynthesis' in window && result.audioResponse) {
+        const utterance = new SpeechSynthesisUtterance(result.audioResponse);
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (error: any) {
+      toast.error(`Voice command failed: ${error?.message || 'Unknown error'}`);
+    }
+  };
+  
+  const startVoiceRecognition = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error('Voice recognition not supported in this browser');
+      return;
+    }
+    
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    
+    recognition.onstart = () => {
+      setIsListening(true);
+      setVoiceTranscript('');
+    };
+    
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0].transcript)
+        .join('');
+      setVoiceTranscript(transcript);
+    };
+    
+    recognition.onend = () => {
+      setIsListening(false);
+      if (voiceTranscript) {
+        handleVoiceCommand(voiceTranscript);
+      }
+    };
+    
+    recognition.onerror = (event: any) => {
+      setIsListening(false);
+      toast.error(`Voice recognition error: ${event.error}`);
+    };
+    
+    recognition.start();
+  };
+  
+  const handleGlobalAutoWake = async () => {
+    try {
+      const result = await globalAutoWakeMutation.mutateAsync();
+      if (result.success) {
+        toast.success(`Global wake: ${result.pagesWoken.length} pages, ${result.decisionsLogged} decisions`);
+        if (result.incomeOpportunities.length > 0) {
+          toast.info(`Income opportunities: ${result.incomeOpportunities.slice(0, 2).join(', ')}`);
+        }
+      }
+      refetch();
+      refetchBotStates();
+      refetchUltimateStatus();
+    } catch (error: any) {
+      toast.error(`Global wake failed: ${error?.message || 'Unknown error'}`);
+    }
+  };
+  
+  const handleRunOptimization = async () => {
+    try {
+      const result = await runOptimizationMutation.mutateAsync();
+      toast.success(`Optimization: ${result.optimizationsApplied.length} applied, ${result.nextActions.length} next actions`);
+      refetch();
+      refetchUltimateStatus();
+    } catch (error: any) {
+      toast.error(`Optimization failed: ${error?.message || 'Unknown error'}`);
+    }
+  };
+  
   const exportLogs = () => {
     if (!logs) return;
     const csv = [
@@ -301,6 +403,14 @@ export default function AuditLog() {
           <Button variant="secondary" onClick={handleRunAllBots} disabled={runAllBotsMutation.isPending}>
             <Bot className="h-4 w-4 mr-2" />
             {runAllBotsMutation.isPending ? "Running..." : "Run All Bots"}
+          </Button>
+          <Button variant="default" className="bg-gradient-to-r from-purple-500 to-pink-500" onClick={handleGlobalAutoWake} disabled={globalAutoWakeMutation.isPending}>
+            <Globe className="h-4 w-4 mr-2" />
+            {globalAutoWakeMutation.isPending ? "Waking All..." : "Global Wake"}
+          </Button>
+          <Button variant="outline" onClick={handleRunOptimization} disabled={runOptimizationMutation.isPending}>
+            <Target className="h-4 w-4 mr-2" />
+            {runOptimizationMutation.isPending ? "Optimizing..." : "Optimize"}
           </Button>
           <Button variant="outline" onClick={exportLogs}>
             <Download className="h-4 w-4 mr-2" />
@@ -404,6 +514,172 @@ export default function AuditLog() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Voice Control Interface */}
+      <Card className="border-purple-500/50 bg-gradient-to-r from-purple-500/5 to-pink-500/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Volume2 className="h-5 w-5 text-purple-500" />
+            Voice Control - Talk to the Hive Mind
+          </CardTitle>
+          <CardDescription>
+            Speak commands to control the system. Say "run all bots", "sync CJ vendors", "generate articles", etc.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex gap-4 items-center">
+              <Button 
+                variant={isListening ? "destructive" : "default"}
+                size="lg"
+                className="w-40"
+                onClick={startVoiceRecognition}
+                disabled={voiceCommandMutation.isPending}
+              >
+                {isListening ? (
+                  <><MicOff className="h-5 w-5 mr-2" /> Listening...</>
+                ) : voiceCommandMutation.isPending ? (
+                  <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Processing...</>
+                ) : (
+                  <><Mic className="h-5 w-5 mr-2" /> Start Voice</>
+                )}
+              </Button>
+              <div className="flex-1">
+                <Input
+                  placeholder="Or type a command here..."
+                  value={voiceTranscript}
+                  onChange={(e) => setVoiceTranscript(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && voiceTranscript && handleVoiceCommand(voiceTranscript)}
+                />
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={() => voiceTranscript && handleVoiceCommand(voiceTranscript)}
+                disabled={!voiceTranscript || voiceCommandMutation.isPending}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {voiceResponse && (
+              <div className="p-4 rounded-lg bg-background/50 border border-purple-500/30">
+                <div className="font-medium mb-2">Hive Mind Response:</div>
+                <p className="text-muted-foreground">{voiceResponse.response}</p>
+                {voiceResponse.actionsExecuted.length > 0 && (
+                  <div className="mt-2">
+                    <span className="text-sm text-muted-foreground">Actions executed: </span>
+                    {voiceResponse.actionsExecuted.map((action, i) => (
+                      <Badge key={i} variant="secondary" className="mr-1">{action}</Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Quick Voice Commands */}
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleVoiceCommand('run all bots')}>
+                <Bot className="h-3 w-3 mr-1" /> Run All Bots
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleVoiceCommand('sync cj vendors')}>
+                <RefreshCw className="h-3 w-3 mr-1" /> Sync CJ
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleVoiceCommand('check performance')}>
+                <TrendingUp className="h-3 w-3 mr-1" /> Check Performance
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleVoiceCommand('find new income')}>
+                <DollarSign className="h-3 w-3 mr-1" /> Find Income
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleVoiceCommand('auto wake')}>
+                <Zap className="h-3 w-3 mr-1" /> Auto Wake
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Ultimate Hive Mind Status */}
+      {ultimateStatus && (
+        <Card className="border-green-500/50 bg-gradient-to-r from-green-500/5 to-emerald-500/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Cpu className="h-5 w-5 text-green-500" />
+              Ultimate Hive Mind Status
+            </CardTitle>
+            <CardDescription>
+              Single purpose: {ultimateStatus.primaryGoal}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="text-sm text-muted-foreground">Owner</div>
+                <div className="font-bold">{ultimateStatus.owner}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="text-sm text-muted-foreground">Active Bots</div>
+                <div className="font-bold text-green-500">{ultimateStatus.activeBots}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="text-sm text-muted-foreground">Total Decisions</div>
+                <div className="font-bold text-purple-500">{ultimateStatus.totalDecisions}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="text-sm text-muted-foreground">Pages Managed</div>
+                <div className="font-bold">{ultimateStatus.pagesManaged}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="text-sm text-muted-foreground">Last Wake</div>
+                <div className="font-bold text-xs">{ultimateStatus.lastWake ? formatDate(ultimateStatus.lastWake) : 'Never'}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="text-sm text-muted-foreground">Autonomous</div>
+                <div className={`font-bold ${ultimateStatus.autonomousMode ? 'text-green-500' : 'text-yellow-500'}`}>
+                  {ultimateStatus.autonomousMode ? 'Active' : 'Inactive'}
+                </div>
+              </div>
+            </div>
+            {ultimateStatus.incomeStreams.length > 0 && (
+              <div className="mt-4">
+                <div className="text-sm text-muted-foreground mb-2">Active Income Streams:</div>
+                <div className="flex flex-wrap gap-2">
+                  {ultimateStatus.incomeStreams.map((stream, i) => (
+                    <Badge key={i} variant="secondary">
+                      <DollarSign className="h-3 w-3 mr-1" />
+                      {stream}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Monetization Platforms */}
+      {monetizationPlatforms && monetizationPlatforms.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-yellow-500" />
+              Available Monetization Platforms
+            </CardTitle>
+            <CardDescription>
+              Platforms the Hive Mind can auto-integrate for additional revenue
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {monetizationPlatforms.map((platform) => (
+                <div key={platform.platform} className="p-3 rounded-lg bg-background/50 border hover:border-primary/50 transition-colors">
+                  <div className="font-medium text-sm">{platform.platform}</div>
+                  <div className="text-xs text-muted-foreground capitalize">{platform.revenueType.replace('_', ' ')}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       {/* Hive Mind Query Interface */}
       <Card className="border-primary/50 bg-gradient-to-r from-primary/5 to-purple-500/5">

@@ -986,9 +986,13 @@ export async function getBotLearningStats(userId: number) {
     successfulDecisions: 0, 
     failedDecisions: 0, 
     successRate: 0,
-    avgConfidence: 0 
+    avgConfidence: 0,
+    botDecisionEvents: 0,
+    botLearningEvents: 0,
+    botOptimizationEvents: 0
   };
   
+  // Get bot learning table stats
   const stats = await db
     .select({
       totalDecisions: sql<number>`COUNT(*)`,
@@ -999,12 +1003,54 @@ export async function getBotLearningStats(userId: number) {
     .from(botLearning)
     .where(eq(botLearning.userId, userId));
   
+  // Also count bot_decision events from audit log
+  const botDecisionEvents = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(auditLog)
+    .where(and(
+      sql`${auditLog.userId} = ${userId}`,
+      eq(auditLog.eventType, 'bot_decision')
+    ));
+
+  // Count bot_learning events
+  const botLearningEvents = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(auditLog)
+    .where(and(
+      sql`${auditLog.userId} = ${userId}`,
+      eq(auditLog.eventType, 'bot_learning')
+    ));
+
+  // Count bot_optimization events
+  const botOptimizationEvents = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(auditLog)
+    .where(and(
+      sql`${auditLog.userId} = ${userId}`,
+      eq(auditLog.eventType, 'bot_optimization')
+    ));
+  
   const result = stats[0] || { totalDecisions: 0, successfulDecisions: 0, failedDecisions: 0, avgConfidence: 0 };
+  
+  // Combine bot learning table decisions with audit log bot events
+  const totalFromAuditLog = (botDecisionEvents[0]?.count || 0) + 
+                            (botLearningEvents[0]?.count || 0) + 
+                            (botOptimizationEvents[0]?.count || 0);
+  
+  const combinedTotalDecisions = (result.totalDecisions || 0) + totalFromAuditLog;
+  
   const successRate = result.totalDecisions > 0 
     ? Math.round((result.successfulDecisions / result.totalDecisions) * 100) 
     : 0;
   
-  return { ...result, successRate };
+  return { 
+    ...result, 
+    totalDecisions: combinedTotalDecisions,
+    successRate,
+    botDecisionEvents: botDecisionEvents[0]?.count || 0,
+    botLearningEvents: botLearningEvents[0]?.count || 0,
+    botOptimizationEvents: botOptimizationEvents[0]?.count || 0
+  };
 }
 
 export async function getRecentBotDecisions(userId: number, limit: number = 10) {

@@ -3141,6 +3141,317 @@ const hiveMindRouter = router({
       const { getBotMessages } = await import('./_core/unifiedBotSystem');
       return getBotMessages(input.botType, input.limit);
     }),
+
+  // ============================================
+  // ULTIMATE HIVE MIND - Fully Autonomous System
+  // ============================================
+
+  // Execute voice command
+  voiceCommand: protectedProcedure
+    .input(z.object({
+      command: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { executeVoiceCommand } = await import('./_core/ultimateHiveMind');
+      return await executeVoiceCommand(ctx.user.id, input.command);
+    }),
+
+  // Global auto-wake - wakes ALL pages and functions
+  globalAutoWake: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { globalAutoWake } = await import('./_core/ultimateHiveMind');
+      return await globalAutoWake(ctx.user.id);
+    }),
+
+  // Self-implement revenue stream
+  selfImplementRevenue: protectedProcedure
+    .input(z.object({
+      platform: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { selfImplementRevenue } = await import('./_core/ultimateHiveMind');
+      return await selfImplementRevenue(ctx.user.id, input.platform);
+    }),
+
+  // Get ultimate hive mind status
+  getUltimateStatus: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getHiveMindStatus } = await import('./_core/ultimateHiveMind');
+      return await getHiveMindStatus(ctx.user.id);
+    }),
+
+  // Run continuous optimization
+  runOptimization: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { runContinuousOptimization } = await import('./_core/ultimateHiveMind');
+      return await runContinuousOptimization(ctx.user.id);
+    }),
+
+  // Get available monetization platforms
+  getMonetizationPlatforms: protectedProcedure
+    .query(async () => {
+      const { getMonetizationPlatforms } = await import('./_core/ultimateHiveMind');
+      return getMonetizationPlatforms();
+    }),
+
+  // ============================================
+  // SELF-IMPLEMENTING REVENUE SYSTEM
+  // ============================================
+
+  // Get all available revenue platforms
+  getRevenuePlatforms: protectedProcedure
+    .query(async () => {
+      const { getAvailableRevenuePlatforms } = await import('./_core/selfImplementingRevenue');
+      return getAvailableRevenuePlatforms();
+    }),
+
+  // Analyze revenue gaps and opportunities
+  analyzeRevenueGaps: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { analyzeRevenueGaps } = await import('./_core/selfImplementingRevenue');
+      return await analyzeRevenueGaps(ctx.user.id);
+    }),
+
+  // Generate integration instructions for a platform
+  getIntegrationInstructions: protectedProcedure
+    .input(z.object({ platformName: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { generateIntegrationInstructions } = await import('./_core/selfImplementingRevenue');
+      return await generateIntegrationInstructions(ctx.user.id, input.platformName);
+    }),
+
+  // Auto-discover CJ opportunities
+  discoverCJOpportunities: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { autoDiscoverCJOpportunities } = await import('./_core/selfImplementingRevenue');
+      return await autoDiscoverCJOpportunities(ctx.user.id);
+    }),
+
+  // Generate revenue report
+  getRevenueReport: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { generateRevenueReport } = await import('./_core/selfImplementingRevenue');
+      return await generateRevenueReport(ctx.user.id);
+    }),
+
+  // Notify owner of opportunities
+  notifyOwnerOpportunities: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { notifyOwnerOfOpportunities } = await import('./_core/selfImplementingRevenue');
+      return await notifyOwnerOfOpportunities(ctx.user.id);
+    }),
+
+  // Auto-implement a revenue stream
+  autoImplementRevenue: protectedProcedure
+    .input(z.object({ platformName: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { autoImplementRevenueStream } = await import('./_core/selfImplementingRevenue');
+      return await autoImplementRevenueStream(ctx.user.id, input.platformName);
+    }),
+
+  // Get revenue dashboard
+  getRevenueDashboard: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getRevenueDashboard } = await import('./_core/selfImplementingRevenue');
+      return await getRevenueDashboard(ctx.user.id);
+    }),
+
+  // ============================================
+  // GLOBAL AUTO-WAKE SYSTEM
+  // ============================================
+
+  // Get all page configurations
+  getPageConfigs: protectedProcedure
+    .query(async () => {
+      const { getPageConfigs } = await import('./_core/globalAutoWake');
+      return getPageConfigs();
+    }),
+
+  // Wake a specific page
+  wakePage: protectedProcedure
+    .input(z.object({ pageId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { wakePage } = await import('./_core/globalAutoWake');
+      return await wakePage(ctx.user.id, input.pageId);
+    }),
+
+  // Run global wake cycle
+  runGlobalWakeCycle: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { runGlobalWakeCycle } = await import('./_core/globalAutoWake');
+      return await runGlobalWakeCycle(ctx.user.id);
+    }),
+
+  // Start continuous wake
+  startContinuousWake: protectedProcedure
+    .input(z.object({ intervalMs: z.number().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const { startContinuousWake } = await import('./_core/globalAutoWake');
+      return startContinuousWake(ctx.user.id, input.intervalMs);
+    }),
+
+  // Stop continuous wake
+  stopContinuousWake: protectedProcedure
+    .mutation(async () => {
+      const { stopContinuousWake } = await import('./_core/globalAutoWake');
+      return stopContinuousWake();
+    }),
+
+  // Get global wake status
+  getGlobalWakeStatus: protectedProcedure
+    .query(async () => {
+      const { getGlobalWakeStatus } = await import('./_core/globalAutoWake');
+      return getGlobalWakeStatus();
+    }),
+
+  // Force wake all pages
+  forceWakeAll: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { forceWakeAll } = await import('./_core/globalAutoWake');
+      return await forceWakeAll(ctx.user.id);
+    }),
+
+  // Set page wake configuration
+  setPageWakeConfig: protectedProcedure
+    .input(z.object({
+      pageId: z.string(),
+      isActive: z.boolean().optional(),
+      wakeIntervalMs: z.number().optional()
+    }))
+    .mutation(async ({ input }) => {
+      const { setPageWakeConfig } = await import('./_core/globalAutoWake');
+      return setPageWakeConfig(input.pageId, {
+        isActive: input.isActive,
+        wakeIntervalMs: input.wakeIntervalMs
+      });
+    }),
+
+  // ============================================
+  // INCOME DISCOVERY ENGINE
+  // ============================================
+
+  // Get all discovered income opportunities
+  getIncomeOpportunities: protectedProcedure
+    .query(async () => {
+      const { getDiscoveredOpportunities } = await import('./_core/incomeDiscoveryEngine');
+      return getDiscoveredOpportunities();
+    }),
+
+  // Analyze income gaps
+  analyzeIncomeGaps: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { analyzeIncomeGaps } = await import('./_core/incomeDiscoveryEngine');
+      return await analyzeIncomeGaps(ctx.user.id);
+    }),
+
+  // Discover new opportunities
+  discoverNewOpportunities: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { discoverNewOpportunities } = await import('./_core/incomeDiscoveryEngine');
+      return await discoverNewOpportunities(ctx.user.id);
+    }),
+
+  // Auto-integrate an opportunity
+  autoIntegrateOpportunity: protectedProcedure
+    .input(z.object({ opportunityId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { autoIntegrateOpportunity } = await import('./_core/incomeDiscoveryEngine');
+      return await autoIntegrateOpportunity(ctx.user.id, input.opportunityId);
+    }),
+
+  // Get income optimizations
+  getIncomeOptimizations: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getIncomeOptimizations } = await import('./_core/incomeDiscoveryEngine');
+      return await getIncomeOptimizations(ctx.user.id);
+    }),
+
+  // Generate income report
+  generateIncomeReport: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { generateIncomeReport } = await import('./_core/incomeDiscoveryEngine');
+      return await generateIncomeReport(ctx.user.id);
+    }),
+
+  // Run full income discovery cycle
+  runIncomeDiscoveryCycle: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { runIncomeDiscoveryCycle } = await import('./_core/incomeDiscoveryEngine');
+      return await runIncomeDiscoveryCycle(ctx.user.id);
+    }),
+
+  // Get income discovery status
+  getIncomeDiscoveryStatus: protectedProcedure
+    .query(async () => {
+      const { getIncomeDiscoveryStatus } = await import('./_core/incomeDiscoveryEngine');
+      return getIncomeDiscoveryStatus();
+    }),
+
+  // Notify owner of opportunities
+  notifyOwnerIncomeOpportunities: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { notifyOwnerOfIncomeOpportunities } = await import('./_core/incomeDiscoveryEngine');
+      return await notifyOwnerOfIncomeOpportunities(ctx.user.id);
+    }),
+
+  // ============================================
+  // SELF-OPTIMIZING SYSTEM
+  // ============================================
+
+  // Collect system metrics
+  collectSystemMetrics: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { collectSystemMetrics } = await import('./_core/selfOptimizingSystem');
+      return await collectSystemMetrics(ctx.user.id);
+    }),
+
+  // Identify optimization opportunities
+  identifyOptimizations: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { collectSystemMetrics, identifyOptimizations } = await import('./_core/selfOptimizingSystem');
+      const metrics = await collectSystemMetrics(ctx.user.id);
+      return await identifyOptimizations(ctx.user.id, metrics);
+    }),
+
+  // Auto-fix an optimization
+  autoFixOptimization: protectedProcedure
+    .input(z.object({
+      category: z.string(),
+      issue: z.string()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { autoFixOptimization } = await import('./_core/selfOptimizingSystem');
+      return await autoFixOptimization(ctx.user.id, input.category as any, input.issue);
+    }),
+
+  // Run full optimization cycle
+  runOptimizationCycle: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const { runOptimizationCycle } = await import('./_core/selfOptimizingSystem');
+      return await runOptimizationCycle(ctx.user.id);
+    }),
+
+  // Get optimization status
+  getOptimizationStatus: protectedProcedure
+    .query(async () => {
+      const { getOptimizationStatus } = await import('./_core/selfOptimizingSystem');
+      return getOptimizationStatus();
+    }),
+
+  // Get AI optimization recommendations
+  getAIOptimizationRecommendations: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { collectSystemMetrics, getAIOptimizationRecommendations } = await import('./_core/selfOptimizingSystem');
+      const metrics = await collectSystemMetrics(ctx.user.id);
+      return await getAIOptimizationRecommendations(ctx.user.id, metrics);
+    }),
+
+  // Get system health score
+  getSystemHealthScore: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getSystemHealthScore } = await import('./_core/selfOptimizingSystem');
+      return await getSystemHealthScore(ctx.user.id);
+    }),
 });
 
 export const appRouter = router({
