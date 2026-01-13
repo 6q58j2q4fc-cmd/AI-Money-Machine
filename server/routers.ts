@@ -12,7 +12,9 @@ import { createBotpressService, BotCommands } from "./_core/botpressApi";
 import { invokeMultiLLM, generateArticle, optimizeSEO, researchTopics, matchAffiliateProducts, generateHeadlines, getAvailableProviders, type LLMTaskType } from "./_core/multiLlm";
 import { runContentPipeline, DEFAULT_PIPELINE_CONFIG, type PipelineConfig, discoverTopics, generateMonetizedArticle, insertAffiliateLinks, calculateContentScore } from "./_core/contentPipeline";
 import { runDailyOptimization, checkAllProvidersHealth, checkFeatureHealth, routeTask, recordUsage, getProviderStats, getUsageHistory, getApiRegistry, type OptimizationResult, type HealthCheckResult, type FeatureHealth, type TaskRoutingDecision } from "./_core/dailyOptimizer";
-import { auditPage, auditAllPages, learnPageContext, generateFixRecommendations, verifyArticlePosting, generateInternalLinks, PAGE_DEFINITIONS, type PageAuditResult } from "./_core/pageAuditor";
+import { auditPage, auditAllPages, learnPageContext, generateFixRecommendations, verifyArticlePosting, generateInternalLinks, PAGE_DEFINITIONS, type PageAuditResult } from './_core/pageAuditor';
+import { logEvent, logArticleEvent, logDistributionEvent, logAutomationEvent, logBotDecision, getPageInsights, communicateWithHiveMind, syncAllPages, getHiveMindState, initializePageContext } from './_core/hiveMind';
+import { generateProductPage, publishProductPage, batchGenerateProductPages } from './_core/productPages';
 
 // Slug generator helper
 function generateSlug(title: string): string {
@@ -156,6 +158,8 @@ const articlesRouter = router({
         slug,
         status: "draft",
       });
+      // Log article creation event
+      await logArticleEvent(ctx.user.id, 'article_created', id, input.title);
       return { id, slug };
     }),
 
@@ -182,6 +186,13 @@ const articlesRouter = router({
         (updates as any).publishedAt = new Date();
       }
       await db.updateArticle(id, ctx.user.id, updates);
+      // Log article update/publish event
+      const article = await db.getArticleById(id, ctx.user.id);
+      if (updates.status === 'published') {
+        await logArticleEvent(ctx.user.id, 'article_published', id, article?.title || 'Unknown');
+      } else {
+        await logArticleEvent(ctx.user.id, 'article_updated', id, article?.title || 'Unknown');
+      }
       return { success: true };
     }),
 
@@ -1541,6 +1552,9 @@ Make it engaging, valuable, and optimized for both readers and search engines.`
           }
         }
 
+        // Log automation cycle completion
+        await logAutomationEvent(ctx.user.id, 'content_generation', generatedArticles.length, true);
+        
         return {
           success: true,
           topicsDiscovered: topicsData.topics.length,
@@ -1551,6 +1565,8 @@ Make it engaging, valuable, and optimized for both readers and search engines.`
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         results.push({ step: "Error", success: false, details: errorMessage });
+        // Log automation failure
+        await logAutomationEvent(ctx.user.id, 'content_generation', 0, false);
         return {
           success: false,
           topicsDiscovered: 0,
@@ -1788,9 +1804,18 @@ Make it engaging, valuable, and optimized for both readers and search engines.`
             }
           }
 
+          // Log article creation event
+          await logArticleEvent(ctx.user.id, config.autoPublish ? 'article_published' : 'article_created', articleId, article.title, {
+            source: 'content_pipeline',
+            affiliateLinksInserted: affiliateLinks.filter(l => article.content.toLowerCase().includes(l.name.toLowerCase().split(' ')[0])).length,
+          });
+
           return articleId;
         }
       );
+
+      // Log pipeline completion
+      await logAutomationEvent(ctx.user.id, 'content_pipeline', result.articlesGenerated, result.success);
 
       return result;
     }),
@@ -2042,6 +2067,8 @@ const distributionRouter = router({
               });
               results.push({ platform, id, status: 'published', url: publishResult.url });
               console.log(`[Distribution] Successfully published to ${platform}: ${publishResult.url}`);
+              // Log distribution success
+              await logDistributionEvent(ctx.user.id, 'distribution_published', input.articleId, platform, publishResult.url);
             } else {
               // Update distribution with failure
               await db.updateDistribution(id, {
@@ -2061,6 +2088,8 @@ const distributionRouter = router({
         } else {
           // No API key configured, leave as pending for manual publishing
           results.push({ platform, id, status: 'pending' });
+          // Log distribution queued
+          await logDistributionEvent(ctx.user.id, 'distribution_queued', input.articleId, platform);
         }
       }
       return { distributions: results, success: true };
@@ -2747,6 +2776,125 @@ const optimizerRouter = router({
     }),
 });
 
+// Hive Mind Router - Central AI coordination
+const hiveMindRouter = router({
+  // Get page insights from Hive Mind
+  getInsights: protectedProcedure
+    .input(z.object({
+      pageId: z.string(),
+      additionalContext: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      return await getPageInsights(input.pageId, ctx.user.id, input.additionalContext);
+    }),
+
+  // Communicate with Hive Mind
+  chat: protectedProcedure
+    .input(z.object({
+      pageId: z.string(),
+      query: z.string(),
+      context: z.any().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return await communicateWithHiveMind(ctx.user.id, input.pageId, input.query, input.context);
+    }),
+
+  // Sync all pages with Hive Mind
+  syncAll: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      return await syncAllPages(ctx.user.id);
+    }),
+
+  // Get Hive Mind state
+  getState: protectedProcedure
+    .query(async () => {
+      return getHiveMindState();
+    }),
+
+  // Initialize page context
+  initPage: protectedProcedure
+    .input(z.object({
+      pageId: z.string(),
+      currentState: z.any().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      return await initializePageContext(input.pageId, input.currentState);
+    }),
+
+  // Log an event
+  logEvent: protectedProcedure
+    .input(z.object({
+      eventType: z.enum([
+        'article_created', 'article_published', 'article_updated', 'article_deleted',
+        'distribution_queued', 'distribution_published', 'distribution_failed',
+        'affiliate_link_added', 'affiliate_link_clicked', 'affiliate_conversion',
+        'automation_cycle_started', 'automation_cycle_completed', 'automation_cycle_failed',
+        'topic_discovered', 'topic_saved', 'bot_decision', 'bot_learning', 'bot_optimization',
+        'seo_indexed', 'seo_ping_sent', 'user_action', 'system_event'
+      ]),
+      message: z.string(),
+      articleId: z.number().optional(),
+      metadata: z.record(z.string(), z.unknown()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return await logEvent(ctx.user.id, input.eventType, {
+        articleId: input.articleId,
+        message: input.message,
+        metadata: input.metadata,
+      });
+    }),
+
+  // Generate a branded product page from an article
+  generateProductPage: protectedProcedure
+    .input(z.object({
+      articleId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const page = await generateProductPage(input.articleId, ctx.user.id);
+      if (!page) {
+        throw new Error('Article not found or could not generate product page');
+      }
+      return page;
+    }),
+
+  // Publish a product page
+  publishProductPage: protectedProcedure
+    .input(z.object({
+      articleId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const page = await generateProductPage(input.articleId, ctx.user.id);
+      if (!page) {
+        throw new Error('Article not found');
+      }
+      const result = await publishProductPage(page, ctx.user.id);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to publish product page');
+      }
+      // Log the event
+      await logEvent(ctx.user.id, 'article_published', {
+        message: `Product page published: ${page.title}`,
+        metadata: { url: result.url, type: 'product_page' },
+      });
+      return result;
+    }),
+
+  // Batch generate product pages
+  batchGenerateProductPages: protectedProcedure
+    .input(z.object({
+      articleIds: z.array(z.number()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await batchGenerateProductPages(input.articleIds, ctx.user.id);
+      // Log the batch event
+      await logEvent(ctx.user.id, 'system_event', {
+        message: `Batch product pages: ${result.generated} generated, ${result.published} published`,
+        metadata: { ...result },
+      });
+      return result;
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -2775,6 +2923,7 @@ export const appRouter = router({
   audit: auditRouter,
   llm: llmRouter,
   optimizer: optimizerRouter,
+  hiveMind: hiveMindRouter,
 });
 
 export type AppRouter = typeof appRouter;

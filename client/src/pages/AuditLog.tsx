@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { 
   FileText, Link2, Send, Bot, Search, Clock, CheckCircle, XCircle, 
-  Activity, TrendingUp, Zap, RefreshCw, Filter, Download
+  Activity, TrendingUp, Zap, RefreshCw, Filter, Download, Brain,
+  MessageSquare, Sparkles, AlertCircle, Play
 } from "lucide-react";
 
 const eventTypeIcons: Record<string, React.ReactNode> = {
@@ -64,6 +68,9 @@ const eventTypeLabels: Record<string, string> = {
 export default function AuditLog() {
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("all");
+  const [hiveMindQuery, setHiveMindQuery] = useState("");
+  const [hiveMindResponse, setHiveMindResponse] = useState<string | null>(null);
+  const [isQuerying, setIsQuerying] = useState(false);
   
   const { data: logs, isLoading, refetch } = trpc.audit.list.useQuery({
     eventType: eventTypeFilter !== "all" ? eventTypeFilter : undefined,
@@ -71,6 +78,20 @@ export default function AuditLog() {
   });
   
   const { data: stats } = trpc.audit.getStats.useQuery();
+  const { data: hiveMindState } = trpc.hiveMind.getState.useQuery();
+  
+  const logEventMutation = trpc.hiveMind.logEvent.useMutation();
+  const chatMutation = trpc.hiveMind.chat.useMutation();
+  const syncAllMutation = trpc.hiveMind.syncAll.useMutation();
+  
+  // Auto-log page visit
+  useEffect(() => {
+    logEventMutation.mutate({
+      eventType: 'user_action',
+      message: 'User visited Audit Log page',
+      metadata: { page: 'audit-log', timestamp: new Date().toISOString() }
+    });
+  }, []);
   
   const formatDate = (date: Date | string) => {
     const d = new Date(date);
@@ -87,6 +108,35 @@ export default function AuditLog() {
     if (activeTab === "seo") return log.eventType.startsWith("seo_");
     return true;
   });
+  
+  const handleHiveMindQuery = async () => {
+    if (!hiveMindQuery.trim()) return;
+    
+    setIsQuerying(true);
+    try {
+      const result = await chatMutation.mutateAsync({
+        pageId: 'audit-log',
+        query: hiveMindQuery,
+        context: { logs: logs?.slice(0, 20), stats }
+      });
+      setHiveMindResponse(result.response);
+      toast.success("Hive Mind responded");
+    } catch (error) {
+      toast.error("Failed to query Hive Mind");
+    } finally {
+      setIsQuerying(false);
+    }
+  };
+  
+  const handleSyncAll = async () => {
+    try {
+      const result = await syncAllMutation.mutateAsync();
+      toast.success(`Synced ${result.pagesUpdated} pages with Hive Mind`);
+      refetch();
+    } catch (error) {
+      toast.error("Failed to sync pages");
+    }
+  };
   
   const exportLogs = () => {
     if (!logs) return;
@@ -120,10 +170,14 @@ export default function AuditLog() {
             Audit Log
           </h1>
           <p className="text-muted-foreground mt-1">
-            Complete activity log for bot learning and system transparency
+            Complete activity log with Hive Mind LLM integration
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleSyncAll} disabled={syncAllMutation.isPending}>
+            <Brain className="h-4 w-4 mr-2" />
+            {syncAllMutation.isPending ? "Syncing..." : "Sync Hive Mind"}
+          </Button>
           <Button variant="outline" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
@@ -134,6 +188,67 @@ export default function AuditLog() {
           </Button>
         </div>
       </div>
+      
+      {/* Hive Mind Status */}
+      <Card className="border-primary/50 bg-gradient-to-r from-primary/5 to-purple-500/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            Hive Mind Central Intelligence
+          </CardTitle>
+          <CardDescription>
+            Central bot coordinating all LLMs with shared memory across pages
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="p-3 rounded-lg bg-background/50 border">
+              <div className="text-sm text-muted-foreground">Active Pages</div>
+              <div className="text-2xl font-bold text-primary">
+                {Object.keys(hiveMindState?.pageContexts || {}).length || 12}
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-background/50 border">
+              <div className="text-sm text-muted-foreground">Memory Items</div>
+              <div className="text-2xl font-bold text-green-500">
+                {hiveMindState?.objectivesCount || 0}
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-background/50 border">
+              <div className="text-sm text-muted-foreground">LLM Calls Today</div>
+              <div className="text-2xl font-bold text-purple-500">
+                {hiveMindState?.conversationCount || 0}
+              </div>
+            </div>
+          </div>
+          
+          {/* Hive Mind Chat */}
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ask the Hive Mind about system activity, patterns, or recommendations..."
+                value={hiveMindQuery}
+                onChange={(e) => setHiveMindQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleHiveMindQuery()}
+              />
+              <Button onClick={handleHiveMindQuery} disabled={isQuerying}>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                {isQuerying ? "Thinking..." : "Ask"}
+              </Button>
+            </div>
+            
+            {hiveMindResponse && (
+              <div className="p-4 rounded-lg bg-background border">
+                <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Hive Mind Response
+                </div>
+                <p className="text-sm">{hiveMindResponse}</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
@@ -254,29 +369,15 @@ export default function AuditLog() {
                             {log.articleId && (
                               <Badge variant="outline">Article #{log.articleId}</Badge>
                             )}
-                            {log.distributionId && (
-                              <Badge variant="outline">Dist #{log.distributionId}</Badge>
-                            )}
-                            {log.affiliateLinkId && (
-                              <Badge variant="outline">Link #{log.affiliateLinkId}</Badge>
-                            )}
                           </div>
-                          <p className="font-medium mt-1">{log.action}</p>
+                          <p className="text-sm mt-1">{log.action}</p>
                           {log.description && (
-                            <p className="text-sm text-muted-foreground mt-1">{log.description}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{log.description}</p>
                           )}
-                          {log.metadata && Object.keys(log.metadata).length > 0 && (
-                            <div className="mt-2 p-2 bg-muted rounded text-xs font-mono">
-                              {JSON.stringify(log.metadata, null, 2)}
-                            </div>
-                          )}
-                          {log.errorMessage && (
-                            <p className="text-sm text-red-500 mt-1">Error: {log.errorMessage}</p>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground whitespace-nowrap flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {formatDate(log.createdAt)}
+                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {formatDate(log.createdAt)}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -284,49 +385,21 @@ export default function AuditLog() {
                 </ScrollArea>
               ) : (
                 <div className="text-center py-12">
-                  <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-semibold">No Events Yet</h3>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    Activity will appear here as the system operates
+                  <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Events Yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Events will appear here as you use the system. Try running the Content Pipeline or Automation to generate events.
                   </p>
+                  <Button variant="outline" onClick={handleSyncAll}>
+                    <Play className="h-4 w-4 mr-2" />
+                    Initialize Hive Mind
+                  </Button>
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-      
-      {/* Bot Learning Info */}
-      <Card className="border-purple-500/50 bg-purple-500/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-purple-500" />
-            How Bots Use This Data
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg bg-background">
-              <h4 className="font-semibold mb-2">Pattern Recognition</h4>
-              <p className="text-sm text-muted-foreground">
-                Bots analyze which articles, topics, and distribution channels perform best to optimize future content.
-              </p>
-            </div>
-            <div className="p-4 rounded-lg bg-background">
-              <h4 className="font-semibold mb-2">Decision Making</h4>
-              <p className="text-sm text-muted-foreground">
-                Every bot decision is logged with reasoning, allowing continuous improvement of AI strategies.
-              </p>
-            </div>
-            <div className="p-4 rounded-lg bg-background">
-              <h4 className="font-semibold mb-2">Performance Tracking</h4>
-              <p className="text-sm text-muted-foreground">
-                Links affiliate clicks, conversions, and revenue back to specific articles and distribution channels.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
