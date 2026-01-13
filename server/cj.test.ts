@@ -49,11 +49,12 @@ describe("CJ Integration Router", () => {
     
     // Should return either null/undefined or a valid settings object
     if (result) {
+      // Settings exist - verify structure
       expect(result).toHaveProperty("cid");
       expect(result).toHaveProperty("websiteId");
-    } else {
-      expect(result === undefined || result === null).toBe(true);
     }
+    // If null/undefined, that's also valid (no settings configured)
+    expect(result === undefined || result === null || typeof result === "object").toBe(true);
   });
 
   it("returns empty array when no CJ products exist", async () => {

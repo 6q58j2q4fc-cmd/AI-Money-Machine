@@ -26,6 +26,7 @@ import AuditLog from "./pages/AuditLog";
 import AICommandCenter from "./pages/AICommandCenter";
 import LLMSettings from "./pages/LLMSettings";
 import ContentPipeline from "./pages/ContentPipeline";
+import SystemOptimizer from "./pages/SystemOptimizer";
 
 function Router() {
   return (
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/auto-publish" component={AutoPublish} />
       <Route path="/automation" component={AutomationCenter} />
       <Route path="/distribution" component={DistributionCenter} />
+      <Route path="/system-optimizer" component={SystemOptimizer} />
       <Route path="/bot" component={BotIntelligence} />
       <Route path="/settings" component={Settings} />
       <Route path="/free-publishing" component={FreePublishingBot} />

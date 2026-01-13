@@ -10,6 +10,7 @@ import { searchCJLinks, getJoinedAdvertiserLinks, getNonJoinedAdvertiserLinks, s
 import { createBotpressService, BotCommands } from "./_core/botpressApi";
 import { invokeMultiLLM, generateArticle, optimizeSEO, researchTopics, matchAffiliateProducts, generateHeadlines, getAvailableProviders, type LLMTaskType } from "./_core/multiLlm";
 import { runContentPipeline, DEFAULT_PIPELINE_CONFIG, type PipelineConfig, discoverTopics, generateMonetizedArticle, insertAffiliateLinks, calculateContentScore } from "./_core/contentPipeline";
+import { runDailyOptimization, checkAllProvidersHealth, checkFeatureHealth, routeTask, recordUsage, getProviderStats, getUsageHistory, getApiRegistry, type OptimizationResult, type HealthCheckResult, type FeatureHealth, type TaskRoutingDecision } from "./_core/dailyOptimizer";
 
 // Slug generator helper
 function generateSlug(title: string): string {
@@ -2498,6 +2499,106 @@ const llmRouter = router({
     }),
 });
 
+// Daily Optimization Router
+const optimizerRouter = router({
+  // Run daily optimization cycle
+  runOptimization: protectedProcedure
+    .mutation(async () => {
+      return await runDailyOptimization();
+    }),
+
+  // Check all provider health
+  checkHealth: protectedProcedure
+    .query(async () => {
+      return await checkAllProvidersHealth();
+    }),
+
+  // Check feature health
+  checkFeatures: protectedProcedure
+    .query(async () => {
+      return await checkFeatureHealth();
+    }),
+
+  // Get task routing decision
+  routeTask: protectedProcedure
+    .input(z.object({ taskType: z.string() }))
+    .query(({ input }) => {
+      return routeTask(input.taskType);
+    }),
+
+  // Get provider statistics
+  getStats: protectedProcedure
+    .query(() => {
+      const stats = getProviderStats();
+      return Object.fromEntries(stats);
+    }),
+
+  // Get usage history
+  getUsageHistory: protectedProcedure
+    .input(z.object({ limit: z.number().min(1).max(500).optional() }))
+    .query(({ input }) => {
+      return getUsageHistory(input?.limit || 100);
+    }),
+
+  // Get API registry
+  getApiRegistry: protectedProcedure
+    .query(() => {
+      return getApiRegistry();
+    }),
+
+  // Get optimization dashboard data
+  getDashboard: protectedProcedure
+    .query(async () => {
+      const [health, features, stats, history] = await Promise.all([
+        checkAllProvidersHealth(),
+        checkFeatureHealth(),
+        Promise.resolve(Object.fromEntries(getProviderStats())),
+        Promise.resolve(getUsageHistory(100)),
+      ]);
+
+      // Calculate summary metrics
+      const last24h = Date.now() - 24 * 60 * 60 * 1000;
+      const recentHistory = history.filter(h => h.timestamp > last24h);
+      const totalRequests = recentHistory.length;
+      const successfulRequests = recentHistory.filter(h => h.success).length;
+      const successRate = totalRequests > 0 ? successfulRequests / totalRequests : 1;
+      const avgResponseTime = totalRequests > 0
+        ? recentHistory.reduce((sum, h) => sum + h.responseTime, 0) / totalRequests
+        : 0;
+
+      // Find top provider
+      const providerCounts = new Map<string, number>();
+      recentHistory.forEach(h => {
+        providerCounts.set(h.provider, (providerCounts.get(h.provider) || 0) + 1);
+      });
+      let topProvider = "manus";
+      let maxCount = 0;
+      providerCounts.forEach((count, provider) => {
+        if (count > maxCount) {
+          maxCount = count;
+          topProvider = provider;
+        }
+      });
+
+      return {
+        health,
+        features,
+        stats,
+        summary: {
+          totalRequests24h: totalRequests,
+          successRate24h: successRate,
+          averageResponseTime24h: avgResponseTime,
+          topProvider,
+          healthyProviders: health.filter(h => h.status === "healthy").length,
+          degradedProviders: health.filter(h => h.status === "degraded").length,
+          downProviders: health.filter(h => h.status === "down").length,
+          operationalFeatures: features.filter(f => f.status === "operational").length,
+          totalFeatures: features.length,
+        },
+      };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -2525,6 +2626,7 @@ export const appRouter = router({
   training: trainingRouter,
   audit: auditRouter,
   llm: llmRouter,
+  optimizer: optimizerRouter,
 });
 
 export type AppRouter = typeof appRouter;
