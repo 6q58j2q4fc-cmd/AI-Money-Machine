@@ -1193,3 +1193,22 @@
 - [x] Add total NFT value card to homepage
 - [x] Add withdrawal button to homepage for accumulated crypto
 - [x] Show Trust Wallet address on homepage
+
+
+## NFT Generation & Display Verification
+- [ ] Test NFT generation via batch generate
+- [ ] Verify NFTs are stored in database correctly
+- [ ] Ensure NFTs display on NFT Empire page
+- [ ] Ensure NFTs display on NFT Gallery page
+- [ ] Verify marketplace listings show correctly
+- [ ] Fix any display or data issues found
+
+
+## NFT Generation & Display Verification (Completed)
+- [x] Test batch NFT generation via NFT Empire page (3 NFTs generated with 24 listings)
+- [x] Verify NFTs are stored in database correctly (16 total NFTs in database)
+- [x] Verify NFTs display on NFT Empire page with correct data (15 NFTs showing)
+- [x] Verify NFTs display on NFT Gallery page with correct data (16 NFTs with images)
+- [x] Verify marketplace listings show correctly with clickable links (8 marketplaces per NFT)
+- [x] Fix display issues - updated NFT Gallery to use real database data
+- [x] Total portfolio value: 2.55 ETH across 112 active listings

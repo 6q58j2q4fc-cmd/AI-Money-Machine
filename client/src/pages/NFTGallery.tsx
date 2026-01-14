@@ -56,8 +56,9 @@ export default function NFTGallery() {
   const OPENSEA_API_KEY = "042g5w5cQcCYJsK2CIS0jiCV8yV3qT6tMMHcUT2u031q7fpz";
   const walletConnected = true; // Always connected to Trust Wallet
 
-  // tRPC queries
-  const { data: nfts, refetch: refetchNFTs } = trpc.nft.getAllNFTs.useQuery();
+  // tRPC queries - use nftEmpire for real database NFTs
+  const { data: nfts, refetch: refetchNFTs } = trpc.nftEmpire.getUserNfts.useQuery();
+  const { data: portfolioSummary, refetch: refetchPortfolio } = trpc.nftEmpire.getPortfolioSummary.useQuery();
   const { data: marketplaces } = trpc.nft.getMarketplaces.useQuery();
   const { data: artStyles } = trpc.nft.getArtStyles.useQuery();
   const { data: marketIntelligence, refetch: refetchIntelligence } = trpc.nft.getMarketIntelligence.useQuery();
@@ -166,15 +167,15 @@ export default function NFTGallery() {
   };
 
   // Calculate stats
-  const stats = useMemo(() => {
-    if (!nfts) return { total: 0, listed: 0, sold: 0, totalValue: 0 };
+const stats = useMemo(() => {
+    if (!portfolioSummary) return { total: 0, listed: 0, sold: 0, totalValue: 0 };
     return {
-      total: nfts.length,
-      listed: nfts.filter(n => n.status === "listed").length,
-      sold: nfts.filter(n => n.status === "sold").length,
-      totalValue: nfts.reduce((sum, n) => sum + n.suggestedPrice, 0)
+      total: portfolioSummary.totalNfts,
+      listed: portfolioSummary.totalListings,
+      sold: portfolioSummary.totalSales,
+      totalValue: portfolioSummary.totalEstimatedValue
     };
-  }, [nfts]);
+  }, [portfolioSummary]);
 
   return (
     <DashboardLayout>
@@ -342,59 +343,87 @@ export default function NFTGallery() {
           <TabsContent value="gallery" className="mt-4">
             {nfts && nfts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nfts.map((nft) => (
-                  <Card key={nft.id} className="bg-zinc-900/50 border-zinc-800 hover:border-purple-500/50 transition-all overflow-hidden">
+                {nfts.map((nftData) => (
+                  <Card key={nftData.nft.id} className="bg-zinc-900/50 border-zinc-800 hover:border-purple-500/50 transition-all overflow-hidden">
                     <div className="aspect-square bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
                       <img 
-                        src={nft.imageUrl} 
-                        alt={nft.name}
+                        src={nftData.nft.imageUrl || ''} 
+                        alt={nftData.nft.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://picsum.photos/400/400?random=${nft.id}`;
+                          (e.target as HTMLImageElement).src = `https://picsum.photos/400/400?random=${nftData.nft.id}`;
                         }}
                       />
                     </div>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-white truncate">{nft.name}</h3>
-                        {getStatusBadge(nft.status)}
+                        <h3 className="font-semibold text-white truncate">{nftData.nft.name}</h3>
+                        {getStatusBadge(nftData.nft.status || 'generated')}
                       </div>
-                      <p className="text-lg font-bold text-purple-400 mb-2">{nft.suggestedPrice} ETH</p>
-                      <p className="text-xs text-zinc-500 mb-3">Style: {nft.style}</p>
+                      <p className="text-lg font-bold text-purple-400 mb-2">{parseFloat(String(nftData.nft.estimatedValue || '0.05')).toFixed(4)} ETH</p>
+                      <p className="text-xs text-zinc-500 mb-3">Category: {nftData.nft.category}</p>
                       
                       {/* Listings */}
-                      {nft.listings && nft.listings.length > 0 && (
+                      {nftData.listings && nftData.listings.length > 0 && (
                         <div className="mb-3">
-                          <p className="text-xs text-zinc-400 mb-1">Listed on:</p>
+                          <p className="text-xs text-zinc-400 mb-1">Listed on {nftData.listings.length} marketplaces:</p>
                           <div className="flex flex-wrap gap-1">
-                            {nft.listings.slice(0, 3).map((listing, i) => (
-                              <Badge key={i} variant="outline" className="text-xs">
-                                {listing.marketplace}
-                              </Badge>
+                            {nftData.listings.slice(0, 3).map((listing, i) => (
+                              <a 
+                                key={i} 
+                                href={listing.listingUrl || '#'} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-flex"
+                              >
+                                <Badge variant="outline" className="text-xs hover:bg-purple-500/20 cursor-pointer">
+                                  {listing.marketplace} - {parseFloat(String(listing.listPrice || '0.05')).toFixed(4)} ETH
+                                </Badge>
+                              </a>
                             ))}
-                            {nft.listings.length > 3 && (
+                            {nftData.listings.length > 3 && (
                               <Badge variant="outline" className="text-xs">
-                                +{nft.listings.length - 3} more
+                                +{nftData.listings.length - 3} more
                               </Badge>
                             )}
                           </div>
                         </div>
                       )}
 
+                      {/* Auto-Buyer Submissions */}
+                      {nftData.submissions && nftData.submissions.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs text-zinc-400 mb-1">Auto-buyer offers:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {nftData.submissions.slice(0, 2).map((sub, i) => (
+                              <Badge key={i} variant="outline" className="text-xs text-green-400 border-green-500/30">
+                                {sub.platform}: ${parseFloat(String(sub.offeredPrice || '0')).toFixed(2)}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex gap-2">
-                        {nft.status === "generated" && (
+                        {nftData.nft.status === "generated" && (
                           <Button 
                             size="sm" 
                             className="flex-1 bg-purple-500 hover:bg-purple-600"
-                            onClick={() => handleAutoList(nft.id)}
+                            onClick={() => handleAutoList(nftData.nft.id.toString())}
                           >
                             <Store className="w-3 h-3 mr-1" />
                             List All
                           </Button>
                         )}
-                        <Button size="sm" variant="ghost">
-                          <ExternalLink className="w-4 h-4" />
-                        </Button>
+                        {nftData.listings?.[0]?.listingUrl && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => window.open(nftData.listings[0].listingUrl || '', '_blank')}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
