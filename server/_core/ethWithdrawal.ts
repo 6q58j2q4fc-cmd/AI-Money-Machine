@@ -1,18 +1,26 @@
 /**
  * ETH Withdrawal Service
- * Handles real ETH transfers to user's Trust Wallet
+ * Handles real ETH transfers using the hot wallet
  */
 
 import { ethers } from "ethers";
 import { getDb } from "../db";
 import { walletSettings } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { getHotWalletAddress, checkAllBalances, sendTransactionWithLogging, NETWORKS as HOT_WALLET_NETWORKS } from "./hotWallet";
+import type { NetworkId } from "./hotWallet";
 
 // User's Trust Wallet address
-const TRUST_WALLET_ADDRESS = "0x75812e1c4246A880f6576db8292405247e6a8775";
+export const TRUST_WALLET_ADDRESS = "0x75812e1c4246A880f6576db8292405247e6a8775";
 
 // Supported networks with RPC endpoints
-const NETWORKS = {
+const NETWORKS: Record<string, {
+  name: string;
+  chainId: number;
+  rpc: string;
+  explorer: string;
+  symbol: string;
+}> = {
   ethereum: {
     name: "Ethereum Mainnet",
     chainId: 1,
@@ -70,7 +78,9 @@ export interface WithdrawalResult {
   network?: string;
   destinationAddress?: string;
   estimatedArrival?: string;
-  status?: "pending" | "processing" | "completed" | "failed";
+  status?: "pending" | "processing" | "completed" | "failed" | "simulated";
+  isSimulated?: boolean;
+  reason?: string;
 }
 
 // Track pending withdrawals
@@ -79,11 +89,12 @@ const pendingWithdrawals: Map<string, {
   userId: number;
   amount: number;
   currency: string;
-  network: NetworkKey;
+  network: string;
   destinationAddress: string;
-  status: "pending" | "processing" | "completed" | "failed";
+  status: "pending" | "processing" | "completed" | "failed" | "simulated";
   createdAt: Date;
   transactionHash?: string;
+  isSimulated: boolean;
 }> = new Map();
 
 /**
@@ -125,14 +136,16 @@ export async function getGasPrice(network: NetworkKey): Promise<{
   estimatedFee: string;
 }> {
   const networkConfig = NETWORKS[network];
+  if (!networkConfig) {
+    return { gasPrice: "0", gasPriceGwei: "0", estimatedFee: "0" };
+  }
+  
   const provider = new ethers.JsonRpcProvider(networkConfig.rpc);
   
   try {
     const feeData = await provider.getFeeData();
     const gasPrice = feeData.gasPrice || BigInt(0);
     const gasPriceGwei = ethers.formatUnits(gasPrice, "gwei");
-    
-    // Estimate fee for a standard transfer (21000 gas)
     const estimatedFee = ethers.formatEther(gasPrice * BigInt(21000));
     
     return {
@@ -142,11 +155,7 @@ export async function getGasPrice(network: NetworkKey): Promise<{
     };
   } catch (error) {
     console.error("Error getting gas price:", error);
-    return {
-      gasPrice: "0",
-      gasPriceGwei: "0",
-      estimatedFee: "0",
-    };
+    return { gasPrice: "0", gasPriceGwei: "0", estimatedFee: "0" };
   }
 }
 
@@ -158,6 +167,10 @@ export async function getBalance(address: string, network: NetworkKey): Promise<
   balanceWei: string;
 }> {
   const networkConfig = NETWORKS[network];
+  if (!networkConfig) {
+    return { balance: "0", balanceWei: "0" };
+  }
+  
   const provider = new ethers.JsonRpcProvider(networkConfig.rpc);
   
   try {
@@ -170,17 +183,48 @@ export async function getBalance(address: string, network: NetworkKey): Promise<
     };
   } catch (error) {
     console.error("Error getting balance:", error);
+    return { balance: "0", balanceWei: "0" };
+  }
+}
+
+/**
+ * Check if hot wallet has sufficient funds for withdrawal
+ */
+export async function checkHotWalletFunds(network: NetworkKey, amount: number): Promise<{
+  hasFunds: boolean;
+  balance: number;
+  required: number;
+  shortfall: number;
+}> {
+  try {
+    const allBalances = await checkAllBalances();
+    const networkKey = network as NetworkId;
+    const networkData = allBalances[networkKey];
+    const balance = networkData ? parseFloat(networkData.balance) : 0;
+    
+    // Add gas buffer (0.001 ETH for gas)
+    const required = amount + 0.001;
+    const hasFunds = balance >= required;
+    
     return {
-      balance: "0",
-      balanceWei: "0",
+      hasFunds,
+      balance,
+      required,
+      shortfall: hasFunds ? 0 : required - balance,
+    };
+  } catch (error) {
+    console.error("Error checking hot wallet funds:", error);
+    return {
+      hasFunds: false,
+      balance: 0,
+      required: amount,
+      shortfall: amount,
     };
   }
 }
 
 /**
- * Process a withdrawal request
- * Note: In a real implementation, this would require a funded wallet with private key
- * For now, we create a withdrawal request that can be processed manually or via a hot wallet
+ * Process a REAL withdrawal using the hot wallet
  */
 export async function processWithdrawal(request: WithdrawalRequest): Promise<WithdrawalResult> {
   const { userId, amount, currency, network } = request;
@@ -191,21 +235,20 @@ export async function processWithdrawal(request: WithdrawalRequest): Promise<Wit
       success: false,
       message: "Invalid withdrawal amount. Must be greater than 0.",
       status: "failed",
+      isSimulated: false,
     };
   }
   
   // Minimum withdrawal amounts
-  const minimums: Record<string, number> = {
-    ETH: 0.001,
-    MATIC: 1,
-  };
-  
+  const minimums: Record<string, number> = { ETH: 0.001, MATIC: 1 };
   const minAmount = minimums[currency] || 0.001;
+  
   if (amount < minAmount) {
     return {
       success: false,
       message: `Minimum withdrawal is ${minAmount} ${currency}`,
       status: "failed",
+      isSimulated: false,
     };
   }
   
@@ -218,6 +261,7 @@ export async function processWithdrawal(request: WithdrawalRequest): Promise<Wit
       success: false,
       message: "Invalid destination wallet address",
       status: "failed",
+      isSimulated: false,
     };
   }
   
@@ -228,55 +272,116 @@ export async function processWithdrawal(request: WithdrawalRequest): Promise<Wit
       success: false,
       message: `Unsupported network: ${network}`,
       status: "failed",
+      isSimulated: false,
     };
   }
   
-  // Create withdrawal ID
-  const withdrawalId = `WD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // Check if hot wallet has sufficient funds
+  const fundCheck = await checkHotWalletFunds(network, amount);
   
-  // In a production environment, this would:
-  // 1. Check the platform's hot wallet balance
-  // 2. Sign and broadcast the transaction
-  // 3. Return the transaction hash
+  if (!fundCheck.hasFunds) {
+    // Return simulated result with clear indication
+    const withdrawalId = `SIM-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    pendingWithdrawals.set(withdrawalId, {
+      id: withdrawalId,
+      userId,
+      amount,
+      currency,
+      network,
+      destinationAddress,
+      status: "simulated",
+      createdAt: new Date(),
+      transactionHash: undefined,
+      isSimulated: true,
+    });
+    
+    return {
+      success: false,
+      message: `SIMULATED: Hot wallet needs funding. Balance: ${fundCheck.balance.toFixed(6)} ${currency}, Required: ${fundCheck.required.toFixed(6)} ${currency}. Fund the hot wallet with ${fundCheck.shortfall.toFixed(6)} ${currency} to enable real withdrawals.`,
+      status: "simulated",
+      isSimulated: true,
+      reason: `Hot wallet balance insufficient. Need ${fundCheck.shortfall.toFixed(6)} more ${currency}.`,
+      amount,
+      currency,
+      network: networkConfig.name,
+      destinationAddress,
+    };
+  }
   
-  // For now, we simulate the withdrawal process
-  // The actual transfer would require a funded hot wallet with private key
-  
-  // Create a simulated transaction hash (in production this would be real)
-  const simulatedTxHash = `0x${Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
-  
-  // Store the withdrawal request
-  pendingWithdrawals.set(withdrawalId, {
-    id: withdrawalId,
-    userId,
-    amount,
-    currency,
-    network,
-    destinationAddress,
-    status: "processing",
-    createdAt: new Date(),
-    transactionHash: simulatedTxHash,
-  });
-  
-  // Log the withdrawal
-  console.log(`[ETH Withdrawal] Processing withdrawal ${withdrawalId}:`);
-  console.log(`  Amount: ${amount} ${currency}`);
-  console.log(`  Network: ${networkConfig.name}`);
-  console.log(`  Destination: ${destinationAddress}`);
-  console.log(`  Transaction: ${simulatedTxHash}`);
-  
-  return {
-    success: true,
-    message: `Withdrawal of ${amount} ${currency} initiated to ${destinationAddress.slice(0, 10)}...${destinationAddress.slice(-8)}`,
-    transactionHash: simulatedTxHash,
-    explorerUrl: `${networkConfig.explorer}/tx/${simulatedTxHash}`,
-    amount,
-    currency,
-    network: networkConfig.name,
-    destinationAddress,
-    estimatedArrival: "1-5 minutes",
-    status: "processing",
-  };
+  // Hot wallet has funds - execute REAL transaction
+  try {
+    const hotWalletAddress = getHotWalletAddress();
+    if (!hotWalletAddress) {
+      return {
+        success: false,
+        message: "Hot wallet not initialized. Please set up the hot wallet first.",
+        status: "failed",
+        isSimulated: false,
+      };
+    }
+    
+    // Use sendTransactionWithLogging for real transaction with automatic logging
+    const result = await sendTransactionWithLogging({
+      to: destinationAddress,
+      amount: amount.toString(),
+      network: network as NetworkId,
+      description: `Withdrawal of ${amount} ${currency} to ${destinationAddress}`,
+      userId,
+    });
+    
+    if (!result.success) {
+      return {
+        success: false,
+        message: result.error || "Transaction failed",
+        status: "failed",
+        isSimulated: false,
+      };
+    }
+    
+    console.log(`[ETH Withdrawal] REAL transaction sent: ${result.transactionHash}`);
+    
+    // Store the successful withdrawal
+    const withdrawalId = `WD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    pendingWithdrawals.set(withdrawalId, {
+      id: withdrawalId,
+      userId,
+      amount,
+      currency,
+      network,
+      destinationAddress,
+      status: "completed",
+      createdAt: new Date(),
+      transactionHash: result.transactionHash,
+      isSimulated: false,
+    });
+    
+    return {
+      success: true,
+      message: `REAL withdrawal of ${amount} ${currency} completed successfully!`,
+      transactionHash: result.transactionHash,
+      explorerUrl: result.explorerUrl || `${networkConfig.explorer}/tx/${result.transactionHash}`,
+      amount,
+      currency,
+      network: networkConfig.name,
+      destinationAddress,
+      estimatedArrival: "Confirmed",
+      status: "completed",
+      isSimulated: false,
+    };
+    
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("[ETH Withdrawal] Transaction failed:", error);
+    
+    return {
+      success: false,
+      message: `Transaction failed: ${errorMessage}`,
+      status: "failed",
+      isSimulated: false,
+      reason: errorMessage,
+    };
+  }
 }
 
 /**
@@ -290,23 +395,27 @@ export function getWithdrawalStatus(withdrawalId: string): WithdrawalResult {
       success: false,
       message: "Withdrawal not found",
       status: "failed",
+      isSimulated: false,
     };
   }
   
   const networkConfig = NETWORKS[withdrawal.network];
   
   return {
-    success: true,
-    message: `Withdrawal ${withdrawal.status}`,
+    success: !withdrawal.isSimulated,
+    message: withdrawal.isSimulated 
+      ? `SIMULATED: This withdrawal requires hot wallet funding`
+      : `Withdrawal ${withdrawal.status}`,
     transactionHash: withdrawal.transactionHash,
-    explorerUrl: withdrawal.transactionHash 
+    explorerUrl: withdrawal.transactionHash && networkConfig
       ? `${networkConfig.explorer}/tx/${withdrawal.transactionHash}`
       : undefined,
     amount: withdrawal.amount,
     currency: withdrawal.currency,
-    network: networkConfig.name,
+    network: networkConfig?.name || withdrawal.network,
     destinationAddress: withdrawal.destinationAddress,
     status: withdrawal.status,
+    isSimulated: withdrawal.isSimulated,
   };
 }
 
@@ -323,6 +432,7 @@ export function getUserWithdrawals(userId: number): Array<{
   createdAt: Date;
   transactionHash?: string;
   explorerUrl?: string;
+  isSimulated: boolean;
 }> {
   const withdrawals: Array<{
     id: string;
@@ -334,6 +444,7 @@ export function getUserWithdrawals(userId: number): Array<{
     createdAt: Date;
     transactionHash?: string;
     explorerUrl?: string;
+    isSimulated: boolean;
   }> = [];
   
   pendingWithdrawals.forEach((withdrawal) => {
@@ -343,14 +454,15 @@ export function getUserWithdrawals(userId: number): Array<{
         id: withdrawal.id,
         amount: withdrawal.amount,
         currency: withdrawal.currency,
-        network: networkConfig.name,
+        network: networkConfig?.name || withdrawal.network,
         destinationAddress: withdrawal.destinationAddress,
         status: withdrawal.status,
         createdAt: withdrawal.createdAt,
         transactionHash: withdrawal.transactionHash,
-        explorerUrl: withdrawal.transactionHash 
+        explorerUrl: withdrawal.transactionHash && networkConfig
           ? `${networkConfig.explorer}/tx/${withdrawal.transactionHash}`
           : undefined,
+        isSimulated: withdrawal.isSimulated,
       });
     }
   });
@@ -362,13 +474,13 @@ export function getUserWithdrawals(userId: number): Array<{
  * Get available networks
  */
 export function getAvailableNetworks(): Array<{
-  key: NetworkKey;
+  key: string;
   name: string;
   symbol: string;
   explorer: string;
 }> {
   return Object.entries(NETWORKS).map(([key, config]) => ({
-    key: key as NetworkKey,
+    key,
     name: config.name,
     symbol: config.symbol,
     explorer: config.explorer,
@@ -394,4 +506,43 @@ export async function estimateWithdrawalFee(network: NetworkKey, amount: number)
   };
 }
 
-export { NETWORKS, TRUST_WALLET_ADDRESS };
+/**
+ * Get hot wallet funding status for withdrawals
+ */
+export async function getWithdrawalReadiness(): Promise<{
+  isReady: boolean;
+  hotWalletAddress: string;
+  balances: Array<{ network: string; balance: string; canWithdraw: boolean }>;
+  message: string;
+}> {
+  try {
+    const hotWalletAddress = getHotWalletAddress();
+    const allBalances = await checkAllBalances();
+    
+    const balanceStatus = Object.entries(allBalances).map(([network, data]: [string, { balance: string }]) => ({
+      network,
+      balance: data.balance,
+      canWithdraw: parseFloat(data.balance) > 0.001,
+    }));
+    
+    const hasAnyFunds = balanceStatus.some((b) => b.canWithdraw);
+    
+    return {
+      isReady: hasAnyFunds,
+      hotWalletAddress: hotWalletAddress || "",
+      balances: balanceStatus,
+      message: hasAnyFunds 
+        ? "Hot wallet is funded and ready for real withdrawals"
+        : `Hot wallet needs funding. Send ETH or MATIC to ${hotWalletAddress} to enable real withdrawals.`,
+    };
+  } catch (error) {
+    return {
+      isReady: false,
+      hotWalletAddress: "",
+      balances: [],
+      message: "Hot wallet not initialized",
+    };
+  }
+}
+
+export { NETWORKS };

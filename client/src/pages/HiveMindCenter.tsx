@@ -30,6 +30,7 @@ export default function HiveMindCenter() {
 
   // Queries
   const { data: systemData, refetch: refetchSystem } = trpc.hiveMind.getState.useQuery();
+  const { data: autonomousState, refetch: refetchAutonomous } = trpc.hiveMind.getAutonomousState.useQuery();
   const { data: botStates } = trpc.hiveMind.getBotStates.useQuery();
   const { data: schedulerStatus, refetch: refetchScheduler } = trpc.hiveMind.getSchedulerState.useQuery();
   // Income streams tracked locally
@@ -134,11 +135,13 @@ export default function HiveMindCenter() {
           break;
         case 'start-autonomous':
           await startAutonomous.mutateAsync();
-          toast.success("Autonomous mode activated");
+          toast.success("Autonomous mode activated - Bots will run continuously");
+          refetchAutonomous();
           break;
         case 'stop-autonomous':
           await stopAutonomous.mutateAsync();
           toast.success("Autonomous mode deactivated");
+          refetchAutonomous();
           break;
         case 'start-scheduler':
           await startScheduler.mutateAsync();
@@ -172,7 +175,8 @@ export default function HiveMindCenter() {
     }
   };
 
-  const [isAutonomousActive, setIsAutonomousActive] = useState(false);
+  // Sync autonomous state from backend
+  const isAutonomousActive = autonomousState?.isRunning || false;
   const isSchedulerRunning = schedulerStatus?.isRunning || false;
 
   return (

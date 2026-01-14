@@ -1514,3 +1514,54 @@
 - [x] Copy button for wallet address
 - [x] How to Import instructions section
 - [x] Security warning about private key handling
+
+
+## Transaction Hash & Master TODO Fixes (User Reported Issues)
+
+### Transaction Hash Error
+- [ ] Fix "Transaction Hash not found on Ethereum" error
+- [ ] Ensure transactions are real blockchain transactions, not simulated
+- [ ] Verify transaction hashes are valid before displaying
+- [ ] Show clear status when transaction is pending vs confirmed vs simulated
+
+### Master TODO Page Fixes
+- [ ] Fix Free Income "SIMULATED" status - clarify what's needed for real earnings
+- [ ] Fix NFT Earnings "NEEDS FUNDING" - show how to fund hot wallet
+- [ ] Fix Hot Wallet "EMPTY" status - update when wallet is funded
+- [ ] Show accurate real-time balances from blockchain
+
+### Hive Mind Page Debug
+- [ ] Audit all Hive Mind page features and buttons
+- [ ] Fix any broken functionality
+- [ ] Ensure all bots are working correctly
+- [ ] Verify voice commands work
+- [ ] Test all quick action buttons
+
+### Site-Wide Debug
+- [ ] Debug every page for functionality issues
+- [ ] Fix all broken buttons and links
+- [ ] Ensure all features work as expected
+- [ ] Remove simulated/fake data where real data should be shown
+
+
+
+## Transaction Hash & Hive Mind Fixes (User Reported Issues)
+
+### Transaction Hash Fix
+- [x] Updated ethWithdrawal.ts to clearly indicate simulated vs real transactions
+- [x] Added isSimulated flag to withdrawal results
+- [x] Show clear warning when transaction is simulated (hot wallet not funded)
+- [x] Real transactions only execute when hot wallet has sufficient balance
+
+### Hive Mind Page Fixes
+- [x] Fixed autonomous state to sync from backend (getAutonomousState query)
+- [x] Start Autonomous button now properly activates autonomous mode
+- [x] Badge changes from MANUAL MODE to AUTONOMOUS ACTIVE
+- [x] Button changes from Start to Stop when active
+- [x] All Quick Actions buttons working (Run All Bots, Sync CJ, Find Income, etc.)
+
+### Master TODO Page Status
+- [x] Free Income shows SIMULATED status with explanation
+- [x] NFT Earnings shows NEEDS FUNDING status
+- [x] Hot Wallet shows EMPTY status with balance
+- [x] Clear indicators for what needs to be done to enable real money flow

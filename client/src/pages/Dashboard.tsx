@@ -38,20 +38,32 @@ export default function Dashboard() {
   // Real ETH withdrawal mutation
   const withdrawETH = trpc.wallet.withdrawETH.useMutation({
     onSuccess: (data) => {
-      if (data.success) {
-        toast.success(`Withdrawal initiated: ${data.amount} ${data.currency}`);
+      if (data.success && !data.isSimulated) {
+        // REAL transaction completed
+        toast.success(`✅ REAL Withdrawal completed: ${data.amount} ${data.currency}`);
         toast.info(
           <div className="space-y-1">
-            <p>Transaction: {data.transactionHash?.slice(0, 16)}...</p>
+            <p className="text-green-400 font-bold">Real Transaction!</p>
+            <p>Hash: {data.transactionHash?.slice(0, 16)}...</p>
             <a 
               href={data.explorerUrl} 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-blue-400 hover:underline flex items-center gap-1"
             >
-              View on Explorer <ExternalLink className="w-3 h-3" />
+              View on Blockchain <ExternalLink className="w-3 h-3" />
             </a>
           </div>
+        );
+      } else if (data.isSimulated) {
+        // SIMULATED - hot wallet needs funding
+        toast.warning(
+          <div className="space-y-2">
+            <p className="text-yellow-400 font-bold">⚠️ SIMULATED - Not Real</p>
+            <p className="text-sm">{data.message}</p>
+            <p className="text-sm text-yellow-300">Fund the Hot Wallet to enable real withdrawals.</p>
+          </div>,
+          { duration: 10000 }
         );
       } else {
         toast.error(data.message);
