@@ -8,6 +8,8 @@ import { logEvent, getHiveMindState } from "./hiveMind";
 import { syncAwinProgrammes, getAwinCommissionSummary } from "./awinApi";
 import { scanForOpportunities, autoClaimRewards, getAllCryptoOpportunities } from "./autoCryptoEarner";
 import { batchGenerateAndList, getNFTMarketIntelligence } from "./nftAutomation";
+import { submitToAutoBuyPlatforms, getEmpirePortfolio, getAllEmpireNFTs } from "./nftEmpire";
+import { marketplaceService } from "./marketplaceApis";
 
 // Operation intervals (in milliseconds)
 const INTERVALS = {
@@ -19,6 +21,9 @@ const INTERVALS = {
   AIRDROP_CHECK: 2 * 60 * 60 * 1000, // 2 hours
   AWIN_SYNC: 4 * 60 * 60 * 1000, // 4 hours
   FULL_OPTIMIZATION: 6 * 60 * 60 * 1000, // 6 hours
+  NFT_GENERATION: 60 * 60 * 1000, // 1 hour - auto-generate NFTs
+  NFT_AUTOBUYER_SUBMIT: 24 * 60 * 60 * 1000, // Daily - submit to auto-buyers
+  MARKETPLACE_SYNC: 30 * 60 * 1000, // 30 minutes - sync marketplace listings
 };
 
 // System state
@@ -72,7 +77,9 @@ export async function startAlwaysAwake(userId: number): Promise<{
   scheduleTask("faucetClaim", INTERVALS.FAUCET_CLAIM, () => claimAllFaucets(userId));
   scheduleTask("airdropCheck", INTERVALS.AIRDROP_CHECK, () => checkAllAirdrops(userId));
   scheduleTask("awinSync", INTERVALS.AWIN_SYNC, () => syncAwin(userId));
-  scheduleTask("nftGeneration", INTERVALS.CONTENT_GENERATION, () => generateNFTs(userId));
+  scheduleTask("nftGeneration", INTERVALS.NFT_GENERATION, () => generateNFTs(userId));
+  scheduleTask("nftAutoBuyerSubmit", INTERVALS.NFT_AUTOBUYER_SUBMIT, () => submitToAutoBuyers(userId));
+  scheduleTask("marketplaceSync", INTERVALS.MARKETPLACE_SYNC, () => syncMarketplaceListings(userId));
   scheduleTask("fullOptimization", INTERVALS.FULL_OPTIMIZATION, () => runFullOptimization(userId));
 
   // Run initial operations immediately
@@ -443,6 +450,71 @@ export function getEarningsSummary(): {
     airdropsChecked: operationStats.airdropsChecked,
     estimatedDailyEarnings,
   };
+}
+
+/**
+ * Submit NFTs to auto-buyer platforms
+ */
+async function submitToAutoBuyers(userId: number): Promise<void> {
+  try {
+    const nfts = getAllEmpireNFTs();
+    
+    // Submit top NFTs to auto-buyers
+    for (const nft of nfts.slice(0, 5)) {
+      try {
+        await submitToAutoBuyPlatforms(userId, nft.id);
+      } catch (error) {
+        console.error(`Failed to submit NFT ${nft.id} to auto-buyers:`, error);
+      }
+    }
+
+    await logEvent(userId, "system_event", {
+      message: `📤 Submitted ${Math.min(5, nfts.length)} NFTs to auto-buyer platforms`,
+      metadata: {
+        type: "autobuyer_submit",
+        submitted: Math.min(5, nfts.length),
+      },
+    });
+  } catch (error) {
+    console.error("Auto-buyer submission failed:", error);
+  }
+}
+
+/**
+ * Sync marketplace listings and check for sales
+ */
+async function syncMarketplaceListings(userId: number): Promise<void> {
+  try {
+    const nfts = getAllEmpireNFTs();
+    
+    // Check marketplace stats for each listed NFT
+    let totalListings = 0;
+    let totalOffers = 0;
+
+    for (const nft of nfts.filter((n: any) => n.status === 'listed').slice(0, 10)) {
+      try {
+        const offers = await marketplaceService.getAllOffers(
+          nft.walletAddress || '0x0',
+          nft.id || '0'
+        );
+        totalOffers += offers.length;
+        totalListings++;
+      } catch (error) {
+        console.error(`Failed to check offers for NFT ${nft.id}:`, error);
+      }
+    }
+
+    await logEvent(userId, "system_event", {
+      message: `🔄 Synced ${totalListings} marketplace listings, found ${totalOffers} offers`,
+      metadata: {
+        type: "marketplace_sync",
+        listings: totalListings,
+        offers: totalOffers,
+      },
+    });
+  } catch (error) {
+    console.error("Marketplace sync failed:", error);
+  }
 }
 
 /**

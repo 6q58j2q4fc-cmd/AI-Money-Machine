@@ -4141,6 +4141,210 @@ const alwaysAwakeRouter = router({
     }),
 });
 
+// Web3 Wallet Router - Real blockchain wallet integration
+const web3Router = router({
+  // Get wallet balance across chains
+  getMultiChainBalance: protectedProcedure
+    .input(z.object({ address: z.string() }))
+    .query(async ({ input }) => {
+      const { web3WalletService } = await import('./_core/web3Wallet');
+      return web3WalletService.getMultiChainBalance(input.address);
+    }),
+
+  // Get single chain balance
+  getBalance: protectedProcedure
+    .input(z.object({ 
+      address: z.string(),
+      chain: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']).optional()
+    }))
+    .query(async ({ input }) => {
+      const { web3WalletService } = await import('./_core/web3Wallet');
+      return web3WalletService.getBalance(input.address, input.chain || 'ethereum');
+    }),
+
+  // Check NFT ownership
+  checkNFTOwnership: protectedProcedure
+    .input(z.object({
+      contractAddress: z.string(),
+      tokenId: z.string(),
+      chain: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']).optional()
+    }))
+    .query(async ({ input }) => {
+      const { web3WalletService } = await import('./_core/web3Wallet');
+      return web3WalletService.checkNFTOwnership(
+        input.contractAddress,
+        input.tokenId,
+        input.chain || 'ethereum'
+      );
+    }),
+
+  // Get NFT metadata
+  getNFTMetadata: protectedProcedure
+    .input(z.object({
+      contractAddress: z.string(),
+      tokenId: z.string(),
+      chain: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']).optional()
+    }))
+    .query(async ({ input }) => {
+      const { web3WalletService } = await import('./_core/web3Wallet');
+      return web3WalletService.getNFTMetadata(
+        input.contractAddress,
+        input.tokenId,
+        input.chain || 'ethereum'
+      );
+    }),
+
+  // Estimate gas for NFT transfer
+  estimateTransferGas: protectedProcedure
+    .input(z.object({
+      contractAddress: z.string(),
+      from: z.string(),
+      to: z.string(),
+      tokenId: z.string(),
+      chain: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']).optional()
+    }))
+    .query(async ({ input }) => {
+      const { web3WalletService } = await import('./_core/web3Wallet');
+      return web3WalletService.estimateNFTTransferGas(
+        input.contractAddress,
+        input.from,
+        input.to,
+        input.tokenId,
+        input.chain || 'ethereum'
+      );
+    }),
+
+  // Generate transfer transaction data
+  generateTransferData: protectedProcedure
+    .input(z.object({
+      contractAddress: z.string(),
+      from: z.string(),
+      to: z.string(),
+      tokenId: z.string()
+    }))
+    .mutation(async ({ input }) => {
+      const { web3WalletService } = await import('./_core/web3Wallet');
+      return web3WalletService.generateTransferData(
+        input.contractAddress,
+        input.from,
+        input.to,
+        input.tokenId
+      );
+    }),
+
+  // Get transaction status
+  getTransactionStatus: protectedProcedure
+    .input(z.object({
+      txHash: z.string(),
+      chain: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']).optional()
+    }))
+    .query(async ({ input }) => {
+      const { web3WalletService } = await import('./_core/web3Wallet');
+      return web3WalletService.getTransactionStatus(
+        input.txHash,
+        input.chain || 'ethereum'
+      );
+    }),
+
+  // Get current gas prices
+  getGasPrices: protectedProcedure
+    .input(z.object({
+      chain: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']).optional()
+    }).optional())
+    .query(async ({ input }) => {
+      const { web3WalletService } = await import('./_core/web3Wallet');
+      return web3WalletService.getGasPrices(input?.chain || 'ethereum');
+    }),
+
+  // Get available chains
+  getChains: publicProcedure
+    .query(async () => {
+      const { CHAINS } = await import('./_core/web3Wallet');
+      return Object.entries(CHAINS).map(([key, chain]) => ({
+        key,
+        ...chain
+      }));
+    }),
+
+  // Validate address
+  validateAddress: publicProcedure
+    .input(z.object({ address: z.string() }))
+    .query(async ({ input }) => {
+      const { web3WalletService } = await import('./_core/web3Wallet');
+      return { valid: web3WalletService.isValidAddress(input.address) };
+    }),
+});
+
+// Marketplace API Router - Real marketplace integrations
+const marketplaceApiRouter = router({
+  // Get aggregated stats across all marketplaces
+  getAggregatedStats: protectedProcedure
+    .input(z.object({ contractAddress: z.string() }))
+    .query(async ({ input }) => {
+      const { marketplaceService } = await import('./_core/marketplaceApis');
+      return marketplaceService.getAggregatedStats(input.contractAddress);
+    }),
+
+  // List NFT on all marketplaces
+  listOnAll: protectedProcedure
+    .input(z.object({
+      tokenId: z.string(),
+      contractAddress: z.string(),
+      price: z.number(),
+      metadata: z.object({
+        name: z.string(),
+        description: z.string(),
+        image: z.string(),
+        attributes: z.array(z.object({
+          trait_type: z.string(),
+          value: z.union([z.string(), z.number()])
+        }))
+      })
+    }))
+    .mutation(async ({ input }) => {
+      const { marketplaceService } = await import('./_core/marketplaceApis');
+      return marketplaceService.listOnAllMarketplaces(input);
+    }),
+
+  // Get all offers for an NFT
+  getAllOffers: protectedProcedure
+    .input(z.object({
+      contractAddress: z.string(),
+      tokenId: z.string()
+    }))
+    .query(async ({ input }) => {
+      const { marketplaceService } = await import('./_core/marketplaceApis');
+      return marketplaceService.getAllOffers(input.contractAddress, input.tokenId);
+    }),
+
+  // Find best sell price
+  findBestSellPrice: protectedProcedure
+    .input(z.object({
+      contractAddress: z.string(),
+      tokenId: z.string()
+    }))
+    .query(async ({ input }) => {
+      const { marketplaceService } = await import('./_core/marketplaceApis');
+      return marketplaceService.findBestSellPrice(input.contractAddress, input.tokenId);
+    }),
+
+  // Get OpenSea collection stats
+  getOpenSeaStats: protectedProcedure
+    .input(z.object({ collectionSlug: z.string() }))
+    .query(async ({ input }) => {
+      const { openSeaApi } = await import('./_core/marketplaceApis');
+      return openSeaApi.getCollectionStats(input.collectionSlug);
+    }),
+
+  // Get Blur collection stats
+  getBlurStats: protectedProcedure
+    .input(z.object({ contractAddress: z.string() }))
+    .query(async ({ input }) => {
+      const { blurApi } = await import('./_core/marketplaceApis');
+      return blurApi.getCollectionStats(input.contractAddress);
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -4175,6 +4379,8 @@ export const appRouter = router({
   nft: nftRouter,
   nftEmpire: nftEmpireRouter,
   dataMonetization: dataMonetizationRouter,
+  web3: web3Router,
+  marketplace: marketplaceApiRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -40,7 +40,7 @@ export default function NFTEmpire() {
   const [activeTab, setActiveTab] = useState("portfolio");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isBatchGenerating, setIsBatchGenerating] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("auto");
   const [batchCount, setBatchCount] = useState(5);
   const [walletAddress, setWalletAddress] = useState("");
   const [walletConnected, setWalletConnected] = useState(false);
@@ -136,7 +136,7 @@ export default function NFTEmpire() {
     setIsGenerating(true);
     try {
       await generateMutation.mutateAsync({
-        category: selectedCategory || undefined
+        category: selectedCategory === 'auto' ? undefined : selectedCategory
       });
     } finally {
       setIsGenerating(false);
@@ -147,19 +147,51 @@ export default function NFTEmpire() {
     setIsBatchGenerating(true);
     await batchGenerateMutation.mutateAsync({
       count: batchCount,
-      category: selectedCategory || undefined,
+      category: selectedCategory === 'auto' ? undefined : selectedCategory,
       autoList: true,
       autoSubmitToBuyers: true
     });
   };
 
-  const connectWallet = () => {
-    toast.info("Connecting to MetaMask...");
-    setTimeout(() => {
-      setWalletConnected(true);
-      setWalletAddress("0x7a3F8b2c9d1E4f5A6B7C8D9E0F1A2B3C4D5E6F7A");
-      toast.success("Wallet connected!");
-    }, 1500);
+  const connectWallet = async () => {
+    // Check if MetaMask is available
+    if (typeof window !== 'undefined' && (window as any).ethereum?.isMetaMask) {
+      try {
+        toast.info("Connecting to MetaMask...");
+        const accounts = await (window as any).ethereum.request({
+          method: 'eth_requestAccounts'
+        });
+        if (accounts && accounts.length > 0) {
+          setWalletConnected(true);
+          setWalletAddress(accounts[0]);
+          toast.success("MetaMask wallet connected!");
+          
+          // Listen for account changes
+          (window as any).ethereum.on('accountsChanged', (newAccounts: string[]) => {
+            if (newAccounts.length > 0) {
+              setWalletAddress(newAccounts[0]);
+            } else {
+              setWalletConnected(false);
+              setWalletAddress("");
+            }
+          });
+        }
+      } catch (error: any) {
+        if (error.code === 4001) {
+          toast.error("Connection rejected by user");
+        } else {
+          toast.error("Failed to connect wallet");
+        }
+      }
+    } else {
+      // Fallback for demo mode
+      toast.info("MetaMask not detected. Using demo mode...");
+      setTimeout(() => {
+        setWalletConnected(true);
+        setWalletAddress("0x7a3F8b2c9d1E4f5A6B7C8D9E0F1A2B3C4D5E6F7A");
+        toast.success("Demo wallet connected!");
+      }, 1000);
+    }
   };
 
   const handleCashOut = async () => {
@@ -473,7 +505,7 @@ export default function NFTEmpire() {
                         <SelectValue placeholder="Auto-select best category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Auto-select (AI chooses)</SelectItem>
+                        <SelectItem value="auto">Auto-select (AI chooses)</SelectItem>
                         {categories?.map((cat) => (
                           <SelectItem key={cat.category} value={cat.category}>
                             <div className="flex items-center justify-between w-full">
