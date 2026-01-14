@@ -893,3 +893,145 @@ export const cryptoTransactionLog = mysqlTable("crypto_transaction_log", {
 });
 export type CryptoTransactionLog = typeof cryptoTransactionLog.$inferSelect;
 export type InsertCryptoTransactionLog = typeof cryptoTransactionLog.$inferInsert;
+
+
+/**
+ * Faucet Accounts - Store credentials for crypto faucet sites
+ * Credentials are encrypted with AES-256
+ */
+export const faucetAccounts = mysqlTable("faucet_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // Faucet platform info
+  platform: varchar("platform", { length: 100 }).notNull(),
+  platformUrl: text("platformUrl").notNull(),
+  platformIcon: varchar("platformIcon", { length: 50 }),
+  
+  // Encrypted credentials
+  encryptedEmail: text("encryptedEmail"),
+  encryptedPassword: text("encryptedPassword"),
+  encryptedApiKey: text("encryptedApiKey"),
+  
+  // Wallet address for this faucet (where rewards go)
+  walletAddress: varchar("walletAddress", { length: 42 }),
+  
+  // Session management
+  sessionCookies: text("sessionCookies"), // Encrypted session cookies for persistent login
+  lastLoginAt: timestamp("lastLoginAt"),
+  loginStatus: mysqlEnum("loginStatus", ["logged_out", "logged_in", "expired", "error"]).default("logged_out"),
+  
+  // Claim tracking
+  lastClaimAt: timestamp("lastClaimAt"),
+  nextClaimAt: timestamp("nextClaimAt"),
+  claimIntervalMinutes: int("claimIntervalMinutes").default(60),
+  totalClaims: int("totalClaims").default(0),
+  totalEarnings: decimal("totalEarnings", { precision: 18, scale: 8 }).default("0"),
+  earningsCurrency: varchar("earningsCurrency", { length: 20 }).default("BTC"),
+  
+  // Status
+  isEnabled: boolean("isEnabled").default(true),
+  errorMessage: text("errorMessage"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type FaucetAccount = typeof faucetAccounts.$inferSelect;
+export type InsertFaucetAccount = typeof faucetAccounts.$inferInsert;
+
+/**
+ * CAPTCHA Solving Settings - API keys for CAPTCHA solving services
+ */
+export const captchaSettings = mysqlTable("captcha_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  
+  // Primary CAPTCHA service
+  primaryService: mysqlEnum("primaryService", ["2captcha", "anticaptcha", "capsolver", "none"]).default("none"),
+  
+  // 2Captcha settings
+  twoCaptchaApiKey: text("twoCaptchaApiKey"), // Encrypted
+  twoCaptchaBalance: decimal("twoCaptchaBalance", { precision: 10, scale: 4 }).default("0"),
+  
+  // Anti-Captcha settings
+  antiCaptchaApiKey: text("antiCaptchaApiKey"), // Encrypted
+  antiCaptchaBalance: decimal("antiCaptchaBalance", { precision: 10, scale: 4 }).default("0"),
+  
+  // CapSolver settings
+  capSolverApiKey: text("capSolverApiKey"), // Encrypted
+  capSolverBalance: decimal("capSolverBalance", { precision: 10, scale: 4 }).default("0"),
+  
+  // Usage tracking
+  totalCaptchasSolved: int("totalCaptchasSolved").default(0),
+  totalCost: decimal("totalCost", { precision: 10, scale: 4 }).default("0"),
+  successRate: decimal("successRate", { precision: 5, scale: 2 }).default("0"),
+  
+  // Auto-solve settings
+  autoSolveEnabled: boolean("autoSolveEnabled").default(true),
+  maxCostPerDay: decimal("maxCostPerDay", { precision: 10, scale: 2 }).default("5.00"),
+  dailyCostUsed: decimal("dailyCostUsed", { precision: 10, scale: 4 }).default("0"),
+  costResetAt: timestamp("costResetAt"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CaptchaSettings = typeof captchaSettings.$inferSelect;
+export type InsertCaptchaSettings = typeof captchaSettings.$inferInsert;
+
+/**
+ * CAPTCHA Solve Log - Track individual CAPTCHA solves
+ */
+export const captchaSolveLog = mysqlTable("captcha_solve_log", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  faucetAccountId: int("faucetAccountId"),
+  
+  // CAPTCHA details
+  captchaType: mysqlEnum("captchaType", ["recaptcha_v2", "recaptcha_v3", "hcaptcha", "funcaptcha", "image", "text"]).notNull(),
+  service: varchar("service", { length: 50 }).notNull(),
+  siteKey: varchar("siteKey", { length: 100 }),
+  pageUrl: text("pageUrl"),
+  
+  // Result
+  status: mysqlEnum("status", ["pending", "solving", "solved", "failed", "timeout"]).default("pending"),
+  solveTimeMs: int("solveTimeMs"),
+  cost: decimal("cost", { precision: 10, scale: 6 }).default("0"),
+  
+  // Error handling
+  errorMessage: text("errorMessage"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CaptchaSolveLog = typeof captchaSolveLog.$inferSelect;
+export type InsertCaptchaSolveLog = typeof captchaSolveLog.$inferInsert;
+
+/**
+ * Faucet Claim Log - Track individual faucet claims
+ */
+export const faucetClaimLog = mysqlTable("faucet_claim_log", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  faucetAccountId: int("faucetAccountId").notNull(),
+  
+  // Claim details
+  platform: varchar("platform", { length: 100 }).notNull(),
+  claimAmount: decimal("claimAmount", { precision: 18, scale: 8 }),
+  currency: varchar("currency", { length: 20 }),
+  usdValue: decimal("usdValue", { precision: 10, scale: 4 }),
+  
+  // Status
+  status: mysqlEnum("status", ["pending", "claiming", "success", "failed", "captcha_failed"]).default("pending"),
+  
+  // CAPTCHA info
+  captchaRequired: boolean("captchaRequired").default(false),
+  captchaSolveLogId: int("captchaSolveLogId"),
+  
+  // Error handling
+  errorMessage: text("errorMessage"),
+  screenshotUrl: text("screenshotUrl"),
+  
+  claimedAt: timestamp("claimedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FaucetClaimLog = typeof faucetClaimLog.$inferSelect;
+export type InsertFaucetClaimLog = typeof faucetClaimLog.$inferInsert;

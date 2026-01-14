@@ -17,6 +17,8 @@ import { logEvent, logArticleEvent, logDistributionEvent, logAutomationEvent, lo
 import { generateProductPage, publishProductPage, batchGenerateProductPages } from './_core/productPages';
 import { logError, getSystemHealth, getRecentErrors, resolveError, runDiagnostics, attemptSelfHeal, getDebuggingSummary, startContinuousMonitoring, stopContinuousMonitoring } from './_core/selfDebugger';
 import * as debugAdmin from './_core/debugAdmin';
+import * as faucetAccounts from './_core/faucetAccounts';
+import * as captchaSolver from './_core/captchaSolver';
 
 // Slug generator helper
 function generateSlug(title: string): string {
@@ -4616,6 +4618,7 @@ const walletRouter = router({
 
 // Hot Wallet router for server-side wallet management
 import { initializeHotWallet, getHotWalletAddress, checkBalance, checkAllBalances, estimateGasPrice, findCheapestNetwork, sendTransaction, transferNFT, getDepositInstructions, getHotWalletStatus, getNetworkList, withdrawToTrustWallet, getTransactionHistory, getRecommendedFunding, importWalletFromPrivateKey, logTransaction, verifyTransaction, updateTransactionStatus, sendTransactionWithLogging, lookupAddressBalance, type NetworkId } from './_core/hotWallet';
+import { fetchRealTransactionHistory, fetchAllNetworkTransactions, getTransactionDetails, verifyTransaction as verifyBlockchainTx } from './_core/transactionHistory';
 
 const hotWalletRouter = router({
   // Initialize hot wallet
@@ -4794,6 +4797,45 @@ const hotWalletRouter = router({
     }))
     .query(async ({ input }) => {
       return lookupAddressBalance(input.address);
+    }),
+
+  // Get REAL blockchain transaction history from Etherscan
+  getRealTransactionHistory: protectedProcedure
+    .input(z.object({
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']).optional(),
+      limit: z.number().optional().default(50),
+    }).optional())
+    .query(async ({ input }) => {
+      const status = await getHotWalletStatus();
+      if (!status.address) {
+        return { success: false, transactions: [], error: 'Hot wallet not initialized' };
+      }
+      
+      if (input?.network) {
+        return fetchRealTransactionHistory(status.address, input.network, { offset: input.limit });
+      }
+      
+      return fetchAllNetworkTransactions(status.address, { limit: input?.limit });
+    }),
+
+  // Get transaction details by hash
+  getTransactionDetails: protectedProcedure
+    .input(z.object({
+      txHash: z.string(),
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']),
+    }))
+    .query(async ({ input }) => {
+      return getTransactionDetails(input.txHash, input.network);
+    }),
+
+  // Verify transaction on blockchain
+  verifyBlockchainTransaction: protectedProcedure
+    .input(z.object({
+      txHash: z.string(),
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']),
+    }))
+    .query(async ({ input }) => {
+      return verifyBlockchainTx(input.txHash, input.network);
     }),
 });
 
@@ -5044,6 +5086,117 @@ const selfDebuggerRouter = router({
     }),
 });
 
+// Faucet Accounts Router
+const faucetAccountsRouter = router({
+  // Get all faucet accounts
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return faucetAccounts.getFaucetAccounts(ctx.user.id);
+  }),
+
+  // Get available platforms
+  platforms: protectedProcedure.query(async () => {
+    return faucetAccounts.FAUCET_PLATFORMS;
+  }),
+
+  // Add a new faucet account
+  add: protectedProcedure
+    .input(z.object({
+      platform: z.string(),
+      email: z.string().email(),
+      password: z.string().min(1),
+      walletAddress: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return faucetAccounts.addFaucetAccount(ctx.user.id, input);
+    }),
+
+  // Update a faucet account
+  update: protectedProcedure
+    .input(z.object({
+      accountId: z.number(),
+      email: z.string().email().optional(),
+      password: z.string().min(1).optional(),
+      walletAddress: z.string().optional(),
+      isEnabled: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { accountId, ...data } = input;
+      return faucetAccounts.updateFaucetAccount(ctx.user.id, accountId, data);
+    }),
+
+  // Delete a faucet account
+  delete: protectedProcedure
+    .input(z.object({ accountId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return faucetAccounts.deleteFaucetAccount(ctx.user.id, input.accountId);
+    }),
+
+  // Get claim history
+  claimHistory: protectedProcedure
+    .input(z.object({ limit: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      return faucetAccounts.getClaimHistory(ctx.user.id, input?.limit);
+    }),
+
+  // Get accounts ready to claim
+  readyToClaim: protectedProcedure.query(async ({ ctx }) => {
+    return faucetAccounts.getReadyToClaim(ctx.user.id);
+  }),
+
+  // Get faucet statistics
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    return faucetAccounts.getFaucetStats(ctx.user.id);
+  }),
+});
+
+// CAPTCHA Solver Router
+const captchaRouter = router({
+  // Get CAPTCHA settings
+  settings: protectedProcedure.query(async ({ ctx }) => {
+    return captchaSolver.getCaptchaSettings(ctx.user.id);
+  }),
+
+  // Save CAPTCHA settings
+  saveSettings: protectedProcedure
+    .input(z.object({
+      primaryService: z.enum(['none', '2captcha', 'anticaptcha', 'capsolver']),
+      twoCaptchaApiKey: z.string().optional(),
+      antiCaptchaApiKey: z.string().optional(),
+      capSolverApiKey: z.string().optional(),
+      autoSolveEnabled: z.boolean().optional(),
+      maxCostPerDay: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return captchaSolver.saveCaptchaSettings(ctx.user.id, input);
+    }),
+
+  // Check balance for a service
+  checkBalance: protectedProcedure
+    .input(z.object({ service: z.enum(['2captcha', 'anticaptcha', 'capsolver']) }))
+    .query(async ({ ctx, input }) => {
+      return captchaSolver.checkBalance(ctx.user.id, input.service);
+    }),
+
+  // Get CAPTCHA statistics
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    return captchaSolver.getCaptchaStats(ctx.user.id);
+  }),
+
+  // Solve a CAPTCHA (for testing)
+  solve: protectedProcedure
+    .input(z.object({
+      type: z.enum(['recaptcha_v2', 'recaptcha_v3', 'hcaptcha', 'funcaptcha', 'image', 'text']),
+      siteKey: z.string().optional(),
+      pageUrl: z.string(),
+      imageBase64: z.string().optional(),
+      minScore: z.number().optional(),
+      action: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return captchaSolver.solveCaptcha(ctx.user.id, input);
+    }),
+});
+
 // Master TODO router for comprehensive site audit
 import * as masterTodoService from './_core/masterTodoService';
 
@@ -5115,6 +5268,8 @@ export const appRouter = router({
   hotWallet: hotWalletRouter,
   debugAdmin: debugAdminRouter,
   masterTodo: masterTodoRouter,
+  faucetAccounts: faucetAccountsRouter,
+  captcha: captchaRouter,
 });
 
 export type AppRouter = typeof appRouter;

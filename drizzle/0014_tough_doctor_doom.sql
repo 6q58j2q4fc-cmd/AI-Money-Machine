@@ -1,0 +1,82 @@
+CREATE TABLE `captcha_settings` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`primaryService` enum('2captcha','anticaptcha','capsolver','none') DEFAULT 'none',
+	`twoCaptchaApiKey` text,
+	`twoCaptchaBalance` decimal(10,4) DEFAULT '0',
+	`antiCaptchaApiKey` text,
+	`antiCaptchaBalance` decimal(10,4) DEFAULT '0',
+	`capSolverApiKey` text,
+	`capSolverBalance` decimal(10,4) DEFAULT '0',
+	`totalCaptchasSolved` int DEFAULT 0,
+	`totalCost` decimal(10,4) DEFAULT '0',
+	`successRate` decimal(5,2) DEFAULT '0',
+	`autoSolveEnabled` boolean DEFAULT true,
+	`maxCostPerDay` decimal(10,2) DEFAULT '5.00',
+	`dailyCostUsed` decimal(10,4) DEFAULT '0',
+	`costResetAt` timestamp,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `captcha_settings_id` PRIMARY KEY(`id`),
+	CONSTRAINT `captcha_settings_userId_unique` UNIQUE(`userId`)
+);
+--> statement-breakpoint
+CREATE TABLE `captcha_solve_log` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`faucetAccountId` int,
+	`captchaType` enum('recaptcha_v2','recaptcha_v3','hcaptcha','funcaptcha','image','text') NOT NULL,
+	`service` varchar(50) NOT NULL,
+	`siteKey` varchar(100),
+	`pageUrl` text,
+	`status` enum('pending','solving','solved','failed','timeout') DEFAULT 'pending',
+	`solveTimeMs` int,
+	`cost` decimal(10,6) DEFAULT '0',
+	`errorMessage` text,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `captcha_solve_log_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `faucet_accounts` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`platform` varchar(100) NOT NULL,
+	`platformUrl` text NOT NULL,
+	`platformIcon` varchar(50),
+	`encryptedEmail` text,
+	`encryptedPassword` text,
+	`encryptedApiKey` text,
+	`walletAddress` varchar(42),
+	`sessionCookies` text,
+	`lastLoginAt` timestamp,
+	`loginStatus` enum('logged_out','logged_in','expired','error') DEFAULT 'logged_out',
+	`lastClaimAt` timestamp,
+	`nextClaimAt` timestamp,
+	`claimIntervalMinutes` int DEFAULT 60,
+	`totalClaims` int DEFAULT 0,
+	`totalEarnings` decimal(18,8) DEFAULT '0',
+	`earningsCurrency` varchar(20) DEFAULT 'BTC',
+	`isEnabled` boolean DEFAULT true,
+	`errorMessage` text,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `faucet_accounts_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `faucet_claim_log` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`faucetAccountId` int NOT NULL,
+	`platform` varchar(100) NOT NULL,
+	`claimAmount` decimal(18,8),
+	`currency` varchar(20),
+	`usdValue` decimal(10,4),
+	`status` enum('pending','claiming','success','failed','captcha_failed') DEFAULT 'pending',
+	`captchaRequired` boolean DEFAULT false,
+	`captchaSolveLogId` int,
+	`errorMessage` text,
+	`screenshotUrl` text,
+	`claimedAt` timestamp,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `faucet_claim_log_id` PRIMARY KEY(`id`)
+);

@@ -40,6 +40,7 @@ import HotWallet from './pages/HotWallet';
 import SystemHealth from './pages/SystemHealth';
 import DebugAdmin from './pages/DebugAdmin';
 import MasterTodo from './pages/MasterTodo';
+import FaucetAccounts from './pages/FaucetAccounts';
 
 function Router() {
   return (
@@ -85,6 +86,7 @@ function Router() {
       <Route path="/system-health" component={SystemHealth} />
       <Route path="/debug-admin" component={DebugAdmin} />
       <Route path="/master-todo" component={MasterTodo} />
+      <Route path="/faucet-accounts" component={FaucetAccounts} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

@@ -1644,3 +1644,66 @@
 - Individual Claim buttons for each faucet
 - How It Works documentation section
 - Important Notes about login requirements and captchas
+
+
+## PERMANENT RULE: Hot Wallet Protection
+
+**CRITICAL RULE - NEVER VIOLATE:**
+- NEVER delete or change hot wallet addresses
+- NEVER delete or change hot wallet private keys
+- NEVER modify wallet encryption or storage
+- All wallet changes must be additive only (new wallets can be added, but existing ones must remain)
+- Current protected wallet: 0xa1df3378a5642efEeD9D804C205b938DBe7CF477
+
+
+## Live NFT Minting & Security Enhancements (New Requirements)
+
+### Live NFT Minting Verification
+- [ ] Verify hot wallet is funded with ETH
+- [ ] Test live NFT minting on real blockchain
+- [ ] Verify NFT appears on OpenSea after minting
+- [ ] Confirm transaction hash is valid on Etherscan
+- [ ] Show real minting status in UI
+
+### Transaction History Fix
+- [x] Show real blockchain transaction history
+- [x] Fetch transactions from Etherscan API
+- [x] Display actual transaction hashes with links
+- [x] Show real timestamps and amounts
+- [x] Remove simulated/fake transaction data
+- [x] Created transactionHistory.ts service with multi-network support
+
+### Source Code Security & Encryption
+- [ ] Install code obfuscation for production builds
+- [ ] Add rate limiting to prevent abuse
+- [ ] Implement CORS protection for API endpoints
+- [ ] Add request signing for sensitive operations
+- [ ] Protect source maps from public access
+- [ ] Ensure all API/bot communications work uninterrupted
+- [ ] Hive Mind and automation systems remain fully functional
+
+
+## Faucet Account Management & CAPTCHA Solving (New Requirements)
+
+### Faucet Account Management
+- [x] Create database table for storing faucet account credentials (faucet_accounts table)
+- [x] Build UI for adding/editing faucet accounts (FreeBitco.in, Cointiply, FaucetPay, etc.)
+- [x] Encrypt stored credentials with AES-256-GCM
+- [ ] Add automatic login functionality to browser automation
+- [x] Store session cookies for persistent login (encrypted storage ready)
+
+### CAPTCHA Solving Integration
+- [x] Integrate 2Captcha API for automatic CAPTCHA solving
+- [ ] Add CAPTCHA detection in browser automation
+- [x] Implement reCAPTCHA v2/v3 solving
+- [x] Implement hCaptcha solving
+- [x] Add fallback to Anti-Captcha if 2Captcha fails
+- [x] Track CAPTCHA solving costs and success rates
+
+### Implementation Details
+- Created faucetAccounts.ts service with encrypted credential storage
+- Created captchaSolver.ts with 2Captcha and Anti-Captcha integration
+- Added FaucetAccounts.tsx management page with full CRUD
+- Added CAPTCHA settings configuration UI
+- Database tables: faucet_accounts, captcha_settings, captcha_solve_log, faucet_claim_log
+- Supported platforms: FreeBitco.in, Cointiply, FaucetPay, FireFaucet, FaucetCrypto, DutchyCorp, Allcoins, ClaimFreeCoins

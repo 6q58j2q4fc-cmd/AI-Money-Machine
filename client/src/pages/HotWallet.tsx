@@ -56,6 +56,7 @@ export default function HotWallet() {
   const { data: cheapestNetwork } = trpc.hotWallet.findCheapestNetwork.useQuery();
   const { data: networks } = trpc.hotWallet.getNetworks.useQuery();
   const { data: transactionHistory, refetch: refetchHistory } = trpc.hotWallet.getTransactionHistory.useQuery({ limit: 50 });
+  const { data: realTransactions, refetch: refetchRealHistory, isLoading: realTxLoading } = trpc.hotWallet.getRealTransactionHistory.useQuery({ limit: 50 });
 
   // Mutations
   const initializeMutation = trpc.hotWallet.initialize.useMutation({
@@ -547,87 +548,115 @@ export default function HotWallet() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-white">Transaction History</CardTitle>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      Transaction History
+                      <Badge variant="outline" className="text-emerald-400 border-emerald-400">
+                        LIVE BLOCKCHAIN
+                      </Badge>
+                    </CardTitle>
                     <CardDescription>
-                      All verified blockchain transactions with tracking numbers
+                      Real transactions fetched directly from Etherscan and block explorers
                     </CardDescription>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => refetchHistory()}
+                    onClick={() => {
+                      refetchHistory();
+                      refetchRealHistory();
+                    }}
+                    disabled={realTxLoading}
                     className="border-zinc-700"
                   >
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                    {realTxLoading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
                     Refresh
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                {transactionHistory?.transactions && transactionHistory.transactions.length > 0 ? (
+                {/* Real blockchain transactions */}
+                {realTransactions?.transactions && realTransactions.transactions.length > 0 ? (
                   <div className="space-y-3">
-                    {transactionHistory.transactions.map((tx) => (
+                    <div className="text-sm text-zinc-400 mb-4">
+                      Found {(realTransactions as any).totalCount || realTransactions.transactions.length} transactions across all networks
+                    </div>
+                    {realTransactions.transactions.map((tx: any, index: number) => (
                       <div
-                        key={tx.id}
+                        key={tx.hash || index}
                         className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg border border-zinc-700"
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`p-2 rounded-full ${tx.direction === 'incoming' ? 'bg-emerald-500/20' : 'bg-orange-500/20'}`}>
-                            {tx.direction === 'incoming' ? (
-                              <ArrowDownLeft className={`h-5 w-5 ${tx.direction === 'incoming' ? 'text-emerald-500' : 'text-orange-500'}`} />
+                          <div className={`p-2 rounded-full ${tx.type === 'incoming' ? 'bg-emerald-500/20' : 'bg-orange-500/20'}`}>
+                            {tx.type === 'incoming' ? (
+                              <ArrowDownLeft className="h-5 w-5 text-emerald-500" />
                             ) : (
-                              <ArrowUpRight className={`h-5 w-5 text-orange-500`} />
+                              <ArrowUpRight className="h-5 w-5 text-orange-500" />
                             )}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-white">
-                                {tx.direction === 'incoming' ? 'Received' : 'Sent'} {tx.amountFormatted} {tx.currency}
+                                {tx.type === 'incoming' ? 'Received' : 'Sent'} {tx.valueFormatted}
                               </span>
                               <Badge
                                 variant="outline"
                                 className={`text-xs ${
-                                  tx.status === 'confirmed' ? 'text-emerald-400 border-emerald-400' :
-                                  tx.status === 'confirming' ? 'text-yellow-400 border-yellow-400' :
+                                  tx.status === 'success' ? 'text-emerald-400 border-emerald-400' :
                                   tx.status === 'failed' ? 'text-red-400 border-red-400' :
-                                  'text-zinc-400 border-zinc-600'
+                                  'text-yellow-400 border-yellow-400'
                                 }`}
                               >
-                                {tx.status} ({tx.confirmations}/12)
+                                {tx.status === 'success' ? 'Confirmed' : tx.status}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs text-blue-400 border-blue-400">
+                                {tx.network?.toUpperCase()}
                               </Badge>
                             </div>
                             <p className="text-sm text-zinc-400">
-                              {tx.description || `${tx.txType} on ${tx.network}`}
+                              Block #{tx.blockNumber} • {tx.dateFormatted}
                             </p>
                             <p className="text-xs text-zinc-500 font-mono mt-1">
-                              TX: {tx.txHash?.slice(0, 20)}...{tx.txHash?.slice(-8)}
+                              TX: {tx.hash?.slice(0, 20)}...{tx.hash?.slice(-8)}
+                            </p>
+                            <p className="text-xs text-zinc-600 font-mono">
+                              {tx.type === 'incoming' ? 'From' : 'To'}: {tx.type === 'incoming' ? tx.from?.slice(0, 10) : tx.to?.slice(0, 10)}...
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="text-sm text-zinc-400">
-                            {tx.usdValue ? `$${parseFloat(tx.usdValue).toFixed(2)}` : '-'}
+                            {tx.confirmations} confirmations
                           </p>
-                          {tx.explorerUrl && (
-                            <a
-                              href={tx.explorerUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-emerald-400 hover:underline flex items-center gap-1 justify-end mt-1"
-                            >
-                              View on Explorer <ExternalLink className="h-3 w-3" />
-                            </a>
-                          )}
+                          <a
+                            href={tx.explorerUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-emerald-400 hover:underline flex items-center gap-1 justify-end mt-1"
+                          >
+                            View on Explorer <ExternalLink className="h-3 w-3" />
+                          </a>
                         </div>
                       </div>
                     ))}
                   </div>
+                ) : realTxLoading ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="h-12 w-12 text-emerald-500 mx-auto mb-4 animate-spin" />
+                    <p className="text-zinc-400">Fetching transactions from blockchain...</p>
+                  </div>
                 ) : (
                   <div className="text-center py-12">
                     <Wallet className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
-                    <p className="text-zinc-400">No transactions yet</p>
+                    <p className="text-zinc-400">No transactions found on blockchain</p>
                     <p className="text-sm text-zinc-500 mt-2">
-                      Transactions will appear here once you send or receive crypto
+                      Transactions will appear here once you send or receive crypto to this wallet
+                    </p>
+                    <p className="text-xs text-zinc-600 mt-4">
+                      Wallet: {status?.address?.slice(0, 10)}...{status?.address?.slice(-8)}
                     </p>
                   </div>
                 )}
