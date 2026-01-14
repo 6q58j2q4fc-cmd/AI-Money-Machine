@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 import { 
   DollarSign, 
   Gift, 
@@ -19,85 +19,72 @@ import {
   CheckCircle,
   Wallet,
   Bitcoin,
-  Sparkles
+  Sparkles,
+  Play,
+  Square,
+  ArrowUpRight,
+  Copy,
+  Activity
 } from "lucide-react";
 
-// Legitimate free income opportunities
-const INCOME_OPPORTUNITIES = {
-  faucets: [
-    { name: "FreeBitco.in", url: "https://freebitco.in", reward: "Up to $200 BTC/hour", type: "Bitcoin", auto: true },
-    { name: "Cointiply", url: "https://cointiply.com", reward: "100+ coins/claim", type: "Bitcoin", auto: true },
-    { name: "Fire Faucet", url: "https://firefaucet.win", reward: "Auto-claim enabled", type: "Multi-coin", auto: true },
-    { name: "FaucetPay", url: "https://faucetpay.io", reward: "Micro-wallet + faucets", type: "Multi-coin", auto: true },
-    { name: "Dutchy CORP", url: "https://autofaucet.dutchycorp.space", reward: "Auto-faucet system", type: "Multi-coin", auto: true },
-    { name: "Final Autoclaim", url: "https://finalautoclaim.com", reward: "Passive earning", type: "Multi-coin", auto: true },
-  ],
-  airdrops: [
-    { name: "CoinMarketCap Airdrops", url: "https://coinmarketcap.com/airdrop", reward: "Various tokens", type: "Airdrop" },
-    { name: "AirdropAlert", url: "https://airdropalert.com", reward: "Free tokens", type: "Airdrop" },
-    { name: "Airdrops.io", url: "https://airdrops.io", reward: "Verified airdrops", type: "Airdrop" },
-    { name: "DappRadar Airdrops", url: "https://dappradar.com/hub/airdrops", reward: "DeFi airdrops", type: "Airdrop" },
-  ],
-  earnCrypto: [
-    { name: "Brave Browser", url: "https://brave.com", reward: "BAT tokens monthly", type: "Browser", auto: true },
-    { name: "Presearch", url: "https://presearch.com", reward: "PRE tokens/search", type: "Search", auto: true },
-    { name: "Swash", url: "https://swashapp.io", reward: "DATA tokens", type: "Extension", auto: true },
-    { name: "COIN App", url: "https://coinapp.co", reward: "XYO tokens", type: "Mobile", auto: true },
-    { name: "Pi Network", url: "https://minepi.com", reward: "Pi coins daily", type: "Mobile", auto: true },
-    { name: "Honeygain", url: "https://honeygain.com", reward: "$20+/month passive", type: "Bandwidth", auto: true },
-  ],
-  cashback: [
-    { name: "Rakuten", url: "https://rakuten.com", reward: "Up to 40% cashback", type: "Shopping" },
-    { name: "Honey", url: "https://joinhoney.com", reward: "Auto-coupons + gold", type: "Extension" },
-    { name: "TopCashback", url: "https://topcashback.com", reward: "Highest cashback rates", type: "Shopping" },
-    { name: "Ibotta", url: "https://ibotta.com", reward: "Grocery cashback", type: "Mobile" },
-    { name: "Dosh", url: "https://dosh.com", reward: "Auto cashback", type: "Mobile", auto: true },
-    { name: "Drop", url: "https://earnwithdrop.com", reward: "Points on purchases", type: "Mobile", auto: true },
-  ],
-  surveys: [
-    { name: "Swagbucks", url: "https://swagbucks.com", reward: "$1-5/survey", type: "Survey" },
-    { name: "Survey Junkie", url: "https://surveyjunkie.com", reward: "$1-3/survey", type: "Survey" },
-    { name: "Prolific", url: "https://prolific.co", reward: "$6-12/hour", type: "Research" },
-    { name: "UserTesting", url: "https://usertesting.com", reward: "$10/test", type: "Testing" },
-    { name: "MTurk", url: "https://mturk.com", reward: "Micro-tasks", type: "Tasks" },
-  ],
-  referrals: [
-    { name: "Coinbase", url: "https://coinbase.com/join", reward: "$10 BTC per referral", type: "Crypto" },
-    { name: "Binance", url: "https://binance.com", reward: "20% commission", type: "Crypto" },
-    { name: "Crypto.com", url: "https://crypto.com", reward: "$25 per referral", type: "Crypto" },
-    { name: "BlockFi", url: "https://blockfi.com", reward: "$10-250 per referral", type: "Crypto" },
-    { name: "Webull", url: "https://webull.com", reward: "Free stocks", type: "Stocks" },
-    { name: "Robinhood", url: "https://robinhood.com", reward: "Free stock", type: "Stocks" },
-  ]
-};
+// Trust Wallet address
+const TRUST_WALLET_ADDRESS = '0x75812e1c4246A880f6576db8292405247e6a8775';
 
 export default function FreeIncome() {
-  // Using sonner toast
   const [activeTab, setActiveTab] = useState("faucets");
-  const [walletAddress, setWalletAddress] = useState("");
-  const [isScanning, setIsScanning] = useState(false);
-  const [earnings, setEarnings] = useState({
-    total: 0,
-    today: 0,
-    pending: 0,
-    sources: [] as { name: string; amount: number; currency: string }[]
+  
+  // tRPC queries and mutations
+  const { data: claimStatus, refetch: refetchStatus } = trpc.autoClaims.getStatus.useQuery();
+  const { data: earnings, refetch: refetchEarnings } = trpc.autoClaims.getEarnings.useQuery();
+  const { data: sourcesData } = trpc.autoClaims.getSources.useQuery();
+  const { data: nftPortfolio } = trpc.nftEmpire.getPortfolio.useQuery();
+  
+  const startAllMutation = trpc.autoClaims.startAll.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message);
+      refetchStatus();
+      refetchEarnings();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  
+  const stopAllMutation = trpc.autoClaims.stopAll.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message);
+      refetchStatus();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  
+  const forceRunMutation = trpc.autoClaims.forceRun.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Processed ${data.claimsProcessed} claims, earned $${data.totalEarned.toFixed(4)}`);
+      refetchStatus();
+      refetchEarnings();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  
+  const withdrawMutation = trpc.autoClaims.withdraw.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message);
+      refetchEarnings();
+    },
+    onError: (error) => toast.error(error.message),
   });
 
-  // Auto-scan for new opportunities
-  const scanForOpportunities = async () => {
-    setIsScanning(true);
-    toast.info("Scanning for new income opportunities...");
-    
-    // Simulate scanning
-    await new Promise(r => setTimeout(r, 2000));
-    
-    toast.success("Found 6 auto-claim faucets, 4 active airdrops, and 3 new referral bonuses");
-    setIsScanning(false);
+  const copyWalletAddress = () => {
+    navigator.clipboard.writeText(TRUST_WALLET_ADDRESS);
+    toast.success('Wallet address copied to clipboard');
   };
 
-  // Start auto-claiming
-  const startAutoClaim = (source: string) => {
-    toast.success(`${source} will automatically claim rewards when available`);
+  const handleWithdraw = () => {
+    const totalETH = earnings?.totalETH || 0;
+    if (totalETH < 0.001) {
+      toast.error('Minimum withdrawal is 0.001 ETH');
+      return;
+    }
+    withdrawMutation.mutate({ amount: totalETH, currency: 'ETH' });
   };
 
   const renderOpportunityCard = (opp: any, index: number) => (
@@ -107,7 +94,7 @@ export default function FreeIncome() {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h4 className="font-semibold text-white">{opp.name}</h4>
-              {opp.auto && (
+              {opp.autoClaimInterval && (
                 <Badge className="bg-green-500/20 text-green-400 text-xs">
                   <Zap className="w-3 h-3 mr-1" />
                   Auto
@@ -115,7 +102,7 @@ export default function FreeIncome() {
               )}
             </div>
             <p className="text-sm text-zinc-400 mb-2">{opp.reward}</p>
-            <Badge variant="outline" className="text-xs">{opp.type}</Badge>
+            <Badge variant="outline" className="text-xs">{opp.currency}</Badge>
           </div>
           <div className="flex flex-col gap-2">
             <Button 
@@ -126,21 +113,19 @@ export default function FreeIncome() {
               <ExternalLink className="w-3 h-3 mr-1" />
               Open
             </Button>
-            {opp.auto && (
-              <Button 
-                size="sm" 
-                className="bg-amber-500 hover:bg-amber-600 text-black"
-                onClick={() => startAutoClaim(opp.name)}
-              >
-                <Zap className="w-3 h-3 mr-1" />
-                Auto
-              </Button>
+            {opp.enabled && (
+              <Badge className="bg-green-500/20 text-green-400 text-xs justify-center">
+                <CheckCircle className="w-3 h-3 mr-1" />
+                Active
+              </Badge>
             )}
           </div>
         </div>
       </CardContent>
     </Card>
   );
+
+  const sources = sourcesData?.sources;
 
   return (
     <DashboardLayout>
@@ -159,18 +144,56 @@ export default function FreeIncome() {
           <div className="flex gap-2">
             <Button 
               variant="outline" 
-              onClick={scanForOpportunities}
-              disabled={isScanning}
+              onClick={() => forceRunMutation.mutate()}
+              disabled={forceRunMutation.isPending}
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isScanning ? 'animate-spin' : ''}`} />
-              {isScanning ? 'Scanning...' : 'Scan for New'}
+              <RefreshCw className={`w-4 h-4 mr-2 ${forceRunMutation.isPending ? 'animate-spin' : ''}`} />
+              Force Claim All
             </Button>
-            <Button className="bg-green-500 hover:bg-green-600">
-              <Zap className="w-4 h-4 mr-2" />
-              Start All Auto-Claims
-            </Button>
+            {claimStatus?.active ? (
+              <Button 
+                variant="destructive"
+                onClick={() => stopAllMutation.mutate()}
+                disabled={stopAllMutation.isPending}
+              >
+                <Square className="w-4 h-4 mr-2" />
+                Stop Auto-Claims
+              </Button>
+            ) : (
+              <Button 
+                className="bg-green-500 hover:bg-green-600"
+                onClick={() => startAllMutation.mutate()}
+                disabled={startAllMutation.isPending}
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Start All Auto-Claims
+              </Button>
+            )}
           </div>
         </div>
+
+        {/* Auto-Claim Status Banner */}
+        <Card className={`border-2 ${claimStatus?.active ? 'border-green-500 bg-green-500/10' : 'border-zinc-700 bg-zinc-900/50'}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={`w-3 h-3 rounded-full ${claimStatus?.active ? 'bg-green-500 animate-pulse' : 'bg-zinc-500'}`} />
+                <div>
+                  <p className="font-semibold text-white">
+                    {claimStatus?.active ? 'Auto-Claims Running 24/7' : 'Auto-Claims Stopped'}
+                  </p>
+                  <p className="text-sm text-zinc-400">
+                    {claimStatus?.activeSources || 0} sources active • {claimStatus?.totalClaims || 0} total claims • {(claimStatus?.successRate || 0).toFixed(1)}% success rate
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-zinc-400">Est. Hourly Earnings</p>
+                <p className="text-xl font-bold text-green-400">${(claimStatus?.estimatedHourlyEarnings || 0).toFixed(4)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Earnings Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -179,7 +202,8 @@ export default function FreeIncome() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-green-400">Total Earned</p>
-                  <p className="text-2xl font-bold text-white">${earnings.total.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-white">${(earnings?.totalUSD || 0).toFixed(2)}</p>
+                  <p className="text-xs text-zinc-400">{(earnings?.totalETH || 0).toFixed(6)} ETH</p>
                 </div>
                 <DollarSign className="w-8 h-8 text-green-500" />
               </div>
@@ -190,7 +214,7 @@ export default function FreeIncome() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-amber-400">Today</p>
-                  <p className="text-2xl font-bold text-white">${earnings.today.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-white">${(earnings?.todayUSD || 0).toFixed(2)}</p>
                 </div>
                 <TrendingUp className="w-8 h-8 text-amber-500" />
               </div>
@@ -200,10 +224,11 @@ export default function FreeIncome() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-blue-400">Pending</p>
-                  <p className="text-2xl font-bold text-white">${earnings.pending.toFixed(2)}</p>
+                  <p className="text-sm text-blue-400">NFT Portfolio</p>
+                  <p className="text-2xl font-bold text-white">{(nftPortfolio?.totalValue || 0).toFixed(4)} ETH</p>
+                  <p className="text-xs text-zinc-400">{nftPortfolio?.totalNFTs || 0} NFTs</p>
                 </div>
-                <Clock className="w-8 h-8 text-blue-500" />
+                <Sparkles className="w-8 h-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
@@ -212,47 +237,102 @@ export default function FreeIncome() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-purple-400">Active Sources</p>
-                  <p className="text-2xl font-bold text-white">32</p>
+                  <p className="text-2xl font-bold text-white">{claimStatus?.activeSources || 0}</p>
                 </div>
-                <Sparkles className="w-8 h-8 text-purple-500" />
+                <Activity className="w-8 h-8 text-purple-500" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Wallet Connection */}
+        {/* Trust Wallet & Withdrawal */}
         <Card className="bg-zinc-900/50 border-zinc-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wallet className="w-5 h-5 text-amber-500" />
-              Crypto Wallet Connection
+              Trust Wallet - All Earnings Go Here
             </CardTitle>
             <CardDescription>
-              Connect your wallet to automatically receive crypto earnings
+              Your configured wallet for automatic crypto payouts
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <Input 
-                placeholder="Enter your wallet address (ETH/BTC/Multi-chain)"
-                value={walletAddress}
-                onChange={(e) => setWalletAddress(e.target.value)}
-                className="flex-1 bg-zinc-800 border-zinc-700"
-              />
-              <Button className="bg-amber-500 hover:bg-amber-600 text-black">
-                <Wallet className="w-4 h-4 mr-2" />
-                Connect Wallet
-              </Button>
-              <Button variant="outline">
-                <Bitcoin className="w-4 h-4 mr-2" />
-                MetaMask
-              </Button>
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <Wallet className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-zinc-400">Trust Wallet Address</p>
+                  <div className="flex items-center gap-2">
+                    <code className="text-white font-mono text-sm bg-zinc-800 px-2 py-1 rounded">
+                      {TRUST_WALLET_ADDRESS.slice(0, 10)}...{TRUST_WALLET_ADDRESS.slice(-8)}
+                    </code>
+                    <Button size="sm" variant="ghost" onClick={copyWalletAddress}>
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                    <a 
+                      href={`https://etherscan.io/address/${TRUST_WALLET_ADDRESS}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button size="sm" variant="ghost">
+                        <ExternalLink className="w-4 h-4" />
+                      </Button>
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-sm text-zinc-400">Available to Withdraw</p>
+                  <p className="text-xl font-bold text-green-400">{(earnings?.totalETH || 0).toFixed(6)} ETH</p>
+                </div>
+                <Button 
+                  className="bg-green-500 hover:bg-green-600 text-black font-semibold"
+                  onClick={handleWithdraw}
+                  disabled={withdrawMutation.isPending || (earnings?.totalETH || 0) < 0.001}
+                >
+                  <ArrowUpRight className="w-4 h-4 mr-2" />
+                  Withdraw to Wallet
+                </Button>
+              </div>
             </div>
-            <p className="text-xs text-zinc-500 mt-2">
-              PayPal: dakotarea@icloud.com (for cash earnings)
+            <p className="text-xs text-zinc-500 mt-4">
+              PayPal: dakotarea@icloud.com (for cash earnings) • Minimum withdrawal: 0.001 ETH
             </p>
           </CardContent>
         </Card>
+
+        {/* Recent Claims */}
+        {earnings?.claims && earnings.claims.length > 0 && (
+          <Card className="bg-zinc-900/50 border-zinc-800">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-500" />
+                Recent Claims
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {earnings.claims.slice(-10).reverse().map((claim: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${claim.status === 'claimed' ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <span className="text-white">{claim.sourceName}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-zinc-400">{claim.amount.toFixed(6)} {claim.currency}</span>
+                      <span className="text-xs text-zinc-500">
+                        {new Date(claim.timestamp).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Income Opportunities Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -269,18 +349,6 @@ export default function FreeIncome() {
               <Coins className="w-4 h-4 mr-2" />
               Earn Crypto
             </TabsTrigger>
-            <TabsTrigger value="cashback" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
-              <DollarSign className="w-4 h-4 mr-2" />
-              Cashback
-            </TabsTrigger>
-            <TabsTrigger value="surveys" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
-              <Star className="w-4 h-4 mr-2" />
-              Surveys
-            </TabsTrigger>
-            <TabsTrigger value="referrals" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Referrals
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="faucets" className="mt-4">
@@ -291,12 +359,12 @@ export default function FreeIncome() {
                   Auto-Claim Crypto Faucets
                 </CardTitle>
                 <CardDescription>
-                  These faucets support automatic claiming - set and forget!
+                  These faucets are automatically claimed by the system - set and forget!
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {INCOME_OPPORTUNITIES.faucets.map((opp, i) => renderOpportunityCard(opp, i))}
+                  {sources?.faucets?.map((opp: any, i: number) => renderOpportunityCard(opp, i))}
                 </div>
               </CardContent>
             </Card>
@@ -310,12 +378,12 @@ export default function FreeIncome() {
                   Active Airdrops
                 </CardTitle>
                 <CardDescription>
-                  Free tokens from new crypto projects - claim before they expire!
+                  Free tokens from new crypto projects - automatically monitored and claimed!
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {INCOME_OPPORTUNITIES.airdrops.map((opp, i) => renderOpportunityCard(opp, i))}
+                  {sources?.airdrops?.map((opp: any, i: number) => renderOpportunityCard(opp, i))}
                 </div>
               </CardContent>
             </Card>
@@ -334,98 +402,12 @@ export default function FreeIncome() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {INCOME_OPPORTUNITIES.earnCrypto.map((opp, i) => renderOpportunityCard(opp, i))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="cashback" className="mt-4">
-            <Card className="bg-zinc-900/50 border-zinc-800">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-green-500" />
-                  Cashback Programs
-                </CardTitle>
-                <CardDescription>
-                  Get money back on purchases you're already making
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {INCOME_OPPORTUNITIES.cashback.map((opp, i) => renderOpportunityCard(opp, i))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="surveys" className="mt-4">
-            <Card className="bg-zinc-900/50 border-zinc-800">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="w-5 h-5 text-blue-500" />
-                  Surveys & Tasks
-                </CardTitle>
-                <CardDescription>
-                  Earn money by sharing your opinions and completing simple tasks
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {INCOME_OPPORTUNITIES.surveys.map((opp, i) => renderOpportunityCard(opp, i))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="referrals" className="mt-4">
-            <Card className="bg-zinc-900/50 border-zinc-800">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-amber-500" />
-                  Referral Bonuses
-                </CardTitle>
-                <CardDescription>
-                  Earn bonuses by referring others to these platforms
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {INCOME_OPPORTUNITIES.referrals.map((opp, i) => renderOpportunityCard(opp, i))}
+                  {sources?.earnCrypto?.map((opp: any, i: number) => renderOpportunityCard(opp, i))}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Auto-Discovery Status */}
-        <Card className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-amber-500" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white">Hive Mind Auto-Discovery</h3>
-                  <p className="text-sm text-zinc-400">
-                    Continuously scanning for new free income opportunities
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-sm text-zinc-400">Last scan</p>
-                  <p className="text-white font-medium">2 minutes ago</p>
-                </div>
-                <Badge className="bg-green-500/20 text-green-400">
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  Active
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   );

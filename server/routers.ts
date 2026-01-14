@@ -4567,6 +4567,60 @@ const walletRouter = router({
     }),
 });
 
+// Auto-claims router for Free Income page
+import { startAllAutoClaims, stopAllAutoClaims, getEarningsSummary, getAutoClaimStatus, requestWithdrawal, forceRunAllClaims, AUTO_CLAIM_SOURCES, TRUST_WALLET_ADDRESS } from './_core/autoClaimsService';
+
+const autoClaimsRouter = router({
+  // Get auto-claim status
+  getStatus: protectedProcedure
+    .query(async () => {
+      return getAutoClaimStatus();
+    }),
+
+  // Get earnings summary
+  getEarnings: protectedProcedure
+    .query(async () => {
+      return getEarningsSummary();
+    }),
+
+  // Start all auto-claims
+  startAll: protectedProcedure
+    .mutation(async () => {
+      return startAllAutoClaims();
+    }),
+
+  // Stop all auto-claims
+  stopAll: protectedProcedure
+    .mutation(async () => {
+      return stopAllAutoClaims();
+    }),
+
+  // Force run all claims immediately
+  forceRun: protectedProcedure
+    .mutation(async () => {
+      return forceRunAllClaims();
+    }),
+
+  // Request withdrawal
+  withdraw: protectedProcedure
+    .input(z.object({
+      amount: z.number(),
+      currency: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      return requestWithdrawal(input.amount, input.currency);
+    }),
+
+  // Get available sources
+  getSources: protectedProcedure
+    .query(async () => {
+      return {
+        sources: AUTO_CLAIM_SOURCES,
+        walletAddress: TRUST_WALLET_ADDRESS,
+      };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -4604,6 +4658,7 @@ export const appRouter = router({
   web3: web3Router,
   marketplace: marketplaceApiRouter,
   wallet: walletRouter,
+  autoClaims: autoClaimsRouter,
 });
 
 export type AppRouter = typeof appRouter;
