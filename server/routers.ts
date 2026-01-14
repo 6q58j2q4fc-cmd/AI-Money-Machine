@@ -4565,6 +4565,51 @@ const walletRouter = router({
         walletAddress: settings.ethWalletAddress,
       };
     }),
+
+  // Real ETH withdrawal with transaction details
+  withdrawETH: protectedProcedure
+    .input(z.object({
+      amount: z.number().positive(),
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']).default('ethereum'),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { processWithdrawal, getAvailableNetworks, TRUST_WALLET_ADDRESS } = await import('./_core/ethWithdrawal');
+      
+      const result = await processWithdrawal({
+        userId: ctx.user.id,
+        amount: input.amount,
+        currency: input.network === 'polygon' ? 'MATIC' : 'ETH',
+        network: input.network,
+        destinationAddress: TRUST_WALLET_ADDRESS,
+      });
+      
+      return result;
+    }),
+
+  // Get available networks for withdrawal
+  getNetworks: protectedProcedure
+    .query(async () => {
+      const { getAvailableNetworks } = await import('./_core/ethWithdrawal');
+      return getAvailableNetworks();
+    }),
+
+  // Estimate withdrawal fee
+  estimateFee: protectedProcedure
+    .input(z.object({
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']),
+      amount: z.number().positive(),
+    }))
+    .query(async ({ input }) => {
+      const { estimateWithdrawalFee } = await import('./_core/ethWithdrawal');
+      return estimateWithdrawalFee(input.network, input.amount);
+    }),
+
+  // Get withdrawal history
+  getWithdrawalHistory: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getUserWithdrawals } = await import('./_core/ethWithdrawal');
+      return getUserWithdrawals(ctx.user.id);
+    }),
 });
 
 // Auto-claims router for Free Income page

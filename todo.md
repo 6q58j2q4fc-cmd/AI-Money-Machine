@@ -1257,3 +1257,24 @@
 - [x] Submit to auto-buying NFT brokers (8 platforms)
 - [x] Optimize pricing for each marketplace
 - [x] Track sales and offers across platforms
+
+
+## ETH Withdrawal Functionality (Critical Fix)
+- [ ] Analyze current withdrawal button implementation
+- [ ] Implement real ETH transfer to Trust Wallet (0x75812e1c4246A880f6576db8292405247e6a8775)
+- [ ] Add transaction signing and broadcasting
+- [ ] Show transaction hash and confirmation status
+- [ ] Add Etherscan link to track transaction
+- [ ] Handle insufficient balance errors
+- [ ] Test withdrawal flow end-to-end
+
+
+## ETH Withdrawal Functionality - COMPLETED
+- [x] Create ethWithdrawal.ts service with Web3 integration
+- [x] Add wallet.withdrawETH mutation to routers
+- [x] Update Dashboard.tsx with real withdrawal button
+- [x] Show loading state during withdrawal processing
+- [x] Display transaction hash and explorer link on success
+- [x] Multi-network support (Ethereum, Polygon, Arbitrum, Optimism, Base)
+- [x] Withdrawal history tracking in database
+- [x] Fee estimation for each network

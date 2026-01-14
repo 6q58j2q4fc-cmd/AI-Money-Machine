@@ -30,13 +30,49 @@ export default function Dashboard() {
   const { data: topArticles } = trpc.analytics.topArticles.useQuery({ limit: 5 });
   const { data: topLinks } = trpc.analytics.topLinks.useQuery({ limit: 5 });
   const { data: nftPortfolio } = trpc.nftEmpire.getPortfolioSummary.useQuery();
+  const { data: withdrawalHistory } = trpc.wallet.getWithdrawalHistory.useQuery();
   
   // Trust Wallet address
   const TRUST_WALLET_ADDRESS = "0x75812e1c4246A880f6576db8292405247e6a8775";
   
+  // Real ETH withdrawal mutation
+  const withdrawETH = trpc.wallet.withdrawETH.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success(`Withdrawal initiated: ${data.amount} ${data.currency}`);
+        toast.info(
+          <div className="space-y-1">
+            <p>Transaction: {data.transactionHash?.slice(0, 16)}...</p>
+            <a 
+              href={data.explorerUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:underline flex items-center gap-1"
+            >
+              View on Explorer <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        );
+      } else {
+        toast.error(data.message);
+      }
+    },
+    onError: (error) => {
+      toast.error(`Withdrawal failed: ${error.message}`);
+    },
+  });
+  
   const handleWithdraw = () => {
-    toast.success(`Withdrawal initiated to ${TRUST_WALLET_ADDRESS.slice(0, 8)}...${TRUST_WALLET_ADDRESS.slice(-6)}`);
-    toast.info("Processing... Funds will arrive in 1-3 business days");
+    const amount = nftPortfolio?.totalEstimatedValue || 0;
+    if (amount <= 0) {
+      toast.error("No funds available to withdraw");
+      return;
+    }
+    
+    withdrawETH.mutate({
+      amount,
+      network: 'ethereum',
+    });
   };
   
   const copyWalletAddress = () => {
@@ -150,10 +186,20 @@ export default function Dashboard() {
                 <div className="flex gap-2">
                   <Button 
                     onClick={handleWithdraw}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    disabled={withdrawETH.isPending || (nftPortfolio?.totalEstimatedValue || 0) <= 0}
+                    className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                   >
-                    <Send className="w-4 h-4 mr-2" />
-                    Withdraw to Wallet
+                    {withdrawETH.isPending ? (
+                      <>
+                        <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Withdraw {(nftPortfolio?.totalEstimatedValue || 0).toFixed(4)} ETH
+                      </>
+                    )}
                   </Button>
                   <Button 
                     variant="outline"
