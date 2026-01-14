@@ -52,6 +52,8 @@ export default function NFTEmpire() {
   const { data: marketplaces } = trpc.nftEmpire.getMarketplaces.useQuery();
   const { data: autoBuyPlatforms } = trpc.nftEmpire.getAutoBuyPlatforms.useQuery();
   const { data: categories } = trpc.nftEmpire.getCategories.useQuery();
+  const { data: openSeaStatus, refetch: refetchOpenSeaStatus } = trpc.nftEmpire.getOpenSeaStatus.useQuery();
+  const { data: nftCategories } = trpc.nftEmpire.getNFTCategories.useQuery();
 
   // Data monetization queries
   const { data: dataStats } = trpc.dataMonetization.getStats.useQuery();
@@ -99,6 +101,40 @@ export default function NFTEmpire() {
     }
   });
 
+  // OpenSea auto-generate mutations
+  const generateAndListOpenSeaMutation = trpc.nftEmpire.generateAndListOpenSea.useMutation({
+    onSuccess: (data) => {
+      toast.success(`NFT "${data.name}" created and listed on OpenSea at ${data.estimatedValue} ETH!`);
+      refetchPortfolio();
+      refetchNFTs();
+      refetchOpenSeaStatus();
+    },
+    onError: (error) => toast.error(error.message)
+  });
+
+  const generateAndListAllMutation = trpc.nftEmpire.generateAndListAll.useMutation({
+    onSuccess: (data) => {
+      toast.success(`NFT "${data.name}" listed on ${data.listings.length} marketplaces!`);
+      refetchPortfolio();
+      refetchNFTs();
+    },
+    onError: (error) => toast.error(error.message)
+  });
+
+  const autoGenerateAndListMutation = trpc.nftEmpire.autoGenerateAndList.useMutation({
+    onSuccess: (data) => {
+      const totalValue = data.reduce((sum: number, nft: any) => sum + nft.estimatedValue, 0);
+      toast.success(`Auto-generated ${data.length} NFTs worth ${totalValue.toFixed(4)} ETH on all marketplaces!`);
+      refetchPortfolio();
+      refetchNFTs();
+      setIsBatchGenerating(false);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      setIsBatchGenerating(false);
+    }
+  });
+
   const transferMutation = trpc.nftEmpire.transferToWallet.useMutation({
     onSuccess: (data) => {
       toast.success(`Transferred! TX: ${data.txHash.slice(0, 10)}...`);
@@ -135,7 +171,8 @@ export default function NFTEmpire() {
   const handleGenerateNFT = async () => {
     setIsGenerating(true);
     try {
-      await generateMutation.mutateAsync({
+      // Use OpenSea auto-generate and list
+      await generateAndListAllMutation.mutateAsync({
         category: selectedCategory === 'auto' ? undefined : selectedCategory
       });
     } finally {
@@ -145,11 +182,9 @@ export default function NFTEmpire() {
 
   const handleBatchGenerate = async () => {
     setIsBatchGenerating(true);
-    await batchGenerateMutation.mutateAsync({
-      count: batchCount,
-      category: selectedCategory === 'auto' ? undefined : selectedCategory,
-      autoList: true,
-      autoSubmitToBuyers: true
+    // Use OpenSea auto-generate and list on all marketplaces
+    await autoGenerateAndListMutation.mutateAsync({
+      count: batchCount
     });
   };
 
@@ -485,6 +520,32 @@ export default function NFTEmpire() {
 
           {/* Generate Tab */}
           <TabsContent value="generate" className="mt-4">
+            {/* OpenSea API Status */}
+            <Card className={`mb-6 ${openSeaStatus?.connected ? 'bg-green-500/10 border-green-500/30' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${openSeaStatus?.connected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
+                    <div>
+                      <h3 className="font-semibold text-white">OpenSea API Status</h3>
+                      <p className="text-sm text-zinc-400">{openSeaStatus?.message || 'Checking connection...'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {openSeaStatus?.apiKey && (
+                      <Badge className="bg-green-500/20 text-green-400">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        API Key Active
+                      </Badge>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => refetchOpenSeaStatus()}>
+                      <RefreshCw className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Single Generation */}
               <Card className="bg-zinc-900/50 border-zinc-800">

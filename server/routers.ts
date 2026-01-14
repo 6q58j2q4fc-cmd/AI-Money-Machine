@@ -3934,6 +3934,59 @@ const nftEmpireRouter = router({
       const { getHighValueCategories } = await import('./_core/nftEmpire');
       return getHighValueCategories();
     }),
+
+  // OpenSea API Status
+  getOpenSeaStatus: protectedProcedure
+    .query(async () => {
+      const { getOpenSeaStatus } = await import('./_core/openSeaNFT');
+      return getOpenSeaStatus();
+    }),
+
+  // Generate and auto-list NFT on OpenSea
+  generateAndListOpenSea: protectedProcedure
+    .input(z.object({
+      category: z.string().optional(),
+      customPrompt: z.string().optional(),
+      price: z.number().optional(),
+    }).optional())
+    .mutation(async ({ input }) => {
+      const { generateHighValueNFT, listOnOpenSea } = await import('./_core/openSeaNFT');
+      const nft = await generateHighValueNFT(input?.category, input?.customPrompt);
+      const listing = await listOnOpenSea(nft, input?.price);
+      nft.listings = [listing];
+      return nft;
+    }),
+
+  // Generate and list on ALL marketplaces
+  generateAndListAll: protectedProcedure
+    .input(z.object({
+      category: z.string().optional(),
+      customPrompt: z.string().optional(),
+      price: z.number().optional(),
+    }).optional())
+    .mutation(async ({ input }) => {
+      const { generateHighValueNFT, listOnAllMarketplaces } = await import('./_core/openSeaNFT');
+      const nft = await generateHighValueNFT(input?.category, input?.customPrompt);
+      nft.listings = await listOnAllMarketplaces(nft, input?.price);
+      return nft;
+    }),
+
+  // Auto-generate and list multiple NFTs
+  autoGenerateAndList: protectedProcedure
+    .input(z.object({
+      count: z.number().min(1).max(50).default(5),
+    }))
+    .mutation(async ({ input }) => {
+      const { autoGenerateAndList } = await import('./_core/openSeaNFT');
+      return autoGenerateAndList(input.count);
+    }),
+
+  // Get available NFT categories
+  getNFTCategories: protectedProcedure
+    .query(async () => {
+      const { HIGH_VALUE_CATEGORIES, TRENDING_STYLES } = await import('./_core/openSeaNFT');
+      return { categories: HIGH_VALUE_CATEGORIES, styles: TRENDING_STYLES };
+    }),
 });
 
 // Data Monetization Router - Generate and sell AI data
