@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, address, encryptedPrivateKey, encryptionIv, encryptionAuthTag, isActive FROM system_hot_wallet;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, address, encryptedPrivateKey, encryptionIv, encryptionAuthTag, isActive FROM system_hot_wallet;",
+  "rows": [
+    {
+      "id": "1",
+      "address": "0x9C802a815Ad21A98C5C85f000b34380787353954",
+      "encryptedPrivateKey": "12964a07d7759b13c55c673fe11dc5a205aa77c4b9261727980e8704e54e515850e891032af300589b3b6193e0ae1ebb9bef07c76f5e74f9659dcf764d197ccbac84",
+      "encryptionIv": "366e6c6cecc3b19022806dfe94621576",
+      "encryptionAuthTag": "596a3d21d05e317e29969a1732e18d6e",
+      "isActive": "0"
+    },
+    {
+      "id": "2",
+      "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "encryptedPrivateKey": "64ef75618c5e871af75570004c83b56daf9de6c688d152d05abafb547d48ec779b6411aadf793dd81f6e75243111a65cae6b781298bce6e9f2025fdfb1b3924ba9e5",
+      "encryptionIv": "3c5af698884079c36da8a0f6af368762",
+      "encryptionAuthTag": "cbf7effc07905dc6e07c87ee455b9fad",
+      "isActive": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\taddress\tencryptedPrivateKey\tencryptionIv\tencryptionAuthTag\tisActive\n1\t0x9C802a815Ad21A98C5C85f000b34380787353954\t12964a07d7759b13c55c673fe11dc5a205aa77c4b9261727980e8704e54e515850e891032af300589b3b6193e0ae1ebb9bef07c76f5e74f9659dcf764d197ccbac84\t366e6c6cecc3b19022806dfe94621576\t596a3d21d05e317e29969a1732e18d6e\t0\n2\t0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\t64ef75618c5e871af75570004c83b56daf9de6c688d152d05abafb547d48ec779b6411aadf793dd81f6e75243111a65cae6b781298bce6e9f2025fdfb1b3924ba9e5\t3c5af698884079c36da8a0f6af368762\tcbf7effc07905dc6e07c87ee455b9fad\t1\n",
+  "stderr": "",
+  "execution_time_ms": 413
+}
