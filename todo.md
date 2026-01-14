@@ -1177,3 +1177,10 @@
 - [x] Total revenue earned
 - [x] Per-NFT listing details with clickable marketplace links
 - [x] Auto-buyer submission tracking with offer prices
+
+
+## Trust Wallet Integration
+- [x] Remove MetaMask wallet connection requirement from NFT Empire
+- [x] Use stored Trust Wallet address (0x75812e1c4246A880f6576db8292405247e6a8775)
+- [x] Show wallet address in NFT Empire header
+- [x] All earnings go directly to Trust Wallet

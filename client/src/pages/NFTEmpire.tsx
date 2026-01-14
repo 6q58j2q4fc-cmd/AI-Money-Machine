@@ -18,8 +18,9 @@ import {
 export default function NFTEmpire() {
   const [selectedCategory, setSelectedCategory] = useState<string>("auto");
   const [batchCount, setBatchCount] = useState(3);
-  const [walletAddress, setWalletAddress] = useState("");
-  const [walletConnected, setWalletConnected] = useState(false);
+  // Trust Wallet address - pre-configured, no MetaMask required
+  const TRUST_WALLET_ADDRESS = "0x75812e1c4246A880f6576db8292405247e6a8775";
+  const walletConnected = true; // Always connected to Trust Wallet
   
   // Real NFT queries - NO DEMO DATA
   const { data: userNfts, isLoading: nftsLoading, refetch: refetchNfts } = trpc.nftEmpire.getUserNfts.useQuery();
@@ -85,37 +86,10 @@ export default function NFTEmpire() {
     batchGenerateMutation.mutate({ count: batchCount, category });
   };
 
-  const connectWallet = async () => {
-    if (typeof window !== 'undefined' && (window as any).ethereum?.isMetaMask) {
-      try {
-        toast.info("Connecting to MetaMask...");
-        const accounts = await (window as any).ethereum.request({
-          method: 'eth_requestAccounts'
-        });
-        if (accounts && accounts.length > 0) {
-          setWalletConnected(true);
-          setWalletAddress(accounts[0]);
-          toast.success("MetaMask wallet connected!");
-          
-          (window as any).ethereum.on('accountsChanged', (newAccounts: string[]) => {
-            if (newAccounts.length > 0) {
-              setWalletAddress(newAccounts[0]);
-            } else {
-              setWalletConnected(false);
-              setWalletAddress("");
-            }
-          });
-        }
-      } catch (error: any) {
-        if (error.code === 4001) {
-          toast.error("Connection rejected by user");
-        } else {
-          toast.error("Failed to connect wallet");
-        }
-      }
-    } else {
-      toast.error("Please install MetaMask to connect your wallet");
-    }
+  // No wallet connection needed - using pre-configured Trust Wallet
+  const copyWalletAddress = () => {
+    navigator.clipboard.writeText(TRUST_WALLET_ADDRESS);
+    toast.success("Wallet address copied to clipboard!");
   };
   
   const getStatusBadge = (status: string) => {
@@ -150,17 +124,17 @@ export default function NFTEmpire() {
             <p className="text-zinc-400 mt-1">Real AI-generated NFTs • Auto-listed on all marketplaces • No demo mode</p>
           </div>
           <div className="flex gap-2">
-            {!walletConnected ? (
-              <Button onClick={connectWallet} className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                <Wallet className="w-4 h-4 mr-2" />
-                Connect Wallet
-              </Button>
-            ) : (
-              <Button variant="outline" className="border-green-500 text-green-400">
-                <Wallet className="w-4 h-4 mr-2" />
-                {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-              </Button>
-            )}
+            <Button 
+              variant="outline" 
+              className="border-green-500 text-green-400 hover:bg-green-500/10"
+              onClick={copyWalletAddress}
+              title="Click to copy wallet address"
+            >
+              <Wallet className="w-4 h-4 mr-2" />
+              <span className="text-xs mr-1">Trust Wallet:</span>
+              {TRUST_WALLET_ADDRESS.slice(0, 6)}...{TRUST_WALLET_ADDRESS.slice(-4)}
+              <CheckCircle className="w-3 h-3 ml-2 text-green-400" />
+            </Button>
             <Button 
               variant="outline" 
               size="sm"
