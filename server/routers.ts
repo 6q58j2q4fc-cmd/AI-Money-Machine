@@ -4946,6 +4946,35 @@ const selfDebuggerRouter = router({
     }),
 });
 
+// Master TODO router for comprehensive site audit
+import * as masterTodoService from './_core/masterTodoService';
+
+const masterTodoRouter = router({
+  // Run full site audit
+  runAudit: protectedProcedure
+    .query(async () => {
+      return masterTodoService.runFullAudit();
+    }),
+
+  // Check real money flow status
+  checkMoneyFlow: protectedProcedure
+    .query(async () => {
+      return masterTodoService.checkRealMoneyFlow();
+    }),
+
+  // Get all fixes
+  getFixes: protectedProcedure
+    .query(async () => {
+      return masterTodoService.getAllFixes();
+    }),
+
+  // Get issues by severity
+  getIssuesBySeverity: protectedProcedure
+    .query(async () => {
+      return masterTodoService.getIssuesBySeverity();
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   selfDebugger: selfDebuggerRouter,
@@ -4987,6 +5016,7 @@ export const appRouter = router({
   autoClaims: autoClaimsRouter,
   hotWallet: hotWalletRouter,
   debugAdmin: debugAdminRouter,
+  masterTodo: masterTodoRouter,
 });
 
 export type AppRouter = typeof appRouter;

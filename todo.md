@@ -1403,3 +1403,51 @@
 - [x] Hot Wallet selected by default for immediate in-app use
 - [x] Trust Wallet option for final personal payouts
 - [x] Test withdrawal flow end-to-end (wallet switching works)
+
+
+## Master TODO Dashboard & Real Money Integration
+
+### Master TODO Dashboard
+- [x] Create Master TODO Dashboard page with comprehensive site audit
+- [x] Show TODO status for every page on the website (31 pages audited)
+- [x] Display what is working vs what is hypothetical/simulated
+- [x] Provide actionable fix buttons for each issue (Go to Wallet, Settings)
+- [x] Real-time status updates across all features
+- [x] Summary stats (22 working, 5 partial, 1 simulated, 3 needs setup)
+- [x] Real Money Flow Status section
+- [x] Site Health Progress bar
+- [x] Quick Actions to Enable Real Money section
+- [x] Tabs for Overview, All Pages, Issues, Fixes
+
+### Real Money Flow - Free Income
+- [ ] Verify Free Income page is actually earning real crypto
+- [ ] Ensure faucet claims deposit directly to Hot Wallet
+- [ ] Track actual earnings vs simulated earnings
+- [ ] Show real transaction hashes for deposits
+
+### Real Money Flow - NFTs
+- [ ] Verify NFTs are successfully created and minted on-chain
+- [ ] Ensure NFT marketplace listings are real and clickable
+- [ ] Fix NFT transfer button to transfer real money
+- [ ] Show what's needed to enable real minting (funded hot wallet)
+
+### Real Money Flow - Hot Wallet to Trust Wallet
+- [ ] Fix transfer functionality for real blockchain transactions
+- [ ] Enable transfer to any wallet address user specifies
+- [ ] Show real transaction confirmations and explorer links
+- [ ] Display actual gas fees and network status
+
+### WordPress & Affiliate Integration
+- [ ] Integrate WordPress Block API for article posting
+- [ ] Verify articles are actually posted to WordPress
+- [ ] Check Commission Junction affiliate links are working
+- [ ] Verify Awin affiliate links are functional
+- [ ] Test all affiliate link click tracking
+
+### Cross-Page Integration
+- [ ] Connect all pages to shared analytics
+- [ ] Integrate bots and hive mind metrics across pages
+- [ ] Enable pages to learn from each other
+- [ ] Store data for optimization and bug fixing
+- [ ] Harmonize all features to work together
+

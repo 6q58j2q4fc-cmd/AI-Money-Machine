@@ -39,6 +39,7 @@ import WalletSettings from './pages/WalletSettings';
 import HotWallet from './pages/HotWallet';
 import SystemHealth from './pages/SystemHealth';
 import DebugAdmin from './pages/DebugAdmin';
+import MasterTodo from './pages/MasterTodo';
 
 function Router() {
   return (
@@ -83,6 +84,7 @@ function Router() {
       <Route path="/hot-wallet" component={HotWallet} />
       <Route path="/system-health" component={SystemHealth} />
       <Route path="/debug-admin" component={DebugAdmin} />
+      <Route path="/master-todo" component={MasterTodo} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
