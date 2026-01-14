@@ -33,6 +33,7 @@ import NetworkConnections from "./pages/NetworkConnections";
 import FreeIncome from "./pages/FreeIncome";
 import NFTGallery from "./pages/NFTGallery";
 import AwinIntegration from "./pages/AwinIntegration";
+import NFTEmpire from "./pages/NFTEmpire";
 
 function Router() {
   return (
@@ -71,6 +72,7 @@ function Router() {
       <Route path="/free-income" component={FreeIncome} />
       <Route path="/nft-gallery" component={NFTGallery} />
       <Route path="/awin-integration" component={AwinIntegration} />
+      <Route path="/nft-empire" component={NFTEmpire} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

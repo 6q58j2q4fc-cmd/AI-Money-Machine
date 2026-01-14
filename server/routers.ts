@@ -3824,6 +3824,183 @@ const awinRouter = router({
     }),
 });
 
+// NFT Empire Router - High-value NFT generation with marketplace listings
+const nftEmpireRouter = router({
+  // Generate high-value NFT
+  generateHighValue: protectedProcedure
+    .input(z.object({
+      category: z.string().optional(),
+      targetPrice: z.number().optional(),
+      forceRarity: z.string().optional(),
+    }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const { generateHighValueNFT } = await import('./_core/nftEmpire');
+      return generateHighValueNFT(ctx.user.id, input);
+    }),
+
+  // List on all marketplaces
+  listOnAllMarketplaces: protectedProcedure
+    .input(z.object({
+      nftId: z.string(),
+      customPrice: z.number().optional(),
+      priorityMarketplaces: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { listOnAllMarketplaces } = await import('./_core/nftEmpire');
+      return listOnAllMarketplaces(ctx.user.id, input.nftId, {
+        customPrice: input.customPrice,
+        priorityMarketplaces: input.priorityMarketplaces,
+      });
+    }),
+
+  // Submit to auto-buy platforms
+  submitToAutoBuy: protectedProcedure
+    .input(z.object({ nftId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { submitToAutoBuyPlatforms } = await import('./_core/nftEmpire');
+      return submitToAutoBuyPlatforms(ctx.user.id, input.nftId);
+    }),
+
+  // Transfer to wallet
+  transferToWallet: protectedProcedure
+    .input(z.object({
+      nftId: z.string(),
+      walletAddress: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { transferToWallet } = await import('./_core/nftEmpire');
+      return transferToWallet(ctx.user.id, input.nftId, input.walletAddress);
+    }),
+
+  // Cash out earnings
+  cashOut: protectedProcedure
+    .input(z.object({
+      walletAddress: z.string(),
+      amount: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { cashOutEarnings } = await import('./_core/nftEmpire');
+      return cashOutEarnings(ctx.user.id, input.walletAddress, input.amount);
+    }),
+
+  // Batch generate empire NFTs
+  batchGenerate: protectedProcedure
+    .input(z.object({
+      count: z.number().min(1).max(50),
+      category: z.string().optional(),
+      autoList: z.boolean().optional(),
+      autoSubmitToBuyers: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { batchGenerateEmpireNFTs } = await import('./_core/nftEmpire');
+      return batchGenerateEmpireNFTs(ctx.user.id, input.count, {
+        category: input.category,
+        autoList: input.autoList,
+        autoSubmitToBuyers: input.autoSubmitToBuyers,
+      });
+    }),
+
+  // Get portfolio
+  getPortfolio: protectedProcedure
+    .query(async () => {
+      const { getEmpirePortfolio } = await import('./_core/nftEmpire');
+      return getEmpirePortfolio();
+    }),
+
+  // Get all empire NFTs
+  getAllNFTs: protectedProcedure
+    .query(async () => {
+      const { getAllEmpireNFTs } = await import('./_core/nftEmpire');
+      return getAllEmpireNFTs();
+    }),
+
+  // Get marketplaces
+  getMarketplaces: protectedProcedure
+    .query(async () => {
+      const { getAvailableMarketplaces } = await import('./_core/nftEmpire');
+      return getAvailableMarketplaces();
+    }),
+
+  // Get auto-buy platforms
+  getAutoBuyPlatforms: protectedProcedure
+    .query(async () => {
+      const { getAutoBuyPlatforms } = await import('./_core/nftEmpire');
+      return getAutoBuyPlatforms();
+    }),
+
+  // Get high-value categories
+  getCategories: protectedProcedure
+    .query(async () => {
+      const { getHighValueCategories } = await import('./_core/nftEmpire');
+      return getHighValueCategories();
+    }),
+});
+
+// Data Monetization Router - Generate and sell AI data
+const dataMonetizationRouter = router({
+  // Generate data batch
+  generateBatch: protectedProcedure
+    .input(z.object({
+      type: z.string(),
+      count: z.number().min(1).max(1000),
+      topic: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { generateDataBatch } = await import('./_core/dataMonetization');
+      return generateDataBatch(ctx.user.id, input);
+    }),
+
+  // Submit to platforms
+  submitToPlatforms: protectedProcedure
+    .input(z.object({ batchId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { submitDataToPlatforms } = await import('./_core/dataMonetization');
+      return submitDataToPlatforms(ctx.user.id, input.batchId);
+    }),
+
+  // Get all data
+  getAllData: protectedProcedure
+    .query(async () => {
+      const { getAllGeneratedData } = await import('./_core/dataMonetization');
+      return getAllGeneratedData();
+    }),
+
+  // Get all batches
+  getAllBatches: protectedProcedure
+    .query(async () => {
+      const { getAllDataBatches } = await import('./_core/dataMonetization');
+      return getAllDataBatches();
+    }),
+
+  // Get buying platforms
+  getPlatforms: protectedProcedure
+    .query(async () => {
+      const { getDataBuyingPlatforms } = await import('./_core/dataMonetization');
+      return getDataBuyingPlatforms();
+    }),
+
+  // Get data types
+  getDataTypes: protectedProcedure
+    .query(async () => {
+      const { getDataGenerationTypes } = await import('./_core/dataMonetization');
+      return getDataGenerationTypes();
+    }),
+
+  // Get earnings
+  getEarnings: protectedProcedure
+    .query(async () => {
+      const { getDataEarnings } = await import('./_core/dataMonetization');
+      return getDataEarnings();
+    }),
+
+  // Get stats
+  getStats: protectedProcedure
+    .query(async () => {
+      const { getDataMonetizationStats } = await import('./_core/dataMonetization');
+      return getDataMonetizationStats();
+    }),
+});
+
 // NFT Automation Router - Generate, value, and sell NFTs automatically
 const nftRouter = router({
   // Generate a single NFT with AI artwork
@@ -3996,6 +4173,8 @@ export const appRouter = router({
   awin: awinRouter,
   alwaysAwake: alwaysAwakeRouter,
   nft: nftRouter,
+  nftEmpire: nftEmpireRouter,
+  dataMonetization: dataMonetizationRouter,
 });
 
 export type AppRouter = typeof appRouter;
