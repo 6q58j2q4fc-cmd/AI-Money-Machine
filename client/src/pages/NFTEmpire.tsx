@@ -1,195 +1,91 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
 import { 
-  Crown,
-  Wallet,
-  TrendingUp,
-  ExternalLink,
-  RefreshCw,
-  Zap,
-  DollarSign,
-  Eye,
-  Store,
-  Globe,
-  CheckCircle,
-  Clock,
-  Rocket,
-  Target,
-  BarChart3,
-  ArrowUpRight,
-  Coins,
-  ShoppingCart,
-  Database,
-  FileText,
-  Download,
-  Send,
-  Sparkles,
-  Link2
+  Image, Sparkles, TrendingUp, DollarSign, ExternalLink, 
+  Loader2, RefreshCw, Wallet, ShoppingCart, Eye, Heart,
+  CheckCircle, Clock, AlertCircle, Zap, Crown, Store,
+  Target, Coins, Database, Send
 } from "lucide-react";
 
 export default function NFTEmpire() {
-  const [activeTab, setActiveTab] = useState("portfolio");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isBatchGenerating, setIsBatchGenerating] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("auto");
-  const [batchCount, setBatchCount] = useState(5);
+  const [batchCount, setBatchCount] = useState(3);
   const [walletAddress, setWalletAddress] = useState("");
   const [walletConnected, setWalletConnected] = useState(false);
-  const [cashoutAmount, setCashoutAmount] = useState("");
-
-  // tRPC queries
-  const { data: portfolio, refetch: refetchPortfolio } = trpc.nftEmpire.getPortfolio.useQuery();
-  const { data: nfts, refetch: refetchNFTs } = trpc.nftEmpire.getAllNFTs.useQuery();
-  const { data: marketplaces } = trpc.nftEmpire.getMarketplaces.useQuery();
-  const { data: autoBuyPlatforms } = trpc.nftEmpire.getAutoBuyPlatforms.useQuery();
-  const { data: categories } = trpc.nftEmpire.getCategories.useQuery();
-  const { data: openSeaStatus, refetch: refetchOpenSeaStatus } = trpc.nftEmpire.getOpenSeaStatus.useQuery();
-  const { data: nftCategories } = trpc.nftEmpire.getNFTCategories.useQuery();
-
-  // Data monetization queries
-  const { data: dataStats } = trpc.dataMonetization.getStats.useQuery();
-  const { data: dataTypes } = trpc.dataMonetization.getDataTypes.useQuery();
-  const { data: dataPlatforms } = trpc.dataMonetization.getPlatforms.useQuery();
-  const { data: dataBatches, refetch: refetchBatches } = trpc.dataMonetization.getAllBatches.useQuery();
-
+  
+  // Real NFT queries - NO DEMO DATA
+  const { data: userNfts, isLoading: nftsLoading, refetch: refetchNfts } = trpc.nftEmpire.getUserNfts.useQuery();
+  const { data: portfolio, refetch: refetchPortfolio } = trpc.nftEmpire.getPortfolioSummary.useQuery();
+  const { data: categories } = trpc.nftEmpire.getRealCategories.useQuery();
+  const { data: marketplaces } = trpc.nftEmpire.getRealMarketplaces.useQuery();
+  const { data: autoBuyerPlatforms } = trpc.nftEmpire.getRealAutoBuyerPlatforms.useQuery();
+  
   // Mutations
-  const generateMutation = trpc.nftEmpire.generateHighValue.useMutation({
+  const generateMutation = trpc.nftEmpire.generateReal.useMutation({
     onSuccess: (data) => {
-      toast.success(`Generated ${data.rarity} NFT: ${data.name}`);
+      toast.success(`Generated NFT: ${data.name}`);
+      refetchNfts();
       refetchPortfolio();
-      refetchNFTs();
-    },
-    onError: (error) => toast.error(error.message)
-  });
-
-  const listMutation = trpc.nftEmpire.listOnAllMarketplaces.useMutation({
-    onSuccess: (data) => {
-      toast.success(`Listed on ${data.listings.length} marketplaces!`);
-      refetchNFTs();
-    },
-    onError: (error) => toast.error(error.message)
-  });
-
-  const submitAutoBuyMutation = trpc.nftEmpire.submitToAutoBuy.useMutation({
-    onSuccess: (data) => {
-      toast.success(`Received ${data.offers.length} auto-buy offers!`);
-      refetchNFTs();
-      refetchPortfolio();
-    },
-    onError: (error) => toast.error(error.message)
-  });
-
-  const batchGenerateMutation = trpc.nftEmpire.batchGenerate.useMutation({
-    onSuccess: (data) => {
-      toast.success(`Generated ${data.generated} NFTs worth ${data.totalValue.toFixed(4)} ETH!`);
-      refetchPortfolio();
-      refetchNFTs();
-      setIsBatchGenerating(false);
     },
     onError: (error) => {
-      toast.error(error.message);
-      setIsBatchGenerating(false);
-    }
-  });
-
-  // OpenSea auto-generate mutations
-  const generateAndListOpenSeaMutation = trpc.nftEmpire.generateAndListOpenSea.useMutation({
-    onSuccess: (data) => {
-      toast.success(`NFT "${data.name}" created and listed on OpenSea at ${data.estimatedValue} ETH!`);
-      refetchPortfolio();
-      refetchNFTs();
-      refetchOpenSeaStatus();
+      toast.error(`Generation failed: ${error.message}`);
     },
-    onError: (error) => toast.error(error.message)
   });
-
-  const generateAndListAllMutation = trpc.nftEmpire.generateAndListAll.useMutation({
+  
+  const listOnAllMutation = trpc.nftEmpire.listRealOnAll.useMutation({
     onSuccess: (data) => {
-      toast.success(`NFT "${data.name}" listed on ${data.listings.length} marketplaces!`);
-      refetchPortfolio();
-      refetchNFTs();
-    },
-    onError: (error) => toast.error(error.message)
-  });
-
-  const autoGenerateAndListMutation = trpc.nftEmpire.autoGenerateAndList.useMutation({
-    onSuccess: (data) => {
-      const totalValue = data.reduce((sum: number, nft: any) => sum + nft.estimatedValue, 0);
-      toast.success(`Auto-generated ${data.length} NFTs worth ${totalValue.toFixed(4)} ETH on all marketplaces!`);
-      refetchPortfolio();
-      refetchNFTs();
-      setIsBatchGenerating(false);
+      toast.success(`Listed on ${data.length} marketplaces!`);
+      refetchNfts();
     },
     onError: (error) => {
-      toast.error(error.message);
-      setIsBatchGenerating(false);
-    }
-  });
-
-  const transferMutation = trpc.nftEmpire.transferToWallet.useMutation({
-    onSuccess: (data) => {
-      toast.success(`Transferred! TX: ${data.txHash.slice(0, 10)}...`);
-      refetchNFTs();
+      toast.error(`Listing failed: ${error.message}`);
     },
-    onError: (error) => toast.error(error.message)
   });
-
-  const cashOutMutation = trpc.nftEmpire.cashOut.useMutation({
+  
+  const submitToAutoBuyersMutation = trpc.nftEmpire.submitRealToAutoBuyers.useMutation({
     onSuccess: (data) => {
-      toast.success(`Cashed out $${data.amount.toFixed(2)}!`);
+      toast.success(`Submitted to ${data.length} auto-buyer platforms!`);
+      refetchNfts();
+    },
+    onError: (error) => {
+      toast.error(`Submission failed: ${error.message}`);
+    },
+  });
+  
+  const batchGenerateMutation = trpc.nftEmpire.batchGenerateReal.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Generated ${data.nfts.length} NFTs with ${data.listings.length} listings worth ${data.totalEstimatedValue.toFixed(4)} ETH!`);
+      refetchNfts();
       refetchPortfolio();
     },
-    onError: (error) => toast.error(error.message)
-  });
-
-  // Data monetization mutations
-  const generateDataMutation = trpc.dataMonetization.generateBatch.useMutation({
-    onSuccess: (data) => {
-      toast.success(`Generated ${data.itemCount} data items worth $${data.totalValue.toFixed(2)}`);
-      refetchBatches();
+    onError: (error) => {
+      toast.error(`Batch generation failed: ${error.message}`);
     },
-    onError: (error) => toast.error(error.message)
   });
-
-  const submitDataMutation = trpc.dataMonetization.submitToPlatforms.useMutation({
-    onSuccess: (data) => {
-      toast.success(`Submitted to platforms - Total offered: $${data.totalOffered.toFixed(2)}`);
-      refetchBatches();
-    },
-    onError: (error) => toast.error(error.message)
-  });
-
-  const handleGenerateNFT = async () => {
-    setIsGenerating(true);
-    try {
-      // Use OpenSea auto-generate and list
-      await generateAndListAllMutation.mutateAsync({
-        category: selectedCategory === 'auto' ? undefined : selectedCategory
-      });
-    } finally {
-      setIsGenerating(false);
+  
+  const handleGenerateAndList = async () => {
+    const category = selectedCategory === "auto" ? undefined : selectedCategory;
+    const nft = await generateMutation.mutateAsync({ category });
+    if (nft) {
+      await listOnAllMutation.mutateAsync({ nftId: nft.id });
+      await submitToAutoBuyersMutation.mutateAsync({ nftId: nft.id });
     }
   };
-
-  const handleBatchGenerate = async () => {
-    setIsBatchGenerating(true);
-    // Use OpenSea auto-generate and list on all marketplaces
-    await autoGenerateAndListMutation.mutateAsync({
-      count: batchCount
-    });
+  
+  const handleBatchGenerate = () => {
+    const category = selectedCategory === "auto" ? undefined : selectedCategory;
+    batchGenerateMutation.mutate({ count: batchCount, category });
   };
 
   const connectWallet = async () => {
-    // Check if MetaMask is available
     if (typeof window !== 'undefined' && (window as any).ethereum?.isMetaMask) {
       try {
         toast.info("Connecting to MetaMask...");
@@ -201,7 +97,6 @@ export default function NFTEmpire() {
           setWalletAddress(accounts[0]);
           toast.success("MetaMask wallet connected!");
           
-          // Listen for account changes
           (window as any).ethereum.on('accountsChanged', (newAccounts: string[]) => {
             if (newAccounts.length > 0) {
               setWalletAddress(newAccounts[0]);
@@ -219,52 +114,40 @@ export default function NFTEmpire() {
         }
       }
     } else {
-      // Fallback for demo mode
-      toast.info("MetaMask not detected. Using demo mode...");
-      setTimeout(() => {
-        setWalletConnected(true);
-        setWalletAddress("0x7a3F8b2c9d1E4f5A6B7C8D9E0F1A2B3C4D5E6F7A");
-        toast.success("Demo wallet connected!");
-      }, 1000);
+      toast.error("Please install MetaMask to connect your wallet");
     }
   };
-
-  const handleCashOut = async () => {
-    if (!walletAddress) {
-      toast.error("Please connect your wallet first");
-      return;
+  
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30"><CheckCircle className="w-3 h-3 mr-1" />Active</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+      case "sold":
+        return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30"><DollarSign className="w-3 h-3 mr-1" />Sold</Badge>;
+      case "submitted":
+        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30"><Send className="w-3 h-3 mr-1" />Submitted</Badge>;
+      case "accepted":
+        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30"><CheckCircle className="w-3 h-3 mr-1" />Accepted</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
-    await cashOutMutation.mutateAsync({
-      walletAddress,
-      amount: cashoutAmount ? parseFloat(cashoutAmount) : undefined
-    });
   };
-
-  const getRarityColor = (rarity: string) => {
-    const colors: Record<string, string> = {
-      common: "text-zinc-400 bg-zinc-500/20",
-      uncommon: "text-green-400 bg-green-500/20",
-      rare: "text-blue-400 bg-blue-500/20",
-      epic: "text-purple-400 bg-purple-500/20",
-      legendary: "text-yellow-400 bg-yellow-500/20",
-      mythic: "text-red-400 bg-red-500/20"
-    };
-    return colors[rarity] || "text-zinc-400 bg-zinc-500/20";
-  };
-
+  
+  const isGenerating = generateMutation.isPending || batchGenerateMutation.isPending;
+  
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <Crown className="w-8 h-8 text-yellow-500" />
+            <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+              <Crown className="w-8 h-8 text-yellow-400" />
               NFT Empire
             </h1>
-            <p className="text-zinc-400 mt-1">
-              Autonomous high-value NFT generation & multi-marketplace sales
-            </p>
+            <p className="text-zinc-400 mt-1">Real AI-generated NFTs • Auto-listed on all marketplaces • No demo mode</p>
           </div>
           <div className="flex gap-2">
             {!walletConnected ? (
@@ -278,688 +161,447 @@ export default function NFTEmpire() {
                 {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
               </Button>
             )}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => { refetchNfts(); refetchPortfolio(); }}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
           </div>
         </div>
-
+        
         {/* Portfolio Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <Card className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border-yellow-500/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-yellow-400">Total NFTs</p>
-                  <p className="text-2xl font-bold text-white">{portfolio?.totalNFTs || 0}</p>
+                  <p className="text-2xl font-bold text-white">{portfolio?.totalNfts || 0}</p>
                 </div>
                 <Crown className="w-8 h-8 text-yellow-500" />
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-green-500/20 to-green-600/10 border-green-500/30">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-green-400">Portfolio Value</p>
-                  <p className="text-2xl font-bold text-white">{portfolio?.totalValue?.toFixed(2) || "0.00"} ETH</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
+          
           <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 border-blue-500/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-blue-400">Active Listings</p>
-                  <p className="text-2xl font-bold text-white">{portfolio?.activeListings || 0}</p>
+                  <p className="text-2xl font-bold text-white">{portfolio?.totalListings || 0}</p>
                 </div>
                 <Store className="w-8 h-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
+          
           <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border-purple-500/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-purple-400">Pending Offers</p>
-                  <p className="text-2xl font-bold text-white">{portfolio?.pendingOffers || 0}</p>
+                  <p className="text-sm text-purple-400">Auto-Buyer Subs</p>
+                  <p className="text-2xl font-bold text-white">{portfolio?.totalSubmissions || 0}</p>
                 </div>
                 <Target className="w-8 h-8 text-purple-500" />
               </div>
             </CardContent>
           </Card>
+          
+          <Card className="bg-gradient-to-br from-green-500/20 to-green-600/10 border-green-500/30">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-green-400">Est. Value</p>
+                  <p className="text-2xl font-bold text-white">
+                    {(portfolio?.totalEstimatedValue || 0).toFixed(4)} ETH
+                  </p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
           <Card className="bg-gradient-to-br from-pink-500/20 to-pink-600/10 border-pink-500/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-pink-400">Total Earnings</p>
-                  <p className="text-2xl font-bold text-white">${portfolio?.totalEarnings?.toFixed(2) || "0.00"}</p>
+                  <p className="text-sm text-pink-400">Total Sales</p>
+                  <p className="text-2xl font-bold text-white">{portfolio?.totalSales || 0}</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-pink-500" />
+                <ShoppingCart className="w-8 h-8 text-pink-500" />
               </div>
             </CardContent>
           </Card>
+          
           <Card className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 border-cyan-500/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-cyan-400">Wallet Balance</p>
-                  <p className="text-2xl font-bold text-white">${portfolio?.walletBalance?.toFixed(2) || "0.00"}</p>
+                  <p className="text-sm text-cyan-400">Total Earnings</p>
+                  <p className="text-2xl font-bold text-white">
+                    {(portfolio?.totalEarnings || 0).toFixed(4)} ETH
+                  </p>
                 </div>
                 <Coins className="w-8 h-8 text-cyan-500" />
               </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-zinc-900 border border-zinc-800">
-            <TabsTrigger value="portfolio" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black">
-              <Crown className="w-4 h-4 mr-2" />
-              Portfolio
-            </TabsTrigger>
-            <TabsTrigger value="generate" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black">
+        
+        <Tabs defaultValue="generate" className="space-y-4">
+          <TabsList className="bg-zinc-900/50 border border-zinc-800">
+            <TabsTrigger value="generate">
               <Sparkles className="w-4 h-4 mr-2" />
-              Generate
+              Generate & List
             </TabsTrigger>
-            <TabsTrigger value="marketplaces" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black">
+            <TabsTrigger value="nfts">
+              <Image className="w-4 h-4 mr-2" />
+              My NFTs ({userNfts?.length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="marketplaces">
               <Store className="w-4 h-4 mr-2" />
               Marketplaces
             </TabsTrigger>
-            <TabsTrigger value="autobuyers" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black">
+            <TabsTrigger value="autobuyers">
               <ShoppingCart className="w-4 h-4 mr-2" />
               Auto-Buyers
             </TabsTrigger>
-            <TabsTrigger value="data" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black">
-              <Database className="w-4 h-4 mr-2" />
-              Data Sales
-            </TabsTrigger>
-            <TabsTrigger value="wallet" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black">
-              <Wallet className="w-4 h-4 mr-2" />
-              Wallet
-            </TabsTrigger>
           </TabsList>
-
-          {/* Portfolio Tab */}
-          <TabsContent value="portfolio" className="mt-4">
-            {nfts && nfts.length > 0 ? (
+          
+          {/* Generate Tab */}
+          <TabsContent value="generate" className="space-y-4">
+            <Card className="bg-zinc-900/50 border-zinc-800">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-yellow-400" />
+                  Generate Real AI NFTs
+                </CardTitle>
+                <CardDescription>
+                  Create unique AI-generated artwork stored in database and automatically list on all marketplaces with real URLs
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm text-zinc-400">Category</label>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto (Best Selling)</SelectItem>
+                        {categories?.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name} ({cat.basePrice} ETH base)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm text-zinc-400">Batch Count</label>
+                    <Select value={batchCount.toString()} onValueChange={(v) => setBatchCount(Number(v))}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 5, 10].map((n) => (
+                          <SelectItem key={n} value={n.toString()}>{n} NFT{n > 1 ? "s" : ""}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={handleGenerateAndList}
+                    disabled={isGenerating}
+                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold"
+                    size="lg"
+                  >
+                    {generateMutation.isPending ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...</>
+                    ) : (
+                      <><Sparkles className="w-4 h-4 mr-2" />Generate & Auto-List (1 NFT)</>
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleBatchGenerate}
+                    disabled={isGenerating}
+                    variant="outline"
+                    size="lg"
+                    className="border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10"
+                  >
+                    {batchGenerateMutation.isPending ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Batch...</>
+                    ) : (
+                      <><Zap className="w-4 h-4 mr-2" />Batch Generate ({batchCount})</>
+                    )}
+                  </Button>
+                </div>
+                
+                {isGenerating && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                    <p className="text-yellow-300 text-sm flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating AI artwork, storing in database, uploading to S3, and listing on all marketplaces...
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Categories Info */}
+            <Card className="bg-zinc-900/50 border-zinc-800">
+              <CardHeader>
+                <CardTitle className="text-white text-lg">Available Categories</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {categories?.map((cat) => (
+                    <div key={cat.id} className="bg-zinc-800/50 rounded-lg p-3">
+                      <h4 className="font-medium text-white">{cat.name}</h4>
+                      <p className="text-sm text-green-400">{cat.basePrice} ETH base</p>
+                      
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* My NFTs Tab */}
+          <TabsContent value="nfts" className="space-y-4">
+            {nftsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
+              </div>
+            ) : userNfts?.length === 0 ? (
+              <Card className="bg-zinc-900/50 border-zinc-800">
+                <CardContent className="py-12 text-center">
+                  <Image className="w-16 h-16 mx-auto text-zinc-600 mb-4" />
+                  <p className="text-zinc-400 mb-4">No NFTs yet. Generate your first one!</p>
+                  <Button onClick={() => document.querySelector('[value="generate"]')?.dispatchEvent(new Event('click'))}>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate NFT
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
               <div className="space-y-4">
-                {nfts.map((nft) => (
-                  <Card key={nft.id} className="bg-zinc-900/50 border-zinc-800">
-                    <CardContent className="p-4">
-                      <div className="flex gap-4">
-                        {/* NFT Image */}
-                        <div className="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0">
+                {userNfts?.map(({ nft, listings, submissions }) => (
+                  <Card key={nft.id} className="bg-zinc-900/50 border-zinc-800 overflow-hidden">
+                    <div className="flex flex-col md:flex-row">
+                      {/* NFT Image */}
+                      <div className="w-full md:w-48 h-48 flex-shrink-0 bg-zinc-800">
+                        {nft.imageUrl ? (
                           <img 
                             src={nft.imageUrl} 
                             alt={nft.name}
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = `https://picsum.photos/200/200?random=${nft.id}`;
-                            }}
                           />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Image className="w-12 h-12 text-zinc-600" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* NFT Details */}
+                      <div className="flex-1 p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="font-bold text-white text-lg">{nft.name}</h3>
+                            <p className="text-sm text-zinc-400">{nft.category} • ID: {nft.id}</p>
+                          </div>
+                          <div className="text-right">
+                            <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-lg">
+                              {Number(nft.estimatedValue || 0).toFixed(4)} ETH
+                            </Badge>
+                            <p className="text-xs text-zinc-500 mt-1">Estimated Value</p>
+                          </div>
                         </div>
-
-                        {/* NFT Details */}
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h3 className="font-bold text-white text-lg">{nft.name}</h3>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge className={getRarityColor(nft.rarity)}>
-                                  {nft.rarity.toUpperCase()}
-                                </Badge>
-                                <Badge variant="outline">{nft.category}</Badge>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-2xl font-bold text-yellow-400">{nft.currentValue.toFixed(4)} ETH</p>
-                              <p className="text-sm text-zinc-400">~${(nft.currentValue * 2500).toFixed(2)}</p>
-                            </div>
-                          </div>
-
-                          {/* Marketplace Listings */}
-                          {nft.listings && nft.listings.length > 0 && (
-                            <div className="mt-3">
-                              <p className="text-sm text-zinc-400 mb-2">Listed on {nft.listings.length} marketplaces:</p>
-                              <div className="flex flex-wrap gap-2">
-                                {nft.listings.map((listing, i) => (
-                                  <a
-                                    key={i}
-                                    href={listing.viewUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1 px-2 py-1 bg-zinc-800 rounded text-sm hover:bg-zinc-700 transition-colors"
-                                  >
-                                    <span className="text-white">{listing.marketplace}</span>
-                                    <span className="text-green-400">{listing.price.toFixed(4)} ETH</span>
-                                    <ExternalLink className="w-3 h-3 text-zinc-400" />
-                                  </a>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Auto-Buy Offers */}
-                          {nft.autoBuyOffers && nft.autoBuyOffers.length > 0 && (
-                            <div className="mt-3">
-                              <p className="text-sm text-zinc-400 mb-2">Auto-buy offers:</p>
-                              <div className="flex flex-wrap gap-2">
-                                {nft.autoBuyOffers.slice(0, 3).map((offer, i) => (
-                                  <a
-                                    key={i}
-                                    href={offer.platformUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1 px-2 py-1 bg-green-500/20 border border-green-500/30 rounded text-sm hover:bg-green-500/30 transition-colors"
-                                  >
-                                    <span className="text-white">{offer.platform}</span>
-                                    <span className="text-green-400">${offer.offerPrice.toFixed(2)}</span>
-                                    <Badge className={offer.status === "accepted" ? "bg-green-500" : "bg-yellow-500"} variant="outline">
-                                      {offer.status}
-                                    </Badge>
-                                  </a>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Actions */}
-                          <div className="flex gap-2 mt-3">
-                            {nft.status === "generated" && (
-                              <>
-                                <Button 
-                                  size="sm" 
-                                  className="bg-yellow-500 hover:bg-yellow-600 text-black"
-                                  onClick={() => listMutation.mutate({ nftId: nft.id })}
-                                >
-                                  <Store className="w-3 h-3 mr-1" />
-                                  List on All
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => submitAutoBuyMutation.mutate({ nftId: nft.id })}
-                                >
-                                  <ShoppingCart className="w-3 h-3 mr-1" />
-                                  Get Offers
-                                </Button>
-                              </>
-                            )}
-                            {walletConnected && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => transferMutation.mutate({ nftId: nft.id, walletAddress })}
+                        
+                        {/* Stats */}
+                        <div className="flex gap-4 mt-2 text-sm text-zinc-400">
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />{nft.views || 0} views
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Heart className="w-3 h-3" />{nft.likes || 0} likes
+                          </span>
+                          <span className="text-zinc-500">
+                            Created: {new Date(nft.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        
+                        {/* Marketplace Listings */}
+                        <div className="mt-4">
+                          <p className="text-sm font-medium text-white mb-2">
+                            Listed on {listings.length} marketplaces:
+                          </p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {listings.map((listing) => (
+                              <a
+                                key={listing.id}
+                                href={listing.listingUrl ?? "#"}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-between bg-zinc-800 hover:bg-zinc-700 px-3 py-2 rounded-lg transition-colors group"
                               >
-                                <Send className="w-3 h-3 mr-1" />
-                                Transfer
-                              </Button>
-                            )}
+                                <div>
+                                  <p className="text-sm font-medium text-white">{listing.marketplace}</p>
+                                  <p className="text-xs text-green-400">{Number(listing.listPrice).toFixed(4)} ETH</p>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {getStatusBadge(listing.status ?? 'pending')}
+                                  <ExternalLink className="w-3 h-3 text-zinc-400 group-hover:text-white" />
+                                </div>
+                              </a>
+                            ))}
                           </div>
+                        </div>
+                        
+                        {/* Auto-Buyer Submissions */}
+                        {submissions.length > 0 && (
+                          <div className="mt-4">
+                            <p className="text-sm font-medium text-white mb-2">
+                              Auto-Buyer Submissions ({submissions.length}):
+                            </p>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                              {submissions.map((sub) => (
+                                <a
+                                  key={sub.id}
+                                  href={sub.platformUrl ?? "#"}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-between bg-zinc-800 hover:bg-zinc-700 px-3 py-2 rounded-lg transition-colors group"
+                                >
+                                  <div>
+                                    <p className="text-sm font-medium text-white">{sub.platform}</p>
+                                    <p className="text-xs text-yellow-400">${sub.offeredPrice} offered</p>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    {getStatusBadge(sub.status ?? 'pending')}
+                                    <ExternalLink className="w-3 h-3 text-zinc-400 group-hover:text-white" />
+                                  </div>
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Actions */}
+                        <div className="flex gap-2 mt-4">
+                          {listings.length === 0 && (
+                            <Button 
+                              size="sm" 
+                              onClick={() => listOnAllMutation.mutate({ nftId: nft.id })}
+                              disabled={listOnAllMutation.isPending}
+                              className="bg-blue-500 hover:bg-blue-600"
+                            >
+                              <Store className="w-3 h-3 mr-1" />
+                              List on All Marketplaces
+                            </Button>
+                          )}
+                          {submissions.length === 0 && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => submitToAutoBuyersMutation.mutate({ nftId: nft.id })}
+                              disabled={submitToAutoBuyersMutation.isPending}
+                            >
+                              <Zap className="w-3 h-3 mr-1" />
+                              Submit to Auto-Buyers
+                            </Button>
+                          )}
                         </div>
                       </div>
-                    </CardContent>
+                    </div>
                   </Card>
                 ))}
               </div>
-            ) : (
-              <Card className="bg-zinc-900/50 border-zinc-800">
-                <CardContent className="p-12 text-center">
-                  <Crown className="w-16 h-16 mx-auto mb-4 text-yellow-500/50" />
-                  <h3 className="text-xl font-semibold text-white mb-2">Build Your Empire</h3>
-                  <p className="text-zinc-400 mb-4">Generate high-value NFTs and list them across all marketplaces</p>
-                  <Button onClick={() => setActiveTab("generate")} className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Start Generating
-                  </Button>
-                </CardContent>
-              </Card>
             )}
           </TabsContent>
-
-          {/* Generate Tab */}
-          <TabsContent value="generate" className="mt-4">
-            {/* OpenSea API Status */}
-            <Card className={`mb-6 ${openSeaStatus?.connected ? 'bg-green-500/10 border-green-500/30' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${openSeaStatus?.connected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
-                    <div>
-                      <h3 className="font-semibold text-white">OpenSea API Status</h3>
-                      <p className="text-sm text-zinc-400">{openSeaStatus?.message || 'Checking connection...'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {openSeaStatus?.apiKey && (
-                      <Badge className="bg-green-500/20 text-green-400">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        API Key Active
-                      </Badge>
-                    )}
-                    <Button variant="outline" size="sm" onClick={() => refetchOpenSeaStatus()}>
-                      <RefreshCw className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Single Generation */}
-              <Card className="bg-zinc-900/50 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-yellow-500" />
-                    Generate High-Value NFT
-                  </CardTitle>
-                  <CardDescription>
-                    AI generates the most valuable NFT for current market demand
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm text-zinc-400 mb-2 block">Category (optional)</label>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700">
-                        <SelectValue placeholder="Auto-select best category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="auto">Auto-select (AI chooses)</SelectItem>
-                        {categories?.map((cat) => (
-                          <SelectItem key={cat.category} value={cat.category}>
-                            <div className="flex items-center justify-between w-full">
-                              <span>{cat.name}</span>
-                              <span className="text-xs text-zinc-400 ml-2">~{cat.avgFloorPrice} ETH</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Button 
-                    onClick={handleGenerateNFT}
-                    disabled={isGenerating}
-                    className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4 mr-2" />
-                        Generate & Auto-List
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Batch Generation */}
-              <Card className="bg-zinc-900/50 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Rocket className="w-5 h-5 text-yellow-500" />
-                    Batch Empire Builder
-                  </CardTitle>
-                  <CardDescription>
-                    Generate multiple NFTs and list on all marketplaces
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm text-zinc-400 mb-2 block">Number of NFTs: {batchCount}</label>
-                    <input 
-                      type="range"
-                      min={1}
-                      max={50}
-                      value={batchCount}
-                      onChange={(e) => setBatchCount(parseInt(e.target.value))}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="bg-zinc-800 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-white mb-2">Batch Summary</h4>
-                    <div className="space-y-1 text-sm text-zinc-400">
-                      <p>• {batchCount} high-value NFTs</p>
-                      <p>• Auto-listed on {marketplaces?.length || 0} marketplaces</p>
-                      <p>• Auto-submitted to {autoBuyPlatforms?.length || 0} buyers</p>
-                      <p>• Est. value: ~{(batchCount * 0.5).toFixed(2)} ETH</p>
-                    </div>
-                  </div>
-
-                  <Button 
-                    onClick={handleBatchGenerate}
-                    disabled={isBatchGenerating}
-                    className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold"
-                  >
-                    {isBatchGenerating ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Building Empire...
-                      </>
-                    ) : (
-                      <>
-                        <Rocket className="w-4 h-4 mr-2" />
-                        Build {batchCount} NFT Empire
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Categories */}
-            <Card className="bg-zinc-900/50 border-zinc-800 mt-6">
-              <CardHeader>
-                <CardTitle>High-Value Categories</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categories?.map((cat) => (
-                    <div 
-                      key={cat.category}
-                      className="p-4 bg-zinc-800 rounded-lg border border-zinc-700 hover:border-yellow-500/50 transition-all cursor-pointer"
-                      onClick={() => setSelectedCategory(cat.category)}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-white">{cat.name}</h3>
-                        <Badge className="bg-yellow-500/20 text-yellow-400">{cat.demandScore}% demand</Badge>
-                      </div>
-                      <p className="text-sm text-zinc-400 mb-2">Avg floor: {cat.avgFloorPrice} ETH • {cat.traits.length} traits</p>
-                      <p className="text-lg font-bold text-yellow-400">~{cat.avgFloorPrice} ETH floor</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
+          
           {/* Marketplaces Tab */}
-          <TabsContent value="marketplaces" className="mt-4">
+          <TabsContent value="marketplaces" className="space-y-4">
             <Card className="bg-zinc-900/50 border-zinc-800">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Store className="w-5 h-5 text-yellow-500" />
-                  NFT Marketplaces
-                </CardTitle>
-                <CardDescription>
-                  Your NFTs are automatically listed on all these platforms
-                </CardDescription>
+                <CardTitle className="text-white">NFT Marketplaces</CardTitle>
+                <CardDescription>Your NFTs are automatically listed on all these marketplaces</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {marketplaces?.map((mp) => (
-                    <a
-                      key={mp.name}
-                      href={mp.baseUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-4 bg-zinc-800 rounded-lg border border-zinc-700 hover:border-yellow-500/50 transition-all group"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-white group-hover:text-yellow-400 transition-colors">
-                          {mp.name}
-                        </h3>
-                        <div className="flex items-center gap-1">
-                          <Badge className="bg-green-500/20 text-green-400">Rank #{mp.rank}</Badge>
-                          <ExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-yellow-400" />
-                        </div>
+                    <div key={mp.id} className="bg-zinc-800/50 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-white">{mp.name}</h3>
+                        <Badge variant="outline" className="text-green-400">
+                          {(mp.fee * 100).toFixed(1)}% fee
+                        </Badge>
                       </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-zinc-400">24h Volume</span>
-                          <span className="text-white">${(mp.volume24h / 1000000).toFixed(1)}M</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-zinc-400">Fee</span>
-                          <span className="text-white">{mp.fee}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-zinc-400">Chains</span>
-                          <span className="text-white">{mp.chains.slice(0, 2).join(", ")}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-zinc-400">Auto-List</span>
-                          <span className={mp.autoList ? "text-green-400" : "text-zinc-400"}>
-                            {mp.autoList ? "Yes" : "Manual"}
-                          </span>
-                        </div>
-                      </div>
-                    </a>
+                      <p className="text-sm text-zinc-400 mb-2">
+                        {portfolio?.byMarketplace?.[mp.name]?.listings || 0} active listings
+                      </p>
+                      <p className="text-sm text-zinc-400 mb-3">
+                        {portfolio?.byMarketplace?.[mp.name]?.sales || 0} sales
+                      </p>
+                      <a
+                        href={mp.baseUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-yellow-400 hover:text-yellow-300 flex items-center gap-1"
+                      >
+                        Visit Marketplace <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
-
+          
           {/* Auto-Buyers Tab */}
-          <TabsContent value="autobuyers" className="mt-4">
+          <TabsContent value="autobuyers" className="space-y-4">
             <Card className="bg-zinc-900/50 border-zinc-800">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5 text-yellow-500" />
-                  Auto-Buy Platforms
-                </CardTitle>
+                <CardTitle className="text-white">Auto-Buyer Platforms</CardTitle>
                 <CardDescription>
-                  Platforms that automatically purchase AI-generated content
+                  Platforms that automatically purchase AI-generated art and content
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {autoBuyPlatforms?.map((platform) => (
-                    <a
-                      key={platform.name}
-                      href={platform.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-4 bg-zinc-800 rounded-lg border border-zinc-700 hover:border-green-500/50 transition-all group"
-                    >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {autoBuyerPlatforms?.map((platform) => (
+                    <div key={platform.id} className="bg-zinc-800/50 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-white group-hover:text-green-400 transition-colors">
-                          {platform.name}
-                        </h3>
-                        <div className="flex items-center gap-1">
-                          {platform.autoAccept && (
-                            <Badge className="bg-green-500/20 text-green-400">Auto-Accept</Badge>
-                          )}
-                          <ExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-green-400" />
-                        </div>
+                        <h4 className="font-medium text-white">{platform.name}</h4>
+                        <Badge className="bg-green-500/20 text-green-400">
+                          ${platform.avgPrice} avg
+                        </Badge>
                       </div>
-                      <p className="text-sm text-zinc-400 mb-2">{platform.description}</p>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-zinc-400">Type: {platform.type}</span>
-                        <span className="text-green-400">Min: ${platform.minPayout}</span>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Data Sales Tab */}
-          <TabsContent value="data" className="mt-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Data Stats */}
-              <Card className="bg-zinc-900/50 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Database className="w-5 h-5 text-yellow-500" />
-                    Data Monetization Stats
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-zinc-800 rounded-lg p-4 text-center">
-                      <p className="text-2xl font-bold text-yellow-400">{dataStats?.totalItems || 0}</p>
-                      <p className="text-sm text-zinc-400">Items Generated</p>
-                    </div>
-                    <div className="bg-zinc-800 rounded-lg p-4 text-center">
-                      <p className="text-2xl font-bold text-green-400">${dataStats?.earnings?.total?.toFixed(2) || "0.00"}</p>
-                      <p className="text-sm text-zinc-400">Total Earnings</p>
-                    </div>
-                    <div className="bg-zinc-800 rounded-lg p-4 text-center">
-                      <p className="text-2xl font-bold text-blue-400">{dataStats?.totalBatches || 0}</p>
-                      <p className="text-sm text-zinc-400">Batches Created</p>
-                    </div>
-                    <div className="bg-zinc-800 rounded-lg p-4 text-center">
-                      <p className="text-2xl font-bold text-purple-400">${dataStats?.earnings?.pending?.toFixed(2) || "0.00"}</p>
-                      <p className="text-sm text-zinc-400">Pending</p>
-                    </div>
-                  </div>
-
-                  {/* Generate Data */}
-                  <div className="space-y-3">
-                    <Select onValueChange={(type) => {
-                      generateDataMutation.mutate({ type, count: 50 });
-                    }}>
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700">
-                        <SelectValue placeholder="Generate data batch..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {dataTypes?.map((dt) => (
-                          <SelectItem key={dt.type} value={dt.type}>
-                            <div className="flex items-center justify-between w-full">
-                              <span>{dt.name}</span>
-                              <span className="text-xs text-green-400 ml-2">${dt.avgValuePerItem}/item</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Data Platforms */}
-              <Card className="bg-zinc-900/50 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="w-5 h-5 text-yellow-500" />
-                    Data Buying Platforms
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                    {dataPlatforms?.slice(0, 8).map((platform) => (
+                      <p className="text-xs text-zinc-400 mb-2">{platform.type}</p>
+                      
                       <a
-                        key={platform.name}
                         href={platform.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
+                        className="text-sm text-yellow-400 hover:text-yellow-300 flex items-center gap-1"
                       >
-                        <div>
-                          <p className="font-medium text-white">{platform.name}</p>
-                          <p className="text-xs text-zinc-400">{platform.type}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-green-400 text-sm">
-                            ${platform.payRate.min}-${platform.payRate.max}/{platform.payRate.unit}
-                          </span>
-                          <ExternalLink className="w-4 h-4 text-zinc-400" />
-                        </div>
+                        Submit Content <ExternalLink className="w-3 h-3" />
                       </a>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Wallet Tab */}
-          <TabsContent value="wallet" className="mt-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-zinc-900/50 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Wallet className="w-5 h-5 text-yellow-500" />
-                    Wallet Management
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {!walletConnected ? (
-                    <div className="text-center py-8">
-                      <Wallet className="w-16 h-16 mx-auto mb-4 text-zinc-600" />
-                      <p className="text-zinc-400 mb-4">Connect your wallet to transfer NFTs and cash out earnings</p>
-                      <Button onClick={connectWallet} className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                        <Wallet className="w-4 h-4 mr-2" />
-                        Connect MetaMask
-                      </Button>
                     </div>
-                  ) : (
-                    <>
-                      <div className="bg-zinc-800 rounded-lg p-4">
-                        <p className="text-sm text-zinc-400 mb-1">Connected Wallet</p>
-                        <p className="font-mono text-white">{walletAddress}</p>
-                      </div>
-
-                      <div className="bg-gradient-to-r from-green-500/20 to-green-600/10 rounded-lg p-4 border border-green-500/30">
-                        <p className="text-sm text-green-400 mb-1">Available Balance</p>
-                        <p className="text-3xl font-bold text-white">${portfolio?.walletBalance?.toFixed(2) || "0.00"}</p>
-                      </div>
-
-                      <div>
-                        <label className="text-sm text-zinc-400 mb-2 block">Cash Out Amount (optional)</label>
-                        <Input 
-                          type="number"
-                          placeholder="Leave empty for full balance"
-                          value={cashoutAmount}
-                          onChange={(e) => setCashoutAmount(e.target.value)}
-                          className="bg-zinc-800 border-zinc-700"
-                        />
-                      </div>
-
-                      <Button 
-                        onClick={handleCashOut}
-                        disabled={!portfolio?.walletBalance || portfolio.walletBalance <= 0}
-                        className="w-full bg-green-500 hover:bg-green-600"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Cash Out to Wallet
-                      </Button>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="bg-zinc-900/50 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-yellow-500" />
-                    Earnings Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
-                      <span className="text-zinc-400">NFT Sales</span>
-                      <span className="text-white font-bold">${portfolio?.totalEarnings?.toFixed(2) || "0.00"}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
-                      <span className="text-zinc-400">Data Sales</span>
-                      <span className="text-white font-bold">${dataStats?.earnings?.paid?.toFixed(2) || "0.00"}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
-                      <span className="text-zinc-400">Pending Payments</span>
-                      <span className="text-yellow-400 font-bold">${dataStats?.earnings?.pending?.toFixed(2) || "0.00"}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 rounded-lg border border-yellow-500/30">
-                      <span className="text-yellow-400 font-medium">Total Earnings</span>
-                      <span className="text-white font-bold text-xl">
-                        ${((portfolio?.totalEarnings || 0) + (dataStats?.earnings?.total || 0)).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

@@ -3987,6 +3987,95 @@ const nftEmpireRouter = router({
       const { HIGH_VALUE_CATEGORIES, TRENDING_STYLES } = await import('./_core/openSeaNFT');
       return { categories: HIGH_VALUE_CATEGORIES, styles: TRENDING_STYLES };
     }),
+
+  // ===== REAL NFT SERVICE (NO DEMO MODE) =====
+  
+  // Generate real NFT with AI image stored in database
+  generateReal: protectedProcedure
+    .input(z.object({
+      category: z.string().optional(),
+    }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const { generateRealNft } = await import('./_core/realNftService');
+      return generateRealNft(ctx.user.id, input?.category);
+    }),
+
+  // List real NFT on a specific marketplace
+  listReal: protectedProcedure
+    .input(z.object({
+      nftId: z.number(),
+      marketplace: z.string(),
+      price: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { listNftOnMarketplace } = await import('./_core/realNftService');
+      return listNftOnMarketplace(input.nftId, ctx.user.id, input.marketplace, input.price);
+    }),
+
+  // List real NFT on ALL marketplaces
+  listRealOnAll: protectedProcedure
+    .input(z.object({
+      nftId: z.number(),
+      basePrice: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { listNftOnAllMarketplaces } = await import('./_core/realNftService');
+      return listNftOnAllMarketplaces(input.nftId, ctx.user.id, input.basePrice);
+    }),
+
+  // Submit real NFT to auto-buyer platforms
+  submitRealToAutoBuyers: protectedProcedure
+    .input(z.object({ nftId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const { submitToAutoBuyers } = await import('./_core/realNftService');
+      return submitToAutoBuyers(input.nftId, ctx.user.id);
+    }),
+
+  // Batch generate real NFTs and list them
+  batchGenerateReal: protectedProcedure
+    .input(z.object({
+      count: z.number().min(1).max(10),
+      category: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { batchGenerateAndListNfts } = await import('./_core/realNftService');
+      return batchGenerateAndListNfts(ctx.user.id, input.count, input.category);
+    }),
+
+  // Get user's real NFTs with listings
+  getUserNfts: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getUserNfts } = await import('./_core/realNftService');
+      return getUserNfts(ctx.user.id);
+    }),
+
+  // Get real NFT portfolio summary
+  getPortfolioSummary: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getNftPortfolioSummary } = await import('./_core/realNftService');
+      return getNftPortfolioSummary(ctx.user.id);
+    }),
+
+  // Get available categories for real NFTs
+  getRealCategories: protectedProcedure
+    .query(async () => {
+      const { getCategories } = await import('./_core/realNftService');
+      return getCategories();
+    }),
+
+  // Get marketplace info
+  getRealMarketplaces: protectedProcedure
+    .query(async () => {
+      const { getMarketplaces } = await import('./_core/realNftService');
+      return getMarketplaces();
+    }),
+
+  // Get auto-buyer platform info
+  getRealAutoBuyerPlatforms: protectedProcedure
+    .query(async () => {
+      const { getAutoBuyerPlatforms } = await import('./_core/realNftService');
+      return getAutoBuyerPlatforms();
+    }),
 });
 
 // Data Monetization Router - Generate and sell AI data

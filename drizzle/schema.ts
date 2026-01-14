@@ -638,3 +638,152 @@ export const walletSettings = mysqlTable("wallet_settings", {
 
 export type WalletSettings = typeof walletSettings.$inferSelect;
 export type InsertWalletSettings = typeof walletSettings.$inferInsert;
+
+
+/**
+ * NFT Assets - Stores all generated NFTs
+ */
+export const nftAssets = mysqlTable("nft_assets", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // NFT Identity
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  
+  // Image storage
+  imageUrl: text("imageUrl").notNull(),
+  imageKey: varchar("imageKey", { length: 500 }),
+  thumbnailUrl: text("thumbnailUrl"),
+  
+  // Metadata
+  category: varchar("category", { length: 100 }).notNull(),
+  style: varchar("style", { length: 100 }),
+  traits: json("traits").$type<{ trait_type: string; value: string }[]>(),
+  
+  // Blockchain info
+  tokenId: varchar("tokenId", { length: 100 }),
+  contractAddress: varchar("contractAddress", { length: 42 }),
+  chain: mysqlEnum("chain", ["ethereum", "polygon", "arbitrum", "optimism", "base", "solana"]).default("ethereum"),
+  metadataUri: text("metadataUri"),
+  
+  // Valuation
+  estimatedValue: decimal("estimatedValue", { precision: 18, scale: 8 }).default("0"),
+  floorPrice: decimal("floorPrice", { precision: 18, scale: 8 }),
+  lastSalePrice: decimal("lastSalePrice", { precision: 18, scale: 8 }),
+  
+  // Status
+  status: mysqlEnum("status", ["generating", "generated", "minting", "minted", "listed", "sold", "burned"]).default("generating"),
+  isMinted: boolean("isMinted").default(false),
+  
+  // Analytics
+  views: int("views").default(0),
+  likes: int("likes").default(0),
+  offers: int("offers").default(0),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NftAsset = typeof nftAssets.$inferSelect;
+export type InsertNftAsset = typeof nftAssets.$inferInsert;
+
+/**
+ * NFT Listings - Tracks where each NFT is listed
+ */
+export const nftListings = mysqlTable("nft_listings", {
+  id: int("id").autoincrement().primaryKey(),
+  nftAssetId: int("nftAssetId").notNull(),
+  userId: int("userId").notNull(),
+  
+  // Marketplace info
+  marketplace: varchar("marketplace", { length: 100 }).notNull(),
+  listingUrl: text("listingUrl"),
+  listingId: varchar("listingId", { length: 200 }),
+  
+  // Pricing
+  listPrice: decimal("listPrice", { precision: 18, scale: 8 }).notNull(),
+  currency: varchar("currency", { length: 10 }).default("ETH"),
+  expectedSalePrice: decimal("expectedSalePrice", { precision: 18, scale: 8 }),
+  
+  // Status
+  status: mysqlEnum("status", ["pending", "active", "sold", "cancelled", "expired"]).default("pending"),
+  
+  // Timestamps
+  listedAt: timestamp("listedAt"),
+  expiresAt: timestamp("expiresAt"),
+  soldAt: timestamp("soldAt"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NftListing = typeof nftListings.$inferSelect;
+export type InsertNftListing = typeof nftListings.$inferInsert;
+
+/**
+ * NFT Sales - Completed sales records
+ */
+export const nftSales = mysqlTable("nft_sales", {
+  id: int("id").autoincrement().primaryKey(),
+  nftAssetId: int("nftAssetId").notNull(),
+  nftListingId: int("nftListingId"),
+  userId: int("userId").notNull(),
+  
+  // Sale details
+  marketplace: varchar("marketplace", { length: 100 }).notNull(),
+  salePrice: decimal("salePrice", { precision: 18, scale: 8 }).notNull(),
+  currency: varchar("currency", { length: 10 }).default("ETH"),
+  
+  // Buyer info
+  buyerAddress: varchar("buyerAddress", { length: 42 }),
+  
+  // Transaction
+  txHash: varchar("txHash", { length: 66 }),
+  blockNumber: int("blockNumber"),
+  
+  // Fees
+  marketplaceFee: decimal("marketplaceFee", { precision: 18, scale: 8 }),
+  royaltyFee: decimal("royaltyFee", { precision: 18, scale: 8 }),
+  netProceeds: decimal("netProceeds", { precision: 18, scale: 8 }),
+  
+  // Payout
+  isPaidOut: boolean("isPaidOut").default(false),
+  payoutTxHash: varchar("payoutTxHash", { length: 66 }),
+  
+  soldAt: timestamp("soldAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type NftSale = typeof nftSales.$inferSelect;
+export type InsertNftSale = typeof nftSales.$inferInsert;
+
+/**
+ * Auto-Buyer Submissions - Track submissions to platforms that buy NFTs/art
+ */
+export const autoBuyerSubmissions = mysqlTable("auto_buyer_submissions", {
+  id: int("id").autoincrement().primaryKey(),
+  nftAssetId: int("nftAssetId").notNull(),
+  userId: int("userId").notNull(),
+  
+  // Platform info
+  platform: varchar("platform", { length: 100 }).notNull(),
+  platformUrl: text("platformUrl"),
+  submissionId: varchar("submissionId", { length: 200 }),
+  
+  // Pricing
+  offeredPrice: decimal("offeredPrice", { precision: 18, scale: 8 }),
+  currency: varchar("currency", { length: 10 }).default("USD"),
+  
+  // Status
+  status: mysqlEnum("status", ["pending", "submitted", "under_review", "accepted", "rejected", "sold"]).default("pending"),
+  rejectionReason: text("rejectionReason"),
+  
+  // Earnings
+  earnings: decimal("earnings", { precision: 10, scale: 2 }).default("0"),
+  isPaidOut: boolean("isPaidOut").default(false),
+  
+  submittedAt: timestamp("submittedAt"),
+  reviewedAt: timestamp("reviewedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AutoBuyerSubmission = typeof autoBuyerSubmissions.$inferSelect;
+export type InsertAutoBuyerSubmission = typeof autoBuyerSubmissions.$inferInsert;
