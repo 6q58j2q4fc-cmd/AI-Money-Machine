@@ -23,7 +23,10 @@ import {
   QrCode,
   Send,
   Loader2,
-  DollarSign
+  DollarSign,
+  Eye,
+  EyeOff,
+  KeyRound
 } from 'lucide-react';
 
 // Trust Wallet address for payouts
@@ -35,6 +38,9 @@ export default function HotWallet() {
   const [sendTo, setSendTo] = useState(TRUST_WALLET);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [privateKeyInput, setPrivateKeyInput] = useState('');
+  const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [previewAddress, setPreviewAddress] = useState<string | null>(null);
+  const [isValidKey, setIsValidKey] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
   // Queries
@@ -630,15 +636,23 @@ export default function HotWallet() {
           <TabsContent value="import">
             <Card className="bg-zinc-900 border-zinc-800">
               <CardHeader>
-                <CardTitle className="text-white">Import Existing Wallet</CardTitle>
-                <CardDescription>
-                  Recover a wallet using its private key to access existing funds
-                </CardDescription>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/20 rounded-lg">
+                    <KeyRound className="h-6 w-6 text-emerald-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-white">Import Existing Wallet</CardTitle>
+                    <CardDescription>
+                      Recover a wallet using its private key to access existing funds
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
+                {/* Security Warning */}
                 <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
                   <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+                    <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
                     <div>
                       <h4 className="font-medium text-yellow-500">Security Warning</h4>
                       <p className="text-sm text-yellow-400/80 mt-1">
@@ -649,44 +663,145 @@ export default function HotWallet() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Private Key</Label>
-                  <Input
-                    type="password"
-                    placeholder="Enter your private key (64 hex characters)"
-                    value={privateKeyInput}
-                    onChange={(e) => setPrivateKeyInput(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 font-mono"
-                  />
-                  <p className="text-xs text-zinc-500">
-                    Your private key should be 64 hexadecimal characters (with or without 0x prefix)
-                  </p>
+                {/* Private Key Input */}
+                <div className="space-y-3">
+                  <Label className="text-white font-medium">Private Key</Label>
+                  <div className="relative">
+                    <Input
+                      type={showPrivateKey ? 'text' : 'password'}
+                      placeholder="Enter your private key (64 hex characters)"
+                      value={privateKeyInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPrivateKeyInput(value);
+                        // Validate and compute preview address
+                        const cleanKey = value.startsWith('0x') ? value.slice(2) : value;
+                        const isValid = /^[a-fA-F0-9]{64}$/.test(cleanKey);
+                        setIsValidKey(isValid);
+                        if (isValid) {
+                          // Compute address preview (simplified - first 10 chars of key hash)
+                          const keyHash = cleanKey.slice(0, 8);
+                          setPreviewAddress(`0x${keyHash}...${cleanKey.slice(-8)}`);
+                        } else {
+                          setPreviewAddress(null);
+                        }
+                      }}
+                      className="bg-zinc-800 border-zinc-700 font-mono pr-12 text-white placeholder:text-zinc-500"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-zinc-700"
+                      onClick={() => setShowPrivateKey(!showPrivateKey)}
+                    >
+                      {showPrivateKey ? (
+                        <EyeOff className="h-4 w-4 text-zinc-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-zinc-400" />
+                      )}
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-zinc-500">
+                      64 hexadecimal characters (with or without 0x prefix)
+                    </p>
+                    {privateKeyInput && (
+                      <Badge variant={isValidKey ? 'default' : 'destructive'} className={isValidKey ? 'bg-emerald-600' : ''}>
+                        {isValidKey ? 'Valid Format' : 'Invalid Format'}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
+                {/* Wallet Preview */}
+                {isValidKey && (
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-medium text-emerald-400">Wallet Ready to Import</h4>
+                        <p className="text-sm text-emerald-300/80 mt-1 font-mono">
+                          Key Preview: {previewAddress}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Import Button */}
                 <Button
-                  onClick={() => importWalletMutation.mutate({ privateKey: privateKeyInput })}
-                  disabled={!privateKeyInput || privateKeyInput.length < 64 || importWalletMutation.isPending}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  onClick={() => {
+                    if (!isValidKey) {
+                      toast.error('Please enter a valid 64-character hex private key');
+                      return;
+                    }
+                    importWalletMutation.mutate({ privateKey: privateKeyInput });
+                  }}
+                  disabled={!isValidKey || importWalletMutation.isPending}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 text-lg font-medium"
                 >
                   {importWalletMutation.isPending ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Importing...
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Importing Wallet...
                     </>
                   ) : (
                     <>
-                      <Wallet className="h-4 w-4 mr-2" />
+                      <Wallet className="h-5 w-5 mr-2" />
                       Import Wallet
                     </>
                   )}
                 </Button>
 
-                <div className="border-t border-zinc-800 pt-4 mt-4">
-                  <h4 className="font-medium text-white mb-2">Current Wallet</h4>
-                  <div className="bg-zinc-800 rounded-lg p-3">
-                    <p className="text-sm text-zinc-400">Address:</p>
-                    <p className="font-mono text-emerald-400">{status?.address || 'Not initialized'}</p>
+                {/* Current Wallet Info */}
+                <div className="border-t border-zinc-800 pt-6 mt-6">
+                  <h4 className="font-medium text-white mb-3 flex items-center gap-2">
+                    <Wallet className="h-4 w-4 text-zinc-400" />
+                    Current Hot Wallet
+                  </h4>
+                  <div className="bg-zinc-800 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-zinc-400 mb-1">Address:</p>
+                        <p className="font-mono text-emerald-400 text-lg">
+                          {status?.address || 'Not initialized'}
+                        </p>
+                      </div>
+                      {status?.address && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(status.address!);
+                            toast.success('Address copied!');
+                          }}
+                          className="hover:bg-zinc-700"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    {status?.initialized && (
+                      <div className="mt-3 pt-3 border-t border-zinc-700">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+                          <span className="text-sm text-emerald-400">Wallet Active</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
+                </div>
+
+                {/* Import Instructions */}
+                <div className="bg-zinc-800/50 rounded-lg p-4">
+                  <h5 className="font-medium text-white mb-2">How to Import</h5>
+                  <ol className="text-sm text-zinc-400 space-y-2 list-decimal list-inside">
+                    <li>Export your private key from your existing wallet (Trust Wallet, MetaMask, etc.)</li>
+                    <li>Paste the 64-character hex key above (with or without 0x prefix)</li>
+                    <li>Click "Import Wallet" to replace the current hot wallet</li>
+                    <li>Your funds will be immediately accessible</li>
+                  </ol>
                 </div>
               </CardContent>
             </Card>
