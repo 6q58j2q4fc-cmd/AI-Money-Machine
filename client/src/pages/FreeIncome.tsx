@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,11 +28,15 @@ import {
   Activity
 } from "lucide-react";
 
-// Trust Wallet address
+// Wallet addresses
 const TRUST_WALLET_ADDRESS = '0x75812e1c4246A880f6576db8292405247e6a8775';
 
 export default function FreeIncome() {
   const [activeTab, setActiveTab] = useState("faucets");
+  const [withdrawDestination, setWithdrawDestination] = useState<'trust' | 'hot'>('hot');
+  
+  // Get hot wallet status
+  const { data: hotWalletStatus } = trpc.hotWallet.getStatus.useQuery();
   
   // tRPC queries and mutations
   const { data: claimStatus, refetch: refetchStatus } = trpc.autoClaims.getStatus.useQuery();
@@ -84,7 +89,21 @@ export default function FreeIncome() {
       toast.error('Minimum withdrawal is 0.001 ETH');
       return;
     }
-    withdrawMutation.mutate({ amount: totalETH, currency: 'ETH' });
+    const destination = withdrawDestination === 'hot' 
+      ? (hotWalletStatus?.address || TRUST_WALLET_ADDRESS)
+      : TRUST_WALLET_ADDRESS;
+    withdrawMutation.mutate({ 
+      amount: totalETH, 
+      currency: 'ETH',
+      destination: destination
+    });
+  };
+
+  const copyHotWalletAddress = () => {
+    if (hotWalletStatus?.address) {
+      navigator.clipboard.writeText(hotWalletStatus.address);
+      toast.success('Hot Wallet address copied to clipboard');
+    }
   };
 
   const renderOpportunityCard = (opp: any, index: number) => (
@@ -245,61 +264,117 @@ export default function FreeIncome() {
           </Card>
         </div>
 
-        {/* Trust Wallet & Withdrawal */}
+        {/* Wallet Withdrawal Section */}
         <Card className="bg-zinc-900/50 border-zinc-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wallet className="w-5 h-5 text-amber-500" />
-              Trust Wallet - All Earnings Go Here
+              Withdraw Earnings
             </CardTitle>
             <CardDescription>
-              Your configured wallet for automatic crypto payouts
+              Choose where to send your earned crypto
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Wallet className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-zinc-400">Trust Wallet Address</p>
+          <CardContent className="space-y-6">
+            {/* Withdrawal Destination Selector */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Hot Wallet Option */}
+              <div 
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  withdrawDestination === 'hot' 
+                    ? 'border-emerald-500 bg-emerald-500/10' 
+                    : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600'
+                }`}
+                onClick={() => setWithdrawDestination('hot')}
+              >
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <code className="text-white font-mono text-sm bg-zinc-800 px-2 py-1 rounded">
-                      {TRUST_WALLET_ADDRESS.slice(0, 10)}...{TRUST_WALLET_ADDRESS.slice(-8)}
-                    </code>
-                    <Button size="sm" variant="ghost" onClick={copyWalletAddress}>
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                    <a 
-                      href={`https://etherscan.io/address/${TRUST_WALLET_ADDRESS}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Button size="sm" variant="ghost">
-                        <ExternalLink className="w-4 h-4" />
-                      </Button>
-                    </a>
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <Wallet className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white">Hot Wallet</p>
+                      <p className="text-xs text-zinc-400">For immediate use in-app</p>
+                    </div>
                   </div>
+                  {withdrawDestination === 'hot' && (
+                    <CheckCircle className="w-5 h-5 text-emerald-500" />
+                  )}
                 </div>
+                <div className="flex items-center gap-2">
+                  <code className="text-emerald-400 font-mono text-xs bg-zinc-900 px-2 py-1 rounded flex-1 truncate">
+                    {hotWalletStatus?.address ? `${hotWalletStatus.address.slice(0, 10)}...${hotWalletStatus.address.slice(-6)}` : 'Not initialized'}
+                  </code>
+                  {hotWalletStatus?.address && (
+                    <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); copyHotWalletAddress(); }}>
+                      <Copy className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">Use for NFT minting, gas fees, trading</p>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-sm text-zinc-400">Available to Withdraw</p>
-                  <p className="text-xl font-bold text-green-400">{(earnings?.totalETH || 0).toFixed(6)} ETH</p>
+
+              {/* Trust Wallet Option */}
+              <div 
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  withdrawDestination === 'trust' 
+                    ? 'border-blue-500 bg-blue-500/10' 
+                    : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600'
+                }`}
+                onClick={() => setWithdrawDestination('trust')}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <Wallet className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white">Trust Wallet</p>
+                      <p className="text-xs text-zinc-400">Your personal wallet</p>
+                    </div>
+                  </div>
+                  {withdrawDestination === 'trust' && (
+                    <CheckCircle className="w-5 h-5 text-blue-500" />
+                  )}
                 </div>
+                <div className="flex items-center gap-2">
+                  <code className="text-blue-400 font-mono text-xs bg-zinc-900 px-2 py-1 rounded flex-1 truncate">
+                    {TRUST_WALLET_ADDRESS.slice(0, 10)}...{TRUST_WALLET_ADDRESS.slice(-6)}
+                  </code>
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); copyWalletAddress(); }}>
+                    <Copy className="w-3 h-3" />
+                  </Button>
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">Final payout to your personal wallet</p>
+              </div>
+            </div>
+
+            {/* Withdrawal Action */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between p-4 bg-zinc-800/50 rounded-lg">
+              <div>
+                <p className="text-sm text-zinc-400">Available to Withdraw</p>
+                <p className="text-2xl font-bold text-green-400">{(earnings?.totalETH || 0).toFixed(6)} ETH</p>
+                <p className="text-xs text-zinc-500">≈ ${((earnings?.totalETH || 0) * 2500).toFixed(2)} USD</p>
+              </div>
+              <div className="flex flex-col gap-2 items-end">
                 <Button 
-                  className="bg-green-500 hover:bg-green-600 text-black font-semibold"
+                  className="bg-green-500 hover:bg-green-600 text-black font-semibold px-6"
                   onClick={handleWithdraw}
                   disabled={withdrawMutation.isPending || (earnings?.totalETH || 0) < 0.001}
                 >
-                  <ArrowUpRight className="w-4 h-4 mr-2" />
-                  Withdraw to Wallet
+                  {withdrawMutation.isPending ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <ArrowUpRight className="w-4 h-4 mr-2" />
+                  )}
+                  Withdraw to {withdrawDestination === 'hot' ? 'Hot Wallet' : 'Trust Wallet'}
                 </Button>
+                <p className="text-xs text-zinc-500">Minimum: 0.001 ETH</p>
               </div>
             </div>
-            <p className="text-xs text-zinc-500 mt-4">
-              PayPal: dakotarea@icloud.com (for cash earnings) • Minimum withdrawal: 0.001 ETH
+
+            <p className="text-xs text-zinc-500">
+              PayPal: dakotarea@icloud.com (for cash earnings)
             </p>
           </CardContent>
         </Card>

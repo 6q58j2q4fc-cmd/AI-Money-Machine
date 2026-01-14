@@ -319,14 +319,19 @@ export function getAutoClaimStatus(): {
 }
 
 /**
- * Request withdrawal to Trust Wallet
+ * Request withdrawal to specified wallet
  */
-export async function requestWithdrawal(amount: number, currency: string): Promise<{
+export async function requestWithdrawal(amount: number, currency: string, destination?: string): Promise<{
   success: boolean;
   message: string;
   txHash?: string;
   estimatedArrival?: string;
+  destination?: string;
 }> {
+  // Use provided destination or default to Trust Wallet
+  const walletAddress = destination || TRUST_WALLET_ADDRESS;
+  const isHotWallet = destination && destination !== TRUST_WALLET_ADDRESS;
+  
   // Simulate withdrawal request
   const txHash = generateTxHash();
   
@@ -334,21 +339,23 @@ export async function requestWithdrawal(amount: number, currency: string): Promi
     1, // System user
     'system_event',
     {
-      message: `Withdrawal requested: ${amount} ${currency} to ${TRUST_WALLET_ADDRESS}`,
+      message: `Withdrawal requested: ${amount} ${currency} to ${isHotWallet ? 'Hot Wallet' : 'Trust Wallet'} (${walletAddress})`,
       metadata: {
         amount,
         currency,
-        walletAddress: TRUST_WALLET_ADDRESS,
-        txHash
+        walletAddress,
+        txHash,
+        destinationType: isHotWallet ? 'hot_wallet' : 'trust_wallet'
       }
     }
   );
   
   return {
     success: true,
-    message: `Withdrawal of ${amount} ${currency} initiated to ${TRUST_WALLET_ADDRESS}`,
+    message: `Withdrawal of ${amount} ${currency} initiated to ${isHotWallet ? 'Hot Wallet' : 'Trust Wallet'}`,
     txHash,
-    estimatedArrival: '10-30 minutes'
+    estimatedArrival: isHotWallet ? '1-5 minutes' : '10-30 minutes',
+    destination: walletAddress
   };
 }
 

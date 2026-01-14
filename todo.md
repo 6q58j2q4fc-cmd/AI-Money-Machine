@@ -1390,3 +1390,16 @@
 - 10 bugs auto-fixed
 - 30 pages audited (all healthy)
 - 7 process flows tested
+
+
+## Free Income to Hot Wallet Integration
+
+### Withdrawal System
+- [x] Audit Free Income page earnings tracking
+- [x] Create withdrawal router in backend (updated to accept destination parameter)
+- [x] Add withdraw to Hot Wallet buttons on Free Income page
+- [x] Display withdrawable balance prominently (0.000000 ETH with USD estimate)
+- [x] Add dual-wallet selector (Hot Wallet vs Trust Wallet)
+- [x] Hot Wallet selected by default for immediate in-app use
+- [x] Trust Wallet option for final personal payouts
+- [x] Test withdrawal flow end-to-end (wallet switching works)

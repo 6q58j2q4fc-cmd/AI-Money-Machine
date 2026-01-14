@@ -4780,9 +4780,10 @@ const autoClaimsRouter = router({
     .input(z.object({
       amount: z.number(),
       currency: z.string(),
+      destination: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
-      return requestWithdrawal(input.amount, input.currency);
+      return requestWithdrawal(input.amount, input.currency, input.destination);
     }),
 
   // Get available sources
