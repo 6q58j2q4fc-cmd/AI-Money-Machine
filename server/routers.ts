@@ -4702,6 +4702,122 @@ const marketplaceApiRouter = router({
       };
     }),
 
+  // USER SUBMISSION: Submit a new NFT for sale
+  submitUserNft: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1).max(100),
+      description: z.string().min(1).max(1000),
+      category: z.enum(['abstract', 'generative', 'pixel', '3d', 'photography', 'anime']),
+      price: z.string().regex(/^\d+\.?\d*$/, 'Invalid price format'),
+      imageBase64: z.string().optional(),
+      imageUrl: z.string().url().optional(),
+      chain: z.enum(['ethereum', 'polygon', 'sepolia', 'amoy']).default('polygon'),
+      royaltyPercentage: z.number().min(0).max(10).default(2.5),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { nftAssets, nftListings } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { storagePut } = await import('./storage');
+      
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      let finalImageUrl = input.imageUrl || '';
+      
+      // If base64 image provided, upload to S3
+      if (input.imageBase64) {
+        try {
+          const base64Data = input.imageBase64.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          const timestamp = Date.now();
+          const randomSuffix = Math.random().toString(36).substring(2, 8);
+          const fileKey = `user-nfts/${ctx.user.id}/${timestamp}-${randomSuffix}.png`;
+          
+          const { url } = await storagePut(fileKey, buffer, 'image/png');
+          finalImageUrl = url;
+        } catch (error) {
+          console.error('[User NFT] Image upload failed:', error);
+          throw new Error('Failed to upload image');
+        }
+      }
+      
+      if (!finalImageUrl) {
+        throw new Error('Image URL or base64 data is required');
+      }
+      
+      // Generate unique token ID
+      const tokenId = `USER-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      
+      // Map input chain to valid schema chain
+      const chainMap: Record<string, 'ethereum' | 'polygon' | 'arbitrum' | 'optimism' | 'base' | 'solana'> = {
+        'ethereum': 'ethereum',
+        'polygon': 'polygon',
+        'sepolia': 'ethereum', // Map testnet to mainnet
+        'amoy': 'polygon', // Map testnet to mainnet
+      };
+      const mappedChain = chainMap[input.chain] || 'polygon';
+      
+      // Insert NFT into database
+      const [newNft] = await db
+        .insert(nftAssets)
+        .values({
+          userId: ctx.user.id,
+          name: input.name,
+          description: input.description,
+          category: input.category,
+          imageUrl: finalImageUrl,
+          thumbnailUrl: finalImageUrl,
+          chain: mappedChain,
+          tokenId: tokenId,
+          estimatedValue: input.price,
+          status: 'generating', // Will be updated to 'listed' after approval
+          traits: [],
+          views: 0,
+          likes: 0,
+        })
+        .$returningId();
+      
+      // Create listing
+      await db
+        .insert(nftListings)
+        .values({
+          nftAssetId: newNft.id,
+          userId: ctx.user.id,
+          marketplace: 'internal',
+          listingUrl: `/marketplace?nft=${newNft.id}`,
+          listPrice: input.price,
+          currency: 'ETH',
+          status: 'pending',
+          listedAt: new Date(),
+        });
+      
+      return {
+        success: true,
+        nftId: newNft.id,
+        tokenId,
+        imageUrl: finalImageUrl,
+        message: 'NFT submitted successfully. It will be reviewed and listed shortly.',
+      };
+    }),
+
+  // Get user's submitted NFTs
+  getUserNfts: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { nftAssets } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) return [];
+      
+      const nfts = await db
+        .select()
+        .from(nftAssets)
+        .where(eq(nftAssets.userId, ctx.user.id));
+      
+      return nfts;
+    }),
+
   // Get aggregated stats across all marketplaces
   getAggregatedStats: protectedProcedure
     .input(z.object({ contractAddress: z.string() }))

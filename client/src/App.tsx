@@ -42,6 +42,7 @@ import DebugAdmin from './pages/DebugAdmin';
 import MasterTodo from './pages/MasterTodo';
 import FaucetAccounts from './pages/FaucetAccounts';
 import NFTMarketplace from './pages/NFTMarketplace';
+import TransactionHistory from './pages/TransactionHistory';
 
 function Router() {
   return (
@@ -50,6 +51,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/marketplace" component={NFTMarketplace} />
       <Route path="/marketplace/nft/:id" component={NFTMarketplace} />
+      <Route path="/transactions" component={TransactionHistory} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={PublicArticle} />
       <Route path="/article/:slug" component={PublicArticle} />

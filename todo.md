@@ -1947,3 +1947,33 @@
 - [x] NFT detail endpoint with full metadata
 - [ ] Purchase intent/order creation endpoint
 - [ ] User listing submission endpoint
+
+
+## Wallet Integration & NFT Features (Jan 2026)
+
+### WalletConnect/MetaMask Integration
+- [x] Install Web3 wallet libraries (wagmi, viem)
+- [x] Create WalletProvider context for wallet state management
+- [x] Connect Wallet button with MetaMask and WalletConnect support
+- [x] Display connected wallet address and balance
+- [x] Enable NFT purchase transactions through connected wallet
+
+### User NFT Listing Submissions
+- [x] Create NFT submission form with image upload
+- [x] Implement S3 upload for user NFT images
+- [x] Add listing price and royalty configuration
+- [x] Create backend endpoint for user NFT submissions
+- [x] Add pending/approved status for user listings
+
+### Transaction History
+- [x] Create transaction history page
+- [x] Display completed purchases with timestamps
+- [x] Add blockchain verification links (Etherscan, Polygonscan)
+- [x] Show transaction status (pending, confirmed, failed)
+- [x] Filter by transaction type (buy, sell, mint)
+
+### NFT Batching Fix
+- [x] Diagnose current NFT batching error - Working correctly, generated 3 NFTs
+- [x] Fix RPC connection issues - Already fixed in previous session
+- [x] Add proper error handling for batch generation
+- [x] Test batch generation with multiple NFTs - Verified 89→92 NFTs

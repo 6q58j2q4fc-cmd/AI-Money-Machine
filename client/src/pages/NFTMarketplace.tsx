@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,11 @@ import { toast } from "sonner";
 import { Link } from "wouter";
 import { 
   Search, Filter, Grid, List, ShoppingCart, Heart, Eye, 
-  ExternalLink, Wallet, TrendingUp, DollarSign, Image,
+  ExternalLink, TrendingUp, DollarSign, Image,
   ArrowUpDown, Clock, Sparkles, Crown, Zap, Share2,
   Twitter, Facebook, Copy, CheckCircle, AlertCircle
 } from "lucide-react";
+import { ConnectWallet, useWallet } from "@/components/ConnectWallet";
 
 // SEO Meta component
 function SEOHead() {
@@ -310,30 +311,159 @@ function SellNFTModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    category: 'abstract',
+    category: 'abstract' as 'abstract' | 'generative' | 'pixel' | '3d' | 'photography' | 'anime',
     price: '0.05',
     imageUrl: '',
+    imageBase64: '',
+    chain: 'polygon' as 'ethereum' | 'polygon' | 'sepolia' | 'amoy',
+    royaltyPercentage: 2.5,
+  });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  
+  const submitMutation = trpc.marketplace.submitUserNft.useMutation({
+    onSuccess: (data) => {
+      toast.success('NFT submitted successfully!', {
+        description: `Token ID: ${data.tokenId}`,
+      });
+      setFormData({
+        name: '',
+        description: '',
+        category: 'abstract',
+        price: '0.05',
+        imageUrl: '',
+        imageBase64: '',
+        chain: 'polygon',
+        royaltyPercentage: 2.5,
+      });
+      setImagePreview(null);
+      onClose();
+    },
+    onError: (error) => {
+      toast.error('Failed to submit NFT', {
+        description: error.message,
+      });
+    },
   });
   
-  const handleSubmit = () => {
-    toast.success('NFT listing submitted for review!');
-    onClose();
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image too large', { description: 'Max file size is 5MB' });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setFormData({ ...formData, imageBase64: base64, imageUrl: '' });
+      setImagePreview(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) {
+      toast.error('Please enter a name for your NFT');
+      return;
+    }
+    if (!formData.description.trim()) {
+      toast.error('Please enter a description');
+      return;
+    }
+    if (!formData.imageBase64 && !formData.imageUrl) {
+      toast.error('Please upload an image or provide an image URL');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      await submitMutation.mutateAsync({
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        price: formData.price,
+        imageBase64: formData.imageBase64 || undefined,
+        imageUrl: formData.imageUrl || undefined,
+        chain: formData.chain,
+        royaltyPercentage: formData.royaltyPercentage,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-gray-900 border-gray-700 text-white">
+      <DialogContent className="max-w-lg bg-gray-900 border-gray-700 text-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-yellow-400" />
             List Your NFT for Sale
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Submit your NFT to be listed on our marketplace
+            Submit your NFT to be listed on our marketplace. Images are uploaded to secure storage.
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 mt-4">
+          {/* Image Upload */}
+          <div>
+            <label className="text-sm font-medium text-gray-300">NFT Image</label>
+            <div className="mt-2">
+              {imagePreview ? (
+                <div className="relative">
+                  <img 
+                    src={imagePreview} 
+                    alt="Preview" 
+                    className="w-full h-48 object-cover rounded-lg border border-gray-700"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="absolute top-2 right-2 bg-gray-900/80"
+                    onClick={() => {
+                      setImagePreview(null);
+                      setFormData({ ...formData, imageBase64: '' });
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <div 
+                  className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-yellow-500/50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Image className="w-12 h-12 mx-auto text-gray-500 mb-2" />
+                  <p className="text-gray-400">Click to upload image</p>
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 5MB</p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Or provide an image URL:</p>
+            <Input 
+              placeholder="https://..."
+              value={formData.imageUrl}
+              onChange={(e) => {
+                setFormData({...formData, imageUrl: e.target.value, imageBase64: ''});
+                setImagePreview(e.target.value || null);
+              }}
+              className="mt-1 bg-gray-800 border-gray-700"
+              disabled={!!formData.imageBase64}
+            />
+          </div>
+          
           <div>
             <label className="text-sm font-medium text-gray-300">NFT Name</label>
             <Input 
@@ -354,50 +484,84 @@ function SellNFTModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
             />
           </div>
           
-          <div>
-            <label className="text-sm font-medium text-gray-300">Category</label>
-            <Select value={formData.category} onValueChange={(v) => setFormData({...formData, category: v})}>
-              <SelectTrigger className="mt-1 bg-gray-800 border-gray-700">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="abstract">Abstract Art</SelectItem>
-                <SelectItem value="generative">Generative Art</SelectItem>
-                <SelectItem value="pixel">Pixel Art</SelectItem>
-                <SelectItem value="3d">3D Art</SelectItem>
-                <SelectItem value="photography">AI Photography</SelectItem>
-                <SelectItem value="anime">Anime Style</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-300">Category</label>
+              <Select value={formData.category} onValueChange={(v: any) => setFormData({...formData, category: v})}>
+                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="abstract">Abstract Art</SelectItem>
+                  <SelectItem value="generative">Generative Art</SelectItem>
+                  <SelectItem value="pixel">Pixel Art</SelectItem>
+                  <SelectItem value="3d">3D Art</SelectItem>
+                  <SelectItem value="photography">AI Photography</SelectItem>
+                  <SelectItem value="anime">Anime Style</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium text-gray-300">Blockchain</label>
+              <Select value={formData.chain} onValueChange={(v: any) => setFormData({...formData, chain: v})}>
+                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ethereum">Ethereum</SelectItem>
+                  <SelectItem value="polygon">Polygon</SelectItem>
+                  <SelectItem value="sepolia">Sepolia (Testnet)</SelectItem>
+                  <SelectItem value="amoy">Amoy (Testnet)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
-          <div>
-            <label className="text-sm font-medium text-gray-300">Price (ETH)</label>
-            <Input 
-              type="number"
-              step="0.001"
-              placeholder="0.05"
-              value={formData.price}
-              onChange={(e) => setFormData({...formData, price: e.target.value})}
-              className="mt-1 bg-gray-800 border-gray-700"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-300">Price (ETH)</label>
+              <Input 
+                type="number"
+                step="0.001"
+                min="0.001"
+                placeholder="0.05"
+                value={formData.price}
+                onChange={(e) => setFormData({...formData, price: e.target.value})}
+                className="mt-1 bg-gray-800 border-gray-700"
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium text-gray-300">Royalty %</label>
+              <Input 
+                type="number"
+                step="0.5"
+                min="0"
+                max="10"
+                placeholder="2.5"
+                value={formData.royaltyPercentage}
+                onChange={(e) => setFormData({...formData, royaltyPercentage: parseFloat(e.target.value) || 0})}
+                className="mt-1 bg-gray-800 border-gray-700"
+              />
+            </div>
           </div>
           
-          <div>
-            <label className="text-sm font-medium text-gray-300">Image URL</label>
-            <Input 
-              placeholder="https://..."
-              value={formData.imageUrl}
-              onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
-              className="mt-1 bg-gray-800 border-gray-700"
-            />
+          <div className="bg-gray-800/50 rounded-lg p-3 text-sm">
+            <p className="text-gray-400">Listing Fee: <span className="text-green-400">Free</span></p>
+            <p className="text-gray-400">Platform Fee: <span className="text-yellow-400">2.5%</span> on sale</p>
           </div>
           
           <Button 
             className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-bold"
             onClick={handleSubmit}
+            disabled={isSubmitting}
           >
-            Submit Listing
+            {isSubmitting ? (
+              <><Clock className="w-4 h-4 mr-2 animate-spin" /> Submitting...</>
+            ) : (
+              <><CheckCircle className="w-4 h-4 mr-2" /> Submit Listing</>
+            )}
           </Button>
         </div>
       </DialogContent>
@@ -474,10 +638,7 @@ export default function NFTMarketplace() {
                 <Sparkles className="w-4 h-4 mr-2" />
                 Sell NFT
               </Button>
-              <Button className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold">
-                <Wallet className="w-4 h-4 mr-2" />
-                Connect Wallet
-              </Button>
+              <ConnectWallet />
             </div>
           </div>
         </div>
