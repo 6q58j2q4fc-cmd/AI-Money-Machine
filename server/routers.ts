@@ -4799,6 +4799,7 @@ const hotWalletRouter = router({
 
 // Auto-claims router for Free Income page
 import { startAllAutoClaims, stopAllAutoClaims, getEarningsSummary, getAutoClaimStatus, requestWithdrawal, forceRunAllClaims, AUTO_CLAIM_SOURCES, TRUST_WALLET_ADDRESS } from './_core/autoClaimsService';
+import { performRealClaim, runAllFaucetClaims, getAutomationStatus, clearLogs, closeBrowser } from './_core/browserAutomation';
 
 const autoClaimsRouter = router({
   // Get auto-claim status
@@ -4849,6 +4850,47 @@ const autoClaimsRouter = router({
         sources: AUTO_CLAIM_SOURCES,
         walletAddress: TRUST_WALLET_ADDRESS,
       };
+    }),
+
+  // Browser automation - get status
+  getAutomationStatus: protectedProcedure
+    .query(async () => {
+      return getAutomationStatus();
+    }),
+
+  // Browser automation - perform real claim
+  performRealClaim: protectedProcedure
+    .input(z.object({
+      sourceId: z.string(),
+      sourceName: z.string(),
+      url: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      return performRealClaim(input.sourceId, input.sourceName, input.url, TRUST_WALLET_ADDRESS);
+    }),
+
+  // Browser automation - run all faucet claims
+  runAllRealClaims: protectedProcedure
+    .mutation(async () => {
+      const allSources = [
+        ...AUTO_CLAIM_SOURCES.faucets,
+        ...AUTO_CLAIM_SOURCES.earnCrypto,
+      ].filter(s => s.enabled);
+      return runAllFaucetClaims(allSources, TRUST_WALLET_ADDRESS);
+    }),
+
+  // Browser automation - clear logs
+  clearAutomationLogs: protectedProcedure
+    .mutation(async () => {
+      clearLogs();
+      return { success: true };
+    }),
+
+  // Browser automation - close browser
+  closeBrowser: protectedProcedure
+    .mutation(async () => {
+      await closeBrowser();
+      return { success: true };
     }),
 });
 

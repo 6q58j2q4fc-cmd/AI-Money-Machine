@@ -25,8 +25,14 @@ import {
   Square,
   ArrowUpRight,
   Copy,
-  Activity
+  Activity,
+  Bot,
+  Terminal,
+  AlertCircle,
+  Trash2,
+  Power
 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Wallet addresses
 const TRUST_WALLET_ADDRESS = '0x75812e1c4246A880f6576db8292405247e6a8775';
@@ -34,6 +40,7 @@ const TRUST_WALLET_ADDRESS = '0x75812e1c4246A880f6576db8292405247e6a8775';
 export default function FreeIncome() {
   const [activeTab, setActiveTab] = useState("faucets");
   const [withdrawDestination, setWithdrawDestination] = useState<'trust' | 'hot'>('hot');
+  const [showAutomationLogs, setShowAutomationLogs] = useState(false);
   
   // Get hot wallet status
   const { data: hotWalletStatus } = trpc.hotWallet.getStatus.useQuery();
@@ -68,6 +75,47 @@ export default function FreeIncome() {
       refetchEarnings();
     },
     onError: (error) => toast.error(error.message),
+  });
+
+  // Browser automation queries and mutations
+  const { data: automationStatus, refetch: refetchAutomation } = trpc.autoClaims.getAutomationStatus.useQuery(undefined, {
+    refetchInterval: 2000, // Refresh every 2 seconds for real-time updates
+  });
+
+  const performRealClaimMutation = trpc.autoClaims.performRealClaim.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success(`Real claim successful: ${data.message}`);
+      } else {
+        toast.warning(`Claim attempt: ${data.message}`);
+      }
+      refetchAutomation();
+      refetchEarnings();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const runAllRealClaimsMutation = trpc.autoClaims.runAllRealClaims.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Completed ${data.successful}/${data.totalAttempted} real browser claims`);
+      refetchAutomation();
+      refetchEarnings();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const clearLogsMutation = trpc.autoClaims.clearAutomationLogs.useMutation({
+    onSuccess: () => {
+      toast.success('Automation logs cleared');
+      refetchAutomation();
+    },
+  });
+
+  const closeBrowserMutation = trpc.autoClaims.closeBrowser.useMutation({
+    onSuccess: () => {
+      toast.success('Browser instance closed');
+      refetchAutomation();
+    },
   });
   
   const withdrawMutation = trpc.autoClaims.withdraw.useMutation({
@@ -424,6 +472,10 @@ export default function FreeIncome() {
               <Coins className="w-4 h-4 mr-2" />
               Earn Crypto
             </TabsTrigger>
+            <TabsTrigger value="automation" className="data-[state=active]:bg-green-500 data-[state=active]:text-black">
+              <Bot className="w-4 h-4 mr-2" />
+              Browser Bot
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="faucets" className="mt-4">
@@ -481,6 +533,221 @@ export default function FreeIncome() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="automation" className="mt-4">
+            <div className="space-y-4">
+              {/* Automation Status Card */}
+              <Card className="bg-zinc-900/50 border-zinc-800">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Bot className="w-5 h-5 text-green-500" />
+                        Real Browser Automation
+                      </CardTitle>
+                      <CardDescription>
+                        Puppeteer-powered headless browser for real faucet claims
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${automationStatus?.isRunning ? 'bg-green-500 animate-pulse' : 'bg-zinc-500'}`} />
+                      <span className="text-sm text-zinc-400">
+                        {automationStatus?.isRunning ? 'Running' : 'Idle'}
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-zinc-800/50 rounded-lg p-3">
+                      <p className="text-xs text-zinc-400">Total Claims</p>
+                      <p className="text-xl font-bold text-white">{automationStatus?.totalClaims || 0}</p>
+                    </div>
+                    <div className="bg-zinc-800/50 rounded-lg p-3">
+                      <p className="text-xs text-zinc-400">Successful</p>
+                      <p className="text-xl font-bold text-green-400">{automationStatus?.successfulClaims || 0}</p>
+                    </div>
+                    <div className="bg-zinc-800/50 rounded-lg p-3">
+                      <p className="text-xs text-zinc-400">Failed</p>
+                      <p className="text-xl font-bold text-red-400">{automationStatus?.failedClaims || 0}</p>
+                    </div>
+                    <div className="bg-zinc-800/50 rounded-lg p-3">
+                      <p className="text-xs text-zinc-400">Success Rate</p>
+                      <p className="text-xl font-bold text-amber-400">
+                        {automationStatus?.totalClaims ? 
+                          ((automationStatus.successfulClaims / automationStatus.totalClaims) * 100).toFixed(1) : 0}%
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Current Task */}
+                  {automationStatus?.currentTask && (
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 text-green-400 animate-spin" />
+                        <span className="text-green-400 font-medium">{automationStatus.currentTask}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      className="bg-green-500 hover:bg-green-600 text-black"
+                      onClick={() => runAllRealClaimsMutation.mutate()}
+                      disabled={runAllRealClaimsMutation.isPending || automationStatus?.isRunning}
+                    >
+                      {runAllRealClaimsMutation.isPending ? (
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Play className="w-4 h-4 mr-2" />
+                      )}
+                      Run All Real Claims
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAutomationLogs(!showAutomationLogs)}
+                    >
+                      <Terminal className="w-4 h-4 mr-2" />
+                      {showAutomationLogs ? 'Hide' : 'Show'} Logs
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => clearLogsMutation.mutate()}
+                      disabled={clearLogsMutation.isPending}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Clear Logs
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => closeBrowserMutation.mutate()}
+                      disabled={closeBrowserMutation.isPending}
+                    >
+                      <Power className="w-4 h-4 mr-2" />
+                      Close Browser
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Automation Logs */}
+              {showAutomationLogs && (
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Terminal className="w-5 h-5 text-green-500" />
+                      Live Automation Logs
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[400px] rounded-lg bg-black/50 p-4 font-mono text-sm">
+                      {automationStatus?.logs && automationStatus.logs.length > 0 ? (
+                        <div className="space-y-1">
+                          {automationStatus.logs.map((log: any, i: number) => (
+                            <div key={i} className="flex items-start gap-2">
+                              <span className="text-zinc-500 text-xs whitespace-nowrap">
+                                {new Date(log.timestamp).toLocaleTimeString()}
+                              </span>
+                              <span className={`text-xs font-medium ${
+                                log.status === 'success' ? 'text-green-400' :
+                                log.status === 'error' ? 'text-red-400' :
+                                log.status === 'warning' ? 'text-amber-400' :
+                                'text-blue-400'
+                              }`}>
+                                [{log.status.toUpperCase()}]
+                              </span>
+                              <span className="text-zinc-300 text-xs">
+                                <span className="text-amber-400">{log.site}</span>: {log.action}
+                                {log.details && <span className="text-zinc-500"> - {log.details}</span>}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-zinc-500 text-center">No logs yet. Run a claim to see activity.</p>
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Individual Claim Buttons */}
+              <Card className="bg-zinc-900/50 border-zinc-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-amber-500" />
+                    Individual Real Claims
+                  </CardTitle>
+                  <CardDescription>
+                    Click to perform a real browser-automated claim on each faucet
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {sources?.faucets?.map((faucet: any) => (
+                      <div key={faucet.id} className="bg-zinc-800/50 rounded-lg p-3 flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-white">{faucet.name}</p>
+                          <p className="text-xs text-zinc-400">{faucet.reward}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-green-500/50 text-green-400 hover:bg-green-500/20"
+                          onClick={() => performRealClaimMutation.mutate({
+                            sourceId: faucet.id,
+                            sourceName: faucet.name,
+                            url: faucet.url,
+                          })}
+                          disabled={performRealClaimMutation.isPending || automationStatus?.isRunning}
+                        >
+                          <Bot className="w-3 h-3 mr-1" />
+                          Claim
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* How It Works */}
+              <Card className="bg-zinc-900/50 border-zinc-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-blue-500" />
+                    How Browser Automation Works
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-zinc-400">
+                  <p>
+                    This system uses <span className="text-green-400 font-medium">Puppeteer</span>, a headless Chrome browser, 
+                    to visit faucet websites and attempt real claims automatically.
+                  </p>
+                  <div className="bg-zinc-800/50 rounded-lg p-4 space-y-2">
+                    <p className="text-white font-medium">What it does:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Opens a real Chrome browser in headless mode</li>
+                      <li>Navigates to faucet websites</li>
+                      <li>Looks for claim buttons and clicks them</li>
+                      <li>Detects captchas and reports when manual intervention is needed</li>
+                      <li>Logs all actions in real-time</li>
+                    </ul>
+                  </div>
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+                    <p className="text-amber-400 font-medium">Important Notes:</p>
+                    <ul className="list-disc list-inside space-y-1 mt-2">
+                      <li>Many faucets require account login - you may need to set up accounts first</li>
+                      <li>Captchas cannot be solved automatically - manual solving may be required</li>
+                      <li>Some sites may block automated access</li>
+                      <li>Real claims depend on external site availability</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
