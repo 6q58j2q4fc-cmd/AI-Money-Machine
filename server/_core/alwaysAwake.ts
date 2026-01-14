@@ -326,24 +326,55 @@ async function syncAwin(userId: number): Promise<void> {
 }
 
 /**
- * Generate NFTs automatically
+ * Generate NFTs automatically using OpenSea service
  */
 async function generateNFTs(userId: number): Promise<void> {
   try {
-    const result = await batchGenerateAndList(userId, 2, {
-      collectionName: "AutoGen Collection"
-    });
+    // Use the new OpenSea NFT service for real AI generation and listing
+    const { autoGenerateAndList } = await import('./openSeaNFT');
+    const nfts = await autoGenerateAndList(3); // Generate 3 NFTs per hour
+
+    const totalValue = nfts.reduce((sum, nft) => sum + nft.estimatedValue, 0);
+    const totalListings = nfts.reduce((sum, nft) => sum + nft.listings.length, 0);
 
     await logEvent(userId, "system_event", {
-      message: `🎨 Auto-generated ${result.generated} NFTs, listed on ${result.listed} marketplaces`,
+      message: `🎨 Auto-generated ${nfts.length} NFTs worth ${totalValue.toFixed(4)} ETH, listed on ${totalListings} marketplaces`,
       metadata: {
         type: "nft_generation",
-        generated: result.generated,
-        listed: result.listed,
+        generated: nfts.length,
+        totalValue,
+        totalListings,
+        nftNames: nfts.map(n => n.name),
       },
     });
+
+    // Also try the legacy batch generate for additional coverage
+    try {
+      const result = await batchGenerateAndList(userId, 2, {
+        collectionName: "AutoGen Collection"
+      });
+      await logEvent(userId, "system_event", {
+        message: `🎨 Additional batch: ${result.generated} NFTs on ${result.listed} marketplaces`,
+        metadata: { type: "nft_batch_generation", ...result },
+      });
+    } catch (batchError) {
+      // Legacy batch is optional
+      console.log("Legacy batch generation skipped:", batchError);
+    }
   } catch (error) {
     console.error("NFT generation failed:", error);
+    // Fallback to legacy method
+    try {
+      const result = await batchGenerateAndList(userId, 2, {
+        collectionName: "AutoGen Collection"
+      });
+      await logEvent(userId, "system_event", {
+        message: `🎨 Fallback: Generated ${result.generated} NFTs on ${result.listed} marketplaces`,
+        metadata: { type: "nft_fallback_generation", ...result },
+      });
+    } catch (fallbackError) {
+      console.error("NFT fallback generation also failed:", fallbackError);
+    }
   }
 }
 
