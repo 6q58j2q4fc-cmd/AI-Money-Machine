@@ -41,12 +41,15 @@ import SystemHealth from './pages/SystemHealth';
 import DebugAdmin from './pages/DebugAdmin';
 import MasterTodo from './pages/MasterTodo';
 import FaucetAccounts from './pages/FaucetAccounts';
+import NFTMarketplace from './pages/NFTMarketplace';
 
 function Router() {
   return (
     <Switch>
       {/* Public routes */}
       <Route path="/" component={Home} />
+      <Route path="/marketplace" component={NFTMarketplace} />
+      <Route path="/marketplace/nft/:id" component={NFTMarketplace} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={PublicArticle} />
       <Route path="/article/:slug" component={PublicArticle} />

@@ -1917,3 +1917,33 @@
 - [x] Implement getProviderWithFallback for automatic failover
 - [x] Add proper error handling for balance checks
 - [x] Fix database insert to include all required fields
+
+
+## Public NFT Marketplace (Jan 2026)
+
+### SEO-Optimized Marketplace Page
+- [x] Create public /marketplace route accessible without login
+- [x] Add SEO meta tags (title, description, keywords, Open Graph)
+- [x] Implement JSON-LD structured data for Product schema
+- [x] Add canonical URLs and sitemap integration
+- [x] Mobile-responsive marketplace grid layout
+
+### NFT Listing & Display
+- [x] Display all NFTs for sale with images, prices, and details
+- [x] Category filtering (Abstract, Generative, Pixel Art, etc.)
+- [x] Price range filtering
+- [x] Sort by price, date, popularity
+- [x] Individual NFT detail pages with full metadata
+
+### Buy & Sell Functionality
+- [x] Connect wallet button for buyers
+- [x] Buy Now button with wallet integration
+- [x] List NFT for sale form (for sellers)
+- [ ] Price setting and royalty configuration
+- [ ] Transaction history display
+
+### Backend Routes
+- [x] Public API endpoint for marketplace listings
+- [x] NFT detail endpoint with full metadata
+- [ ] Purchase intent/order creation endpoint
+- [ ] User listing submission endpoint

@@ -4541,6 +4541,167 @@ const web3Router = router({
 
 // Marketplace API Router - Real marketplace integrations
 const marketplaceApiRouter = router({
+  // PUBLIC: Get all listed NFTs for the marketplace page
+  getListedNfts: publicProcedure
+    .input(z.object({
+      category: z.string().optional(),
+      sortBy: z.string().optional(),
+      search: z.string().optional(),
+      limit: z.number().optional().default(50),
+      offset: z.number().optional().default(0),
+    }))
+    .query(async ({ input }) => {
+      const { nftAssets } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq, or } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) return [];
+      
+      // Get all NFTs that are listed or generated
+      const nfts = await db
+        .select()
+        .from(nftAssets)
+        .where(
+          or(
+            eq(nftAssets.status, 'listed'),
+            eq(nftAssets.status, 'generated'),
+            eq(nftAssets.status, 'minted')
+          )
+        );
+      
+      // Apply filters
+      type NftAsset = typeof nfts[number];
+      let filtered: NftAsset[] = nfts;
+      
+      if (input.category && input.category !== 'all') {
+        filtered = filtered.filter((n: NftAsset) => n.category?.toLowerCase() === input.category?.toLowerCase());
+      }
+      
+      if (input.search) {
+        const searchLower = input.search.toLowerCase();
+        filtered = filtered.filter((n: NftAsset) => 
+          n.name?.toLowerCase().includes(searchLower) ||
+          n.description?.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Apply sorting
+      switch (input.sortBy) {
+        case 'price_low':
+          filtered.sort((a: NftAsset, b: NftAsset) => parseFloat(String(a.estimatedValue || '0')) - parseFloat(String(b.estimatedValue || '0')));
+          break;
+        case 'price_high':
+          filtered.sort((a: NftAsset, b: NftAsset) => parseFloat(String(b.estimatedValue || '0')) - parseFloat(String(a.estimatedValue || '0')));
+          break;
+        case 'oldest':
+          filtered.sort((a: NftAsset, b: NftAsset) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+          break;
+        case 'popular':
+          filtered.sort((a: NftAsset, b: NftAsset) => (b.views || 0) - (a.views || 0));
+          break;
+        case 'newest':
+        default:
+          filtered.sort((a: NftAsset, b: NftAsset) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
+      
+      // Apply pagination
+      const paginated = filtered.slice(input.offset, input.offset + input.limit);
+      
+      return paginated.map((nft: NftAsset) => ({
+        id: nft.id,
+        name: nft.name,
+        description: nft.description,
+        imageUrl: nft.imageUrl,
+        thumbnailUrl: nft.thumbnailUrl,
+        category: nft.category,
+        chain: nft.chain,
+        tokenId: nft.tokenId,
+        contractAddress: nft.contractAddress,
+        estimatedValue: nft.estimatedValue,
+        views: nft.views,
+        likes: nft.likes,
+        traits: nft.traits,
+        status: nft.status,
+        createdAt: nft.createdAt,
+      }));
+    }),
+
+  // PUBLIC: Get marketplace stats
+  getStats: publicProcedure
+    .query(async () => {
+      const { nftAssets, nftListings } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { count, eq, sql } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) return { totalNfts: 0, activeListings: 0, totalVolume: '0', uniqueCollectors: 0 };
+      
+      // Count total NFTs
+      const [nftCount] = await db
+        .select({ count: count() })
+        .from(nftAssets);
+      
+      // Count active listings
+      const [listingCount] = await db
+        .select({ count: count() })
+        .from(nftListings)
+        .where(eq(nftListings.status, 'active'));
+      
+      // Calculate total volume
+      const [volumeResult] = await db
+        .select({ total: sql<string>`COALESCE(SUM(CAST(${nftAssets.estimatedValue} AS DECIMAL(18,8))), 0)` })
+        .from(nftAssets);
+      
+      // Count unique users (collectors)
+      const [collectorsResult] = await db
+        .select({ count: sql<number>`COUNT(DISTINCT ${nftAssets.userId})` })
+        .from(nftAssets);
+      
+      return {
+        totalNfts: nftCount?.count || 0,
+        activeListings: listingCount?.count || 0,
+        totalVolume: volumeResult?.total || '0',
+        uniqueCollectors: collectorsResult?.count || 0,
+      };
+    }),
+
+  // PUBLIC: Get single NFT details
+  getNftDetails: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const { nftAssets, nftListings } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) return null;
+      
+      const [nft] = await db
+        .select()
+        .from(nftAssets)
+        .where(eq(nftAssets.id, input.id));
+      
+      if (!nft) return null;
+      
+      // Get listings for this NFT
+      const listings = await db
+        .select()
+        .from(nftListings)
+        .where(eq(nftListings.nftAssetId, input.id));
+      
+      // Increment view count
+      await db
+        .update(nftAssets)
+        .set({ views: (nft.views || 0) + 1 })
+        .where(eq(nftAssets.id, input.id));
+      
+      return {
+        ...nft,
+        listings,
+      };
+    }),
+
   // Get aggregated stats across all marketplaces
   getAggregatedStats: protectedProcedure
     .input(z.object({ contractAddress: z.string() }))
