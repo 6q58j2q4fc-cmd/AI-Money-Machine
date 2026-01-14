@@ -3,7 +3,7 @@
  * Uses Puppeteer for real browser automation to claim from faucets
  */
 
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Browser, Page, executablePath } from 'puppeteer';
 import { logEvent } from './hiveMind';
 
 // Browser instance (singleton)
@@ -90,8 +90,13 @@ async function initBrowser(): Promise<Browser> {
   try {
     addLog('Initializing browser', 'System', 'info', 'Starting headless Chrome...');
     
+    // Use system Chromium browser
+    const chromePath = '/usr/bin/chromium-browser';
+    addLog('Using Chrome path', 'System', 'info', chromePath);
+    
     browserInstance = await puppeteer.launch({
       headless: true,
+      executablePath: chromePath,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -100,7 +105,8 @@ async function initBrowser(): Promise<Browser> {
         '--disable-gpu',
         '--window-size=1920,1080',
         '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process'
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--single-process'
       ],
       defaultViewport: {
         width: 1920,
