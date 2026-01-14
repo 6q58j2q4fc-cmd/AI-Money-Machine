@@ -1113,3 +1113,81 @@ export const nftEarnings = mysqlTable("nft_earnings", {
 });
 export type NftEarning = typeof nftEarnings.$inferSelect;
 export type InsertNftEarning = typeof nftEarnings.$inferInsert;
+
+
+/**
+ * NFT Favorites/Watchlist - Users can save NFTs they're interested in
+ */
+export const nftFavorites = mysqlTable("nft_favorites", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  nftAssetId: int("nftAssetId").notNull(),
+  
+  // Price tracking for notifications
+  priceAtSave: varchar("priceAtSave", { length: 50 }),
+  notifyOnPriceChange: boolean("notifyOnPriceChange").default(true),
+  notifyOnSale: boolean("notifyOnSale").default(true),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type NftFavorite = typeof nftFavorites.$inferSelect;
+export type InsertNftFavorite = typeof nftFavorites.$inferInsert;
+
+/**
+ * NFT Royalty Settings - Creator royalty configuration
+ */
+export const nftRoyalties = mysqlTable("nft_royalties", {
+  id: int("id").autoincrement().primaryKey(),
+  nftAssetId: int("nftAssetId").notNull(),
+  
+  // Royalty percentage (0-100, with decimals)
+  royaltyPercentage: varchar("royaltyPercentage", { length: 10 }).default("2.5"),
+  
+  // Royalty recipient wallet address
+  recipientAddress: varchar("recipientAddress", { length: 100 }),
+  
+  // Whether royalties are enforced on-chain
+  onChainEnforced: boolean("onChainEnforced").default(false),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NftRoyalty = typeof nftRoyalties.$inferSelect;
+export type InsertNftRoyalty = typeof nftRoyalties.$inferInsert;
+
+/**
+ * NFT Price History - Track price changes for watchlist notifications
+ */
+export const nftPriceHistory = mysqlTable("nft_price_history", {
+  id: int("id").autoincrement().primaryKey(),
+  nftAssetId: int("nftAssetId").notNull(),
+  
+  price: varchar("price", { length: 50 }).notNull(),
+  currency: varchar("currency", { length: 10 }).default("ETH"),
+  marketplace: varchar("marketplace", { length: 50 }),
+  
+  recordedAt: timestamp("recordedAt").defaultNow().notNull(),
+});
+export type NftPriceHistory = typeof nftPriceHistory.$inferSelect;
+export type InsertNftPriceHistory = typeof nftPriceHistory.$inferInsert;
+
+/**
+ * Marketplace API Settings - Store API keys for OpenSea, Rarible, etc.
+ */
+export const marketplaceApiSettings = mysqlTable("marketplace_api_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  marketplace: varchar("marketplace", { length: 50 }).notNull(), // opensea, rarible, etc.
+  apiKey: varchar("apiKey", { length: 500 }),
+  apiSecret: varchar("apiSecret", { length: 500 }),
+  
+  isEnabled: boolean("isEnabled").default(true),
+  autoSync: boolean("autoSync").default(true),
+  lastSyncAt: timestamp("lastSyncAt"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type MarketplaceApiSettings = typeof marketplaceApiSettings.$inferSelect;
+export type InsertMarketplaceApiSettings = typeof marketplaceApiSettings.$inferInsert;

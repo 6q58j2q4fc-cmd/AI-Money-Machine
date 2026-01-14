@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package, Crown, Network, Gift, Palette, Coins, ExternalLink, Wallet, HeartPulse, Bug, ClipboardCheck, Key, Clock, Store } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package, Crown, Network, Gift, Palette, Coins, ExternalLink, Wallet, HeartPulse, Bug, ClipboardCheck, Key, Clock, Store, Heart } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -55,6 +55,7 @@ const menuItems = [
   { icon: Key, label: "Faucet Accounts", path: "/faucet-accounts" },
   { icon: Store, label: "NFT Marketplace", path: "/marketplace" },
   { icon: Clock, label: "Transaction History", path: "/transactions" },
+  { icon: Heart, label: "NFT Watchlist", path: "/watchlist" },
   { icon: Package, label: "Product Pages", path: "/product-pages" },
   { icon: Zap, label: "Auto Publish", path: "/auto-publish" },
   { icon: Link2, label: "Affiliate Links", path: "/affiliate-links" },

@@ -102,6 +102,25 @@ function NFTCard({ nft, onBuy, onView }: {
   onView: (nft: any) => void;
 }) {
   const [isLiked, setIsLiked] = useState(false);
+  const addToFavorites = trpc.marketplace.addToFavorites.useMutation();
+  const removeFromFavorites = trpc.marketplace.removeFromFavorites.useMutation();
+  const { data: isFavorited } = trpc.marketplace.isFavorited.useQuery({ nftAssetId: nft.id }, { enabled: !!nft.id });
+  const { data: royalty } = trpc.marketplace.getRoyalty.useQuery({ nftAssetId: nft.id }, { enabled: !!nft.id });
+  
+  const handleFavoriteToggle = async () => {
+    try {
+      if (isFavorited) {
+        await removeFromFavorites.mutateAsync({ nftAssetId: nft.id });
+        toast.success('Removed from watchlist');
+      } else {
+        await addToFavorites.mutateAsync({ nftAssetId: nft.id });
+        toast.success('Added to watchlist');
+      }
+      setIsLiked(!isFavorited);
+    } catch (error) {
+      toast.error('Please sign in to add to watchlist');
+    }
+  };
   
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -146,13 +165,20 @@ function NFTCard({ nft, onBuy, onView }: {
           </Button>
         </div>
         
-        {/* Like button */}
+        {/* Like/Favorite button */}
         <button 
           className="absolute top-3 right-3 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
-          onClick={() => setIsLiked(!isLiked)}
+          onClick={handleFavoriteToggle}
         >
-          <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : 'text-white'}`} />
+          <Heart className={`w-4 h-4 ${isFavorited ? 'fill-red-500 text-red-500' : 'text-white'}`} />
         </button>
+        
+        {/* Royalty badge */}
+        {royalty && parseFloat(royalty.royaltyPercentage || '0') > 0 && (
+          <Badge className="absolute top-3 left-24 bg-green-500/20 text-green-400 border-green-500/30">
+            {royalty.royaltyPercentage}% Royalty
+          </Badge>
+        )}
         
         {/* Category badge */}
         <Badge className={`absolute top-3 left-3 ${getCategoryColor(nft.category)}`}>

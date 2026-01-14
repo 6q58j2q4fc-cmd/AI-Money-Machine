@@ -4884,6 +4884,320 @@ const marketplaceApiRouter = router({
       const { blurApi } = await import('./_core/marketplaceApis');
       return blurApi.getCollectionStats(input.contractAddress);
     }),
+
+  // ===== NFT FAVORITES/WATCHLIST =====
+  
+  // Add NFT to favorites
+  addToFavorites: protectedProcedure
+    .input(z.object({
+      nftAssetId: z.number(),
+      notifyOnPriceChange: z.boolean().optional().default(true),
+      notifyOnSale: z.boolean().optional().default(true),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { nftFavorites, nftAssets } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq, and } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // Check if already favorited
+      const existing = await db
+        .select()
+        .from(nftFavorites)
+        .where(and(
+          eq(nftFavorites.userId, ctx.user.id),
+          eq(nftFavorites.nftAssetId, input.nftAssetId)
+        ))
+        .limit(1);
+      
+      if (existing.length > 0) {
+        return { success: true, message: 'Already in favorites' };
+      }
+      
+      // Get current price
+      const [nft] = await db
+        .select()
+        .from(nftAssets)
+        .where(eq(nftAssets.id, input.nftAssetId))
+        .limit(1);
+      
+      await db.insert(nftFavorites).values({
+        userId: ctx.user.id,
+        nftAssetId: input.nftAssetId,
+        priceAtSave: nft?.estimatedValue || '0',
+        notifyOnPriceChange: input.notifyOnPriceChange,
+        notifyOnSale: input.notifyOnSale,
+      });
+      
+      return { success: true, message: 'Added to favorites' };
+    }),
+
+  // Remove from favorites
+  removeFromFavorites: protectedProcedure
+    .input(z.object({ nftAssetId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const { nftFavorites } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq, and } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      await db
+        .delete(nftFavorites)
+        .where(and(
+          eq(nftFavorites.userId, ctx.user.id),
+          eq(nftFavorites.nftAssetId, input.nftAssetId)
+        ));
+      
+      return { success: true };
+    }),
+
+  // Get user's favorites/watchlist
+  getFavorites: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { nftFavorites, nftAssets } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) return [];
+      
+      const favorites = await db
+        .select({
+          favoriteId: nftFavorites.id,
+          nftAssetId: nftFavorites.nftAssetId,
+          priceAtSave: nftFavorites.priceAtSave,
+          notifyOnPriceChange: nftFavorites.notifyOnPriceChange,
+          notifyOnSale: nftFavorites.notifyOnSale,
+          createdAt: nftFavorites.createdAt,
+          nft: {
+            id: nftAssets.id,
+            name: nftAssets.name,
+            imageUrl: nftAssets.imageUrl,
+            category: nftAssets.category,
+            chain: nftAssets.chain,
+            estimatedValue: nftAssets.estimatedValue,
+            status: nftAssets.status,
+          },
+        })
+        .from(nftFavorites)
+        .leftJoin(nftAssets, eq(nftFavorites.nftAssetId, nftAssets.id))
+        .where(eq(nftFavorites.userId, ctx.user.id));
+      
+      // Calculate price changes
+      return favorites.map(f => ({
+        ...f,
+        priceChange: f.nft?.estimatedValue && f.priceAtSave
+          ? ((parseFloat(f.nft.estimatedValue) - parseFloat(f.priceAtSave)) / parseFloat(f.priceAtSave) * 100).toFixed(2)
+          : '0',
+      }));
+    }),
+
+  // Check if NFT is favorited
+  isFavorited: protectedProcedure
+    .input(z.object({ nftAssetId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const { nftFavorites } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq, and } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) return false;
+      
+      const existing = await db
+        .select()
+        .from(nftFavorites)
+        .where(and(
+          eq(nftFavorites.userId, ctx.user.id),
+          eq(nftFavorites.nftAssetId, input.nftAssetId)
+        ))
+        .limit(1);
+      
+      return existing.length > 0;
+    }),
+
+  // ===== ROYALTY CONFIGURATION =====
+  
+  // Set royalty for an NFT
+  setRoyalty: protectedProcedure
+    .input(z.object({
+      nftAssetId: z.number(),
+      royaltyPercentage: z.string().regex(/^\d+\.?\d*$/).refine(v => parseFloat(v) >= 0 && parseFloat(v) <= 10, 'Royalty must be 0-10%'),
+      recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { nftRoyalties, nftAssets } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq, and } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // Verify ownership
+      const [nft] = await db
+        .select()
+        .from(nftAssets)
+        .where(and(
+          eq(nftAssets.id, input.nftAssetId),
+          eq(nftAssets.userId, ctx.user.id)
+        ))
+        .limit(1);
+      
+      if (!nft) {
+        throw new Error('NFT not found or not owned by you');
+      }
+      
+      // Check if royalty exists
+      const existing = await db
+        .select()
+        .from(nftRoyalties)
+        .where(eq(nftRoyalties.nftAssetId, input.nftAssetId))
+        .limit(1);
+      
+      if (existing.length > 0) {
+        await db
+          .update(nftRoyalties)
+          .set({
+            royaltyPercentage: input.royaltyPercentage,
+            recipientAddress: input.recipientAddress,
+          })
+          .where(eq(nftRoyalties.nftAssetId, input.nftAssetId));
+      } else {
+        await db.insert(nftRoyalties).values({
+          nftAssetId: input.nftAssetId,
+          royaltyPercentage: input.royaltyPercentage,
+          recipientAddress: input.recipientAddress,
+        });
+      }
+      
+      return { success: true };
+    }),
+
+  // Get royalty settings for an NFT
+  getRoyalty: publicProcedure
+    .input(z.object({ nftAssetId: z.number() }))
+    .query(async ({ input }) => {
+      const { nftRoyalties } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) return null;
+      
+      const [royalty] = await db
+        .select()
+        .from(nftRoyalties)
+        .where(eq(nftRoyalties.nftAssetId, input.nftAssetId))
+        .limit(1);
+      
+      return royalty || { royaltyPercentage: '2.5', recipientAddress: null };
+    }),
+
+  // ===== OPENSEA/RARIBLE SYNC =====
+  
+  // Sync NFT from OpenSea
+  syncFromOpenSea: protectedProcedure
+    .input(z.object({ nftId: z.number() }))
+    .mutation(async ({ input }) => {
+      const { syncNftFromOpenSea } = await import('./_core/openseaApi');
+      return syncNftFromOpenSea(input.nftId);
+    }),
+
+  // Sync NFT from Rarible
+  syncFromRarible: protectedProcedure
+    .input(z.object({ nftId: z.number() }))
+    .mutation(async ({ input }) => {
+      const { syncNftFromRarible } = await import('./_core/raribleApi');
+      return syncNftFromRarible(input.nftId);
+    }),
+
+  // Get OpenSea API status
+  getOpenSeaStatus: protectedProcedure
+    .query(async () => {
+      const { getOpenSeaStatus } = await import('./_core/openseaApi');
+      return getOpenSeaStatus();
+    }),
+
+  // Get Rarible API status
+  getRaribleStatus: protectedProcedure
+    .query(async () => {
+      const { getRaribleStatus } = await import('./_core/raribleApi');
+      return getRaribleStatus();
+    }),
+
+  // Save marketplace API settings
+  saveApiSettings: protectedProcedure
+    .input(z.object({
+      marketplace: z.enum(['opensea', 'rarible', 'blur', 'looksrare']),
+      apiKey: z.string().optional(),
+      isEnabled: z.boolean().optional(),
+      autoSync: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { marketplaceApiSettings } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq, and } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // Check if settings exist
+      const existing = await db
+        .select()
+        .from(marketplaceApiSettings)
+        .where(and(
+          eq(marketplaceApiSettings.userId, ctx.user.id),
+          eq(marketplaceApiSettings.marketplace, input.marketplace)
+        ))
+        .limit(1);
+      
+      if (existing.length > 0) {
+        await db
+          .update(marketplaceApiSettings)
+          .set({
+            apiKey: input.apiKey,
+            isEnabled: input.isEnabled,
+            autoSync: input.autoSync,
+          })
+          .where(eq(marketplaceApiSettings.id, existing[0].id));
+      } else {
+        await db.insert(marketplaceApiSettings).values({
+          userId: ctx.user.id,
+          marketplace: input.marketplace,
+          apiKey: input.apiKey,
+          isEnabled: input.isEnabled ?? true,
+          autoSync: input.autoSync ?? true,
+        });
+      }
+      
+      return { success: true };
+    }),
+
+  // Get marketplace API settings
+  getApiSettings: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { marketplaceApiSettings } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (!db) return [];
+      
+      const settings = await db
+        .select()
+        .from(marketplaceApiSettings)
+        .where(eq(marketplaceApiSettings.userId, ctx.user.id));
+      
+      // Mask API keys
+      return settings.map(s => ({
+        ...s,
+        apiKey: s.apiKey ? `${s.apiKey.substring(0, 8)}...${s.apiKey.substring(s.apiKey.length - 4)}` : null,
+        hasApiKey: !!s.apiKey,
+      }));
+    }),
 });
 
 // Wallet settings router

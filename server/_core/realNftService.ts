@@ -297,14 +297,34 @@ export async function generateRealNft(
     const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
     const { url: permanentUrl } = await storagePut(imageKey, imageBuffer, "image/png");
     
-    // Update NFT with image URL
+    // Generate unique blockchain token ID
+    const blockchainTokenId = `NFT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    
+    // Update NFT with image URL and token ID
     await db.update(nftAssets)
       .set({
         imageUrl: permanentUrl,
         imageKey,
-        status: "generated",
+        tokenId: blockchainTokenId,
+        status: "listed", // Auto-set to listed for public marketplace
       })
       .where(eq(nftAssets.id, nftId));
+    
+    // Auto-list on internal marketplace
+    await db.insert(nftListings).values({
+      nftAssetId: nftId,
+      userId,
+      marketplace: "internal",
+      listingUrl: `/marketplace?nft=${nftId}`,
+      listingId: `internal-${nftId}-${Date.now()}`,
+      listPrice: estimatedValue.toString(),
+      currency: "ETH",
+      status: "active",
+      listedAt: new Date(),
+      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+    });
+    
+    console.log(`[NFT] Auto-listed NFT ${nftId} with token ID ${blockchainTokenId} on marketplace`);
     
     // Return the updated NFT
     const [updatedNft] = await db.select().from(nftAssets).where(eq(nftAssets.id, nftId));

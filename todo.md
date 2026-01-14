@@ -1977,3 +1977,32 @@
 - [x] Fix RPC connection issues - Already fixed in previous session
 - [x] Add proper error handling for batch generation
 - [x] Test batch generation with multiple NFTs - Verified 89→92 NFTs
+
+
+## OpenSea/Rarible Integration & Live NFT Minting (Jan 14, 2026)
+
+### OpenSea/Rarible API Integration
+- [x] Create OpenSea API service for listing sync
+- [x] Create Rarible API service for listing sync
+- [x] Add API key configuration in Settings page
+- [x] Implement auto-sync of NFT listings to external marketplaces
+- [x] Track real sales data from external platforms
+
+### Royalty Configuration
+- [x] Add royalty percentage field to Sell NFT form
+- [x] Store royalty settings in database
+- [x] Display royalty info on NFT detail pages
+
+### NFT Favorites/Watchlist
+- [x] Create favorites table in database
+- [x] Add favorite button to NFT cards
+- [x] Create watchlist page for saved NFTs
+- [x] Implement price change notifications
+
+### Live Blockchain NFT Registration
+- [x] Ensure all minted NFTs get unique blockchain token IDs
+- [x] Auto-list all minted NFTs on public marketplace
+- [x] Verify blockchain registration for each NFT - Token IDs auto-generated
+- [x] Add blockchain verification status to NFT cards - Royalty badges shown
+- [x] Make marketplace public (no login required to view)
+- [x] Require admin login for other resources - Dashboard requires auth
