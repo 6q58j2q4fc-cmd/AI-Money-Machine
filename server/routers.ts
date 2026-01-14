@@ -4137,6 +4137,67 @@ const nftEmpireRouter = router({
       const { getAutoBuyerPlatforms } = await import('./_core/realNftService');
       return getAutoBuyerPlatforms();
     }),
+
+  // ===== BLOCKCHAIN VERIFICATION & EARNINGS =====
+
+  // Mint real NFT on blockchain
+  mintOnBlockchain: protectedProcedure
+    .input(z.object({
+      name: z.string(),
+      description: z.string(),
+      imageUrl: z.string().optional(),
+      imagePrompt: z.string().optional(),
+      category: z.string().optional(),
+      rarity: z.string().optional(),
+      network: z.enum(['polygon', 'ethereum', 'base']).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { mintRealNFT } = await import('./_core/realNftMinting');
+      return mintRealNFT(ctx.user.id, input);
+    }),
+
+  // Get minted NFTs with blockchain proof
+  getMintedNFTs: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getMintedNFTs } = await import('./_core/realNftMinting');
+      return getMintedNFTs(ctx.user.id);
+    }),
+
+  // Get NFT earnings with transaction proof
+  getNFTEarnings: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getNFTEarnings } = await import('./_core/realNftMinting');
+      return getNFTEarnings(ctx.user.id);
+    }),
+
+  // Get earnings summary
+  getEarningsSummary: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getEarningsSummary } = await import('./_core/realNftMinting');
+      return getEarningsSummary(ctx.user.id);
+    }),
+
+  // Verify NFT on blockchain
+  verifyOnChain: protectedProcedure
+    .input(z.object({
+      transactionHash: z.string(),
+      network: z.enum(['polygon', 'ethereum', 'base']).optional(),
+    }))
+    .query(async ({ input }) => {
+      const { verifyNFTOnChain } = await import('./_core/realNftMinting');
+      return verifyNFTOnChain(input.transactionHash, input.network);
+    }),
+
+  // Get blockchain explorer URL
+  getExplorerUrl: protectedProcedure
+    .input(z.object({
+      transactionHash: z.string(),
+      network: z.enum(['polygon', 'ethereum', 'base']).optional(),
+    }))
+    .query(async ({ input }) => {
+      const { getExplorerUrl } = await import('./_core/realNftMinting');
+      return { url: getExplorerUrl(input.transactionHash, input.network) };
+    }),
 });
 
 // Data Monetization Router - Generate and sell AI data

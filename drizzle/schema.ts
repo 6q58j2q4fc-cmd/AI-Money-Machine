@@ -1035,3 +1035,81 @@ export const faucetClaimLog = mysqlTable("faucet_claim_log", {
 });
 export type FaucetClaimLog = typeof faucetClaimLog.$inferSelect;
 export type InsertFaucetClaimLog = typeof faucetClaimLog.$inferInsert;
+
+
+/**
+ * Real NFT mints with blockchain proof
+ */
+export const nftMints = mysqlTable("nft_mints", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // Blockchain identifiers
+  tokenId: varchar("tokenId", { length: 100 }).notNull(),
+  contractAddress: varchar("contractAddress", { length: 100 }).notNull(),
+  transactionHash: varchar("transactionHash", { length: 100 }).notNull(),
+  blockNumber: int("blockNumber"),
+  blockHash: varchar("blockHash", { length: 100 }),
+  network: varchar("network", { length: 50 }).notNull(),
+  
+  // NFT metadata
+  name: varchar("name", { length: 500 }).notNull(),
+  description: text("description"),
+  imageUrl: text("imageUrl"),
+  metadataUrl: text("metadataUrl"),
+  category: varchar("category", { length: 100 }),
+  rarity: varchar("rarity", { length: 50 }),
+  
+  // Transaction details
+  gasUsed: varchar("gasUsed", { length: 100 }),
+  gasCost: varchar("gasCost", { length: 100 }),
+  
+  // Status
+  status: mysqlEnum("status", ["minted", "listed", "sold", "transferred"]).default("minted").notNull(),
+  
+  // Marketplace listings
+  listedOn: json("listedOn").$type<string[]>(),
+  listingUrls: json("listingUrls").$type<Record<string, string>>(),
+  currentPrice: varchar("currentPrice", { length: 100 }),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NftMint = typeof nftMints.$inferSelect;
+export type InsertNftMint = typeof nftMints.$inferInsert;
+
+/**
+ * NFT earnings with transaction proof
+ */
+export const nftEarnings = mysqlTable("nft_earnings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // NFT reference
+  nftId: varchar("nftId", { length: 100 }),
+  tokenId: varchar("tokenId", { length: 100 }),
+  contractAddress: varchar("contractAddress", { length: 100 }),
+  
+  // Sale details
+  salePrice: varchar("salePrice", { length: 100 }).notNull(),
+  currency: varchar("currency", { length: 20 }).notNull(),
+  marketplace: varchar("marketplace", { length: 100 }),
+  buyerAddress: varchar("buyerAddress", { length: 100 }),
+  
+  // Transaction proof
+  transactionHash: varchar("transactionHash", { length: 100 }),
+  blockNumber: int("blockNumber"),
+  
+  // Earnings breakdown
+  netEarnings: varchar("netEarnings", { length: 100 }),
+  fees: varchar("fees", { length: 100 }),
+  
+  // Transfer status
+  status: mysqlEnum("status", ["pending", "confirmed", "transferred"]).default("pending").notNull(),
+  transferTxHash: varchar("transferTxHash", { length: 100 }),
+  transferredToWallet: varchar("transferredToWallet", { length: 100 }),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type NftEarning = typeof nftEarnings.$inferSelect;
+export type InsertNftEarning = typeof nftEarnings.$inferInsert;
