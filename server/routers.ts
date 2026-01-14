@@ -16,6 +16,7 @@ import { auditPage, auditAllPages, learnPageContext, generateFixRecommendations,
 import { logEvent, logArticleEvent, logDistributionEvent, logAutomationEvent, logBotDecision, getPageInsights, communicateWithHiveMind, syncAllPages, getHiveMindState, initializePageContext } from './_core/hiveMind';
 import { generateProductPage, publishProductPage, batchGenerateProductPages } from './_core/productPages';
 import { logError, getSystemHealth, getRecentErrors, resolveError, runDiagnostics, attemptSelfHeal, getDebuggingSummary, startContinuousMonitoring, stopContinuousMonitoring } from './_core/selfDebugger';
+import * as debugAdmin from './_core/debugAdmin';
 
 // Slug generator helper
 function generateSlug(title: string): string {
@@ -4794,6 +4795,84 @@ const autoClaimsRouter = router({
     }),
 });
 
+// Debug Admin router for comprehensive code analysis and bug detection
+const debugAdminRouter = router({
+  // Get debugging summary
+  getSummary: protectedProcedure
+    .query(async () => {
+      return debugAdmin.getDebuggingSummary();
+    }),
+
+  // Get all bugs
+  getAllBugs: protectedProcedure
+    .query(async () => {
+      return debugAdmin.getAllBugs();
+    }),
+
+  // Get page audit results
+  getPageAudits: protectedProcedure
+    .query(async () => {
+      return debugAdmin.getPageAuditResults();
+    }),
+
+  // Get process flow results
+  getFlowAudits: protectedProcedure
+    .query(async () => {
+      return debugAdmin.getProcessFlowResults();
+    }),
+
+  // Run full code scan
+  scanCode: protectedProcedure
+    .mutation(async () => {
+      return debugAdmin.runFullCodeScan();
+    }),
+
+  // Audit all pages
+  auditAllPages: protectedProcedure
+    .mutation(async () => {
+      return debugAdmin.auditAllPages();
+    }),
+
+  // Audit all flows
+  auditAllFlows: protectedProcedure
+    .mutation(async () => {
+      return debugAdmin.auditAllFlows();
+    }),
+
+  // Auto-fix bugs
+  autoFix: protectedProcedure
+    .mutation(async () => {
+      return debugAdmin.autoFixBugs();
+    }),
+
+  // Verify with Hive Mind
+  verifyWithHiveMind: protectedProcedure
+    .mutation(async () => {
+      return debugAdmin.verifyWithHiveMind();
+    }),
+
+  // Run manual debug cycle
+  runManualCycle: protectedProcedure
+    .mutation(async () => {
+      return debugAdmin.runManualDebugCycle();
+    }),
+
+  // Toggle auto-debugging
+  toggleAutoDebug: protectedProcedure
+    .input(z.object({ enabled: z.boolean() }))
+    .mutation(async ({ input }) => {
+      debugAdmin.setAutoDebugging(input.enabled);
+      return { success: true, enabled: input.enabled };
+    }),
+
+  // Get LLM bug analysis
+  getLLMAnalysis: protectedProcedure
+    .mutation(async () => {
+      const bugs = debugAdmin.getAllBugs();
+      return debugAdmin.getLLMBugAnalysis(bugs);
+    }),
+});
+
 // Self-Debugger router for real-time error monitoring and auto-fix
 const selfDebuggerRouter = router({
   // Get system health status
@@ -4906,6 +4985,7 @@ export const appRouter = router({
   wallet: walletRouter,
   autoClaims: autoClaimsRouter,
   hotWallet: hotWalletRouter,
+  debugAdmin: debugAdminRouter,
 });
 
 export type AppRouter = typeof appRouter;

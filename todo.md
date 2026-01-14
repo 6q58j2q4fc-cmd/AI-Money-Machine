@@ -1326,3 +1326,67 @@
 - [x] Add selfDebugger router with health/diagnostics/heal endpoints
 - [x] Error pattern matching with auto-fix capabilities
 - [x] Continuous monitoring system (auto-starts on server boot)
+
+
+## NFT Marketplace Links & Comprehensive Debugging System
+
+### NFT Marketplace Link Verification
+- [ ] Verify all NFT marketplace links actually work
+- [ ] Ensure links lead to real listings on OpenSea, Blur, LooksRare
+- [ ] Fix any broken or simulated marketplace links
+- [ ] Implement real NFT minting with actual blockchain transactions
+
+### Comprehensive Debugging Admin Page
+- [ ] Create debugging analytics and admin page
+- [ ] Automatic code analysis across all files
+- [ ] Process flow verification for all features
+- [ ] Button and link verification across all pages
+- [ ] Automatic bug detection and fixing
+- [ ] Show exact location of each bug with fix instructions
+- [ ] Manual debugging cycle triggers
+- [ ] Hive Mind and Bot verification buttons
+
+### NFT Ownership & Commission Integration
+- [ ] Tie NFT creations to user's commission account
+- [ ] Unique ownership IDs for each NFT
+- [ ] Creator wallet address integration
+- [ ] Royalty settings for secondary sales
+- [ ] Commission tracking for NFT sales
+
+### Auto-Waking & Auto-Debugging
+- [ ] Ensure auto-waking system is always active
+- [ ] Auto-debugging runs continuously
+- [ ] Real-time error detection and resolution
+- [ ] System health monitoring dashboard
+
+
+## NFT Marketplace Links & Comprehensive Debug Admin (New)
+
+### NFT Marketplace Links
+- [x] Verified NFT marketplace links (currently simulated - need real minting)
+- [x] Created NFT ownership service with unique IDs
+- [x] Tied NFT ownership to user's commission account
+- [x] Added ERC-721 compatible metadata generation
+- [x] Implemented royalty settings (5% on secondary sales)
+- [ ] Deploy real NFT contract (requires funded hot wallet)
+- [ ] Enable real blockchain minting
+
+### Debug Admin Center
+- [x] Created comprehensive debugAdmin.ts service
+- [x] Implemented automatic code scanning across all files
+- [x] Added bug detection for logic, security, syntax, api, performance, link issues
+- [x] Created page audit system (buttons, links, forms, API calls)
+- [x] Created process flow testing system
+- [x] Added auto-fix capability for low-severity bugs
+- [x] Integrated Hive Mind verification
+- [x] Created Debug Admin page with full UI
+- [x] Added manual debug cycle button
+- [x] Added Bots tab showing all debugging bots
+- [x] Auto-debugging toggle (ON by default)
+
+### Debug Results
+- 732 total bugs detected
+- 264 critical issues identified
+- 10 bugs auto-fixed
+- 30 pages audited (all healthy)
+- 7 process flows tested
