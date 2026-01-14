@@ -46,6 +46,7 @@ const menuItems = [
   { icon: Gift, label: "Free Income", path: "/free-income" },
   { icon: Palette, label: "NFT Gallery", path: "/nft-gallery" },
   { icon: Crown, label: "NFT Empire", path: "/nft-empire" },
+  { icon: Zap, label: "Always Awake", path: "/always-awake" },
   { icon: Package, label: "Product Pages", path: "/product-pages" },
   { icon: Zap, label: "Auto Publish", path: "/auto-publish" },
   { icon: Link2, label: "Affiliate Links", path: "/affiliate-links" },
