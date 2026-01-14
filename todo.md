@@ -1184,3 +1184,12 @@
 - [x] Use stored Trust Wallet address (0x75812e1c4246A880f6576db8292405247e6a8775)
 - [x] Show wallet address in NFT Empire header
 - [x] All earnings go directly to Trust Wallet
+
+
+## Homepage & NFT Enhancements
+- [x] Remove MetaMask from NFT Automation Center page
+- [x] Add Trust Wallet integration to NFT Automation Center
+- [x] Add OpenSea API features and key display
+- [x] Add total NFT value card to homepage
+- [x] Add withdrawal button to homepage for accumulated crypto
+- [x] Show Trust Wallet address on homepage

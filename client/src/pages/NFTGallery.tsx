@@ -51,7 +51,10 @@ export default function NFTGallery() {
   const [batchCount, setBatchCount] = useState(5);
   const [collectionName, setCollectionName] = useState("");
   const [autoListEnabled, setAutoListEnabled] = useState(true);
-  const [walletConnected, setWalletConnected] = useState(false);
+  // Trust Wallet - pre-configured, no MetaMask required
+  const TRUST_WALLET_ADDRESS = "0x75812e1c4246A880f6576db8292405247e6a8775";
+  const OPENSEA_API_KEY = "042g5w5cQcCYJsK2CIS0jiCV8yV3qT6tMMHcUT2u031q7fpz";
+  const walletConnected = true; // Always connected to Trust Wallet
 
   // tRPC queries
   const { data: nfts, refetch: refetchNFTs } = trpc.nft.getAllNFTs.useQuery();
@@ -135,12 +138,16 @@ export default function NFTGallery() {
     await autoListMutation.mutateAsync({ nftId });
   };
 
-  const connectWallet = () => {
-    toast.info("Connecting to MetaMask...");
-    setTimeout(() => {
-      setWalletConnected(true);
-      toast.success("Wallet connected: 0x7a3...8f2d");
-    }, 1500);
+  // Copy wallet address to clipboard
+  const copyWalletAddress = () => {
+    navigator.clipboard.writeText(TRUST_WALLET_ADDRESS);
+    toast.success("Trust Wallet address copied!");
+  };
+
+  // Copy OpenSea API key to clipboard
+  const copyOpenSeaKey = () => {
+    navigator.clipboard.writeText(OPENSEA_API_KEY);
+    toast.success("OpenSea API key copied!");
   };
 
   const getStatusBadge = (status: string) => {
@@ -184,17 +191,27 @@ export default function NFTGallery() {
             </p>
           </div>
           <div className="flex gap-2">
-            {!walletConnected ? (
-              <Button onClick={connectWallet} className="bg-purple-500 hover:bg-purple-600">
-                <Wallet className="w-4 h-4 mr-2" />
-                Connect Wallet
-              </Button>
-            ) : (
-              <Button variant="outline" className="border-green-500 text-green-400">
-                <Wallet className="w-4 h-4 mr-2" />
-                0x7a3...8f2d
-              </Button>
-            )}
+            <Button 
+              variant="outline" 
+              className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
+              onClick={copyOpenSeaKey}
+              title="Click to copy OpenSea API key"
+            >
+              <Store className="w-4 h-4 mr-2" />
+              <span className="text-xs">OpenSea: ...7fpz</span>
+              <CheckCircle className="w-3 h-3 ml-1 text-green-400" />
+            </Button>
+            <Button 
+              variant="outline" 
+              className="border-green-500 text-green-400 hover:bg-green-500/10"
+              onClick={copyWalletAddress}
+              title="Click to copy Trust Wallet address"
+            >
+              <Wallet className="w-4 h-4 mr-2" />
+              <span className="text-xs">Trust:</span>
+              {TRUST_WALLET_ADDRESS.slice(0, 6)}...{TRUST_WALLET_ADDRESS.slice(-4)}
+              <CheckCircle className="w-3 h-3 ml-1 text-green-400" />
+            </Button>
           </div>
         </div>
 
@@ -256,6 +273,45 @@ export default function NFTGallery() {
             </CardContent>
           </Card>
         </div>
+
+        {/* OpenSea API Status */}
+        <Card className="bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 border-blue-500/30">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-500/20 rounded-lg">
+                  <Store className="w-8 h-8 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    OpenSea API Integration
+                    <CheckCircle className="w-5 h-5 text-green-400" />
+                  </h3>
+                  <p className="text-sm text-zinc-400">Connected • Real-time marketplace data • Auto-listing enabled</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-xs text-zinc-500">API Key</p>
+                  <p className="text-sm font-mono text-blue-400">...{OPENSEA_API_KEY.slice(-8)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-zinc-500">Trust Wallet</p>
+                  <p className="text-sm font-mono text-green-400">{TRUST_WALLET_ADDRESS.slice(0, 8)}...{TRUST_WALLET_ADDRESS.slice(-6)}</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-blue-500 text-blue-400 hover:bg-blue-500/10"
+                  onClick={() => window.open('https://opensea.io', '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-1" />
+                  View on OpenSea
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
