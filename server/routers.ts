@@ -4615,7 +4615,7 @@ const walletRouter = router({
 });
 
 // Hot Wallet router for server-side wallet management
-import { initializeHotWallet, getHotWalletAddress, checkBalance, checkAllBalances, estimateGasPrice, findCheapestNetwork, sendTransaction, transferNFT, getDepositInstructions, getHotWalletStatus, getNetworkList, withdrawToTrustWallet, getTransactionHistory, getRecommendedFunding, importWalletFromPrivateKey, logTransaction, verifyTransaction, updateTransactionStatus, sendTransactionWithLogging, type NetworkId } from './_core/hotWallet';
+import { initializeHotWallet, getHotWalletAddress, checkBalance, checkAllBalances, estimateGasPrice, findCheapestNetwork, sendTransaction, transferNFT, getDepositInstructions, getHotWalletStatus, getNetworkList, withdrawToTrustWallet, getTransactionHistory, getRecommendedFunding, importWalletFromPrivateKey, logTransaction, verifyTransaction, updateTransactionStatus, sendTransactionWithLogging, lookupAddressBalance, type NetworkId } from './_core/hotWallet';
 
 const hotWalletRouter = router({
   // Initialize hot wallet
@@ -4785,6 +4785,15 @@ const hotWalletRouter = router({
         description: input.description,
         userId: ctx.user?.id,
       });
+    }),
+
+  // Lookup any wallet address balance (no private key needed)
+  lookupAddress: protectedProcedure
+    .input(z.object({
+      address: z.string().min(40).max(42),
+    }))
+    .query(async ({ input }) => {
+      return lookupAddressBalance(input.address);
     }),
 });
 

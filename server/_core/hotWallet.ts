@@ -1093,3 +1093,84 @@ export async function sendTransactionWithLogging(params: {
   
   return result;
 }
+
+
+// Lookup any wallet address balance (no private key needed)
+export async function lookupAddressBalance(address: string): Promise<{
+  success: boolean;
+  address: string;
+  balances: Record<NetworkId, {
+    balance: string;
+    balanceWei: string;
+    symbol: string;
+    network: string;
+    valueUsd: number;
+  }>;
+  totalValueUsd: number;
+  error?: string;
+}> {
+  try {
+    // Validate address format
+    if (!ethers.isAddress(address)) {
+      return {
+        success: false,
+        address,
+        balances: {} as any,
+        totalValueUsd: 0,
+        error: 'Invalid Ethereum address format',
+      };
+    }
+    
+    const balances: Record<string, any> = {};
+    let totalValueUsd = 0;
+    const ethPrice = 2000;
+    const maticPrice = 1;
+    
+    for (const networkId of Object.keys(NETWORKS) as NetworkId[]) {
+      const config = NETWORKS[networkId];
+      const provider = getProvider(networkId);
+      
+      try {
+        const balanceWei = await provider.getBalance(address);
+        const balance = ethers.formatEther(balanceWei);
+        const price = networkId === 'polygon' ? maticPrice : ethPrice;
+        const valueUsd = parseFloat(balance) * price;
+        
+        balances[networkId] = {
+          balance,
+          balanceWei: balanceWei.toString(),
+          symbol: config.symbol,
+          network: config.name,
+          valueUsd,
+        };
+        
+        totalValueUsd += valueUsd;
+      } catch (error) {
+        console.error(`[HotWallet] Error checking ${networkId} balance for ${address}:`, error);
+        balances[networkId] = {
+          balance: '0',
+          balanceWei: '0',
+          symbol: config.symbol,
+          network: config.name,
+          valueUsd: 0,
+        };
+      }
+    }
+    
+    return {
+      success: true,
+      address,
+      balances: balances as Record<NetworkId, any>,
+      totalValueUsd,
+    };
+  } catch (error: any) {
+    console.error('[HotWallet] Error looking up address:', error);
+    return {
+      success: false,
+      address,
+      balances: {} as any,
+      totalValueUsd: 0,
+      error: error.message || 'Failed to lookup address',
+    };
+  }
+}

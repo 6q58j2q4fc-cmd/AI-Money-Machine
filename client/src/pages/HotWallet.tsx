@@ -26,7 +26,8 @@ import {
   DollarSign,
   Eye,
   EyeOff,
-  KeyRound
+  KeyRound,
+  Search
 } from 'lucide-react';
 
 // Trust Wallet address for payouts
@@ -42,6 +43,8 @@ export default function HotWallet() {
   const [previewAddress, setPreviewAddress] = useState<string | null>(null);
   const [isValidKey, setIsValidKey] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [lookupAddress, setLookupAddress] = useState('');
+  const [isLookingUp, setIsLookingUp] = useState(false);
 
   // Queries
   const { data: status, refetch: refetchStatus, isLoading: statusLoading } = trpc.hotWallet.getStatus.useQuery();
@@ -649,6 +652,27 @@ export default function HotWallet() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Important: Address vs Private Key */}
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <KeyRound className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-medium text-blue-400">Important: Private Key Required</h4>
+                      <div className="text-sm text-blue-300/80 mt-2 space-y-2">
+                        <p><strong>Wallet Address</strong> (40 characters) - This is PUBLIC, like your bank account number:</p>
+                        <code className="block bg-zinc-800 p-2 rounded text-xs text-zinc-300 break-all">
+                          0x4Ced8a78aFA8B7B1f4352AB869F1CF6bF75726d0
+                        </code>
+                        <p className="mt-3"><strong>Private Key</strong> (64 characters) - This is SECRET, like your PIN:</p>
+                        <code className="block bg-zinc-800 p-2 rounded text-xs text-zinc-300 break-all">
+                          ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+                        </code>
+                        <p className="mt-3 text-yellow-400">⚠️ You need the PRIVATE KEY to import a wallet, not the address.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Security Warning */}
                 <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
                   <div className="flex items-start gap-3">
@@ -665,24 +689,29 @@ export default function HotWallet() {
 
                 {/* Private Key Input */}
                 <div className="space-y-3">
-                  <Label className="text-white font-medium">Private Key</Label>
+                  <Label className="text-white font-medium">Private Key (64 hex characters)</Label>
                   <div className="relative">
                     <Input
                       type={showPrivateKey ? 'text' : 'password'}
-                      placeholder="Enter your private key (64 hex characters)"
+                      placeholder="Paste your 64-character private key here..."
                       value={privateKeyInput}
                       onChange={(e) => {
-                        const value = e.target.value;
+                        const value = e.target.value.replace(/[\s-]/g, ''); // Remove spaces and dashes
                         setPrivateKeyInput(value);
-                        // Validate and compute preview address
-                        const cleanKey = value.startsWith('0x') ? value.slice(2) : value;
-                        const isValid = /^[a-fA-F0-9]{64}$/.test(cleanKey);
-                        setIsValidKey(isValid);
-                        if (isValid) {
-                          // Compute address preview (simplified - first 10 chars of key hash)
-                          const keyHash = cleanKey.slice(0, 8);
-                          setPreviewAddress(`0x${keyHash}...${cleanKey.slice(-8)}`);
+                        // Check if user entered a wallet address instead of private key
+                        const cleanValue = value.startsWith('0x') ? value.slice(2) : value;
+                        const isWalletAddress = /^[a-fA-F0-9]{40}$/.test(cleanValue);
+                        const isValidPrivateKey = /^[a-fA-F0-9]{64}$/.test(cleanValue);
+                        
+                        if (isWalletAddress && !isValidPrivateKey) {
+                          setIsValidKey(false);
+                          setPreviewAddress('ADDRESS_NOT_KEY');
+                        } else if (isValidPrivateKey) {
+                          setIsValidKey(true);
+                          const keyHash = cleanValue.slice(0, 8);
+                          setPreviewAddress(`0x${keyHash}...${cleanValue.slice(-8)}`);
                         } else {
+                          setIsValidKey(false);
                           setPreviewAddress(null);
                         }
                       }}
@@ -704,23 +733,69 @@ export default function HotWallet() {
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-zinc-500">
-                      64 hexadecimal characters (with or without 0x prefix)
+                      {privateKeyInput ? `${(privateKeyInput.startsWith('0x') ? privateKeyInput.slice(2) : privateKeyInput).replace(/[\s-]/g, '').length}/64 characters` : '64 hexadecimal characters required'}
                     </p>
                     {privateKeyInput && (
-                      <Badge variant={isValidKey ? 'default' : 'destructive'} className={isValidKey ? 'bg-emerald-600' : ''}>
-                        {isValidKey ? 'Valid Format' : 'Invalid Format'}
+                      <Badge 
+                        variant={isValidKey ? 'default' : 'destructive'} 
+                        className={isValidKey ? 'bg-emerald-600' : previewAddress === 'ADDRESS_NOT_KEY' ? 'bg-orange-600' : ''}
+                      >
+                        {isValidKey ? 'Valid Private Key ✓' : previewAddress === 'ADDRESS_NOT_KEY' ? 'This is an Address, not a Key!' : 'Invalid Format'}
                       </Badge>
                     )}
                   </div>
                 </div>
 
+                {/* Error: User entered wallet address - with lookup option */}
+                {previewAddress === 'ADDRESS_NOT_KEY' && (
+                  <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-orange-400">You Entered a Wallet Address</h4>
+                        <p className="text-sm text-orange-300/80 mt-1">
+                          This looks like a <strong>wallet address</strong> (40 characters), not a <strong>private key</strong> (64 characters).
+                        </p>
+                        <p className="text-sm text-orange-300/80 mt-2">
+                          To import a wallet, you need the private key. Here's how to find it:
+                        </p>
+                        <ul className="text-sm text-orange-300/80 mt-2 list-disc list-inside space-y-1">
+                          <li><strong>Trust Wallet:</strong> Settings → Wallets → (i) icon → Show Private Key</li>
+                          <li><strong>MetaMask:</strong> Account Details → Export Private Key</li>
+                          <li><strong>Coinbase Wallet:</strong> Settings → Security → Show Private Key</li>
+                        </ul>
+                        
+                        {/* Quick lookup button */}
+                        <div className="mt-4 pt-4 border-t border-orange-500/30">
+                          <p className="text-sm text-orange-300/80 mb-2">
+                            <strong>Want to check if this address has funds?</strong>
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const cleanValue = privateKeyInput.startsWith('0x') ? privateKeyInput : `0x${privateKeyInput}`;
+                              setLookupAddress(cleanValue);
+                              setIsLookingUp(true);
+                            }}
+                            className="border-orange-500/50 text-orange-400 hover:bg-orange-500/20"
+                          >
+                            <Search className="h-4 w-4 mr-2" />
+                            Check Balance of This Address
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Wallet Preview */}
-                {isValidKey && (
+                {isValidKey && previewAddress !== 'ADDRESS_NOT_KEY' && (
                   <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
                     <div className="flex items-center gap-3">
                       <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />
                       <div>
-                        <h4 className="font-medium text-emerald-400">Wallet Ready to Import</h4>
+                        <h4 className="font-medium text-emerald-400">✓ Valid Private Key - Ready to Import</h4>
                         <p className="text-sm text-emerald-300/80 mt-1 font-mono">
                           Key Preview: {previewAddress}
                         </p>
@@ -733,7 +808,11 @@ export default function HotWallet() {
                 <Button
                   onClick={() => {
                     if (!isValidKey) {
-                      toast.error('Please enter a valid 64-character hex private key');
+                      if (previewAddress === 'ADDRESS_NOT_KEY') {
+                        toast.error('You entered a wallet address. Please enter the private key instead (64 characters).');
+                      } else {
+                        toast.error('Please enter a valid 64-character hex private key');
+                      }
                       return;
                     }
                     importWalletMutation.mutate({ privateKey: privateKeyInput });
@@ -803,6 +882,38 @@ export default function HotWallet() {
                     <li>Your funds will be immediately accessible</li>
                   </ol>
                 </div>
+
+                {/* Address Lookup Section */}
+                <div className="border-t border-zinc-800 pt-6 mt-6">
+                  <h4 className="font-medium text-white mb-3 flex items-center gap-2">
+                    <Search className="h-4 w-4 text-zinc-400" />
+                    Check Any Wallet Balance
+                  </h4>
+                  <p className="text-sm text-zinc-400 mb-4">
+                    Enter any wallet address to check its balance across all networks (no private key needed).
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter wallet address (0x...)"
+                      value={lookupAddress}
+                      onChange={(e) => setLookupAddress(e.target.value)}
+                      className="bg-zinc-800 border-zinc-700 font-mono text-white placeholder:text-zinc-500"
+                    />
+                    <Button
+                      onClick={() => setIsLookingUp(true)}
+                      disabled={!lookupAddress || lookupAddress.length < 40}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Search className="h-4 w-4 mr-2" />
+                      Lookup
+                    </Button>
+                  </div>
+                  
+                  {/* Lookup Results */}
+                  {isLookingUp && lookupAddress && (
+                    <AddressLookupResults address={lookupAddress} onClose={() => setIsLookingUp(false)} />
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -845,5 +956,103 @@ function GasPriceCard({ networkId, networkName, symbol }: { networkId: string; n
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// Address Lookup Results Component
+function AddressLookupResults({ address, onClose }: { address: string; onClose: () => void }) {
+  const { data: lookupData, isLoading, error } = trpc.hotWallet.lookupAddress.useQuery(
+    { address },
+    { enabled: !!address && address.length >= 40 }
+  );
+
+  if (isLoading) {
+    return (
+      <div className="mt-4 bg-zinc-800 rounded-lg p-4">
+        <div className="flex items-center gap-3">
+          <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
+          <span className="text-zinc-300">Looking up wallet balance...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !lookupData?.success) {
+    return (
+      <div className="mt-4 bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />
+          <div className="flex-1">
+            <h4 className="font-medium text-red-400">Lookup Failed</h4>
+            <p className="text-sm text-red-300/80 mt-1">
+              {lookupData?.error || error?.message || 'Invalid address or network error'}
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-zinc-400 hover:text-white">
+            ✕
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const hasBalance = lookupData.totalValueUsd > 0;
+
+  return (
+    <div className="mt-4 bg-zinc-800 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Wallet className="h-5 w-5 text-blue-400" />
+          <h4 className="font-medium text-white">Wallet Balance</h4>
+        </div>
+        <Button variant="ghost" size="sm" onClick={onClose} className="text-zinc-400 hover:text-white">
+          ✕
+        </Button>
+      </div>
+      
+      <div className="space-y-3">
+        <div className="flex items-center justify-between p-2 bg-zinc-900 rounded">
+          <span className="text-sm text-zinc-400">Address:</span>
+          <span className="font-mono text-sm text-zinc-300">{address.slice(0, 10)}...{address.slice(-8)}</span>
+        </div>
+        
+        <div className="flex items-center justify-between p-2 bg-zinc-900 rounded">
+          <span className="text-sm text-zinc-400">Total Value:</span>
+          <span className={`font-bold ${hasBalance ? 'text-emerald-400' : 'text-zinc-500'}`}>
+            ${lookupData.totalValueUsd.toFixed(2)} USD
+          </span>
+        </div>
+
+        {/* Network balances */}
+        <div className="space-y-2 mt-4">
+          <h5 className="text-sm font-medium text-zinc-400">Balances by Network:</h5>
+          {Object.entries(lookupData.balances).map(([networkId, data]: [string, any]) => (
+            <div key={networkId} className="flex items-center justify-between p-2 bg-zinc-900/50 rounded text-sm">
+              <span className="text-zinc-400">{data.network}</span>
+              <span className={parseFloat(data.balance) > 0 ? 'text-emerald-400' : 'text-zinc-500'}>
+                {parseFloat(data.balance).toFixed(6)} {data.symbol}
+                {data.valueUsd > 0 && (
+                  <span className="text-zinc-500 ml-2">(${data.valueUsd.toFixed(2)})</span>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {hasBalance ? (
+          <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+            <p className="text-sm text-emerald-400">
+              <strong>This wallet has funds!</strong> To access these funds, you need to import the wallet using its private key (not the address).
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+            <p className="text-sm text-yellow-400">
+              <strong>No balance found.</strong> This wallet appears to be empty across all supported networks.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

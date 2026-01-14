@@ -1565,3 +1565,21 @@
 - [x] NFT Earnings shows NEEDS FUNDING status
 - [x] Hot Wallet shows EMPTY status with balance
 - [x] Clear indicators for what needs to be done to enable real money flow
+
+
+## Import Wallet Address vs Private Key Fix (User Reported Issue)
+
+### Issues Fixed
+- [x] Clarify difference between wallet address (40 hex) and private key (64 hex)
+- [x] Add wallet address balance lookup feature (check balance without importing)
+- [x] Update instructions to explain what a private key is
+- [x] Add helpful error message when user enters address instead of private key
+- [x] Provide guidance on how to find/export private key from Trust Wallet
+
+### Implementation Details
+- [x] Blue info box explains ADDRESS (40 chars, public) vs PRIVATE KEY (64 chars, secret)
+- [x] Orange warning appears when user enters wallet address instead of private key
+- [x] Instructions for Trust Wallet, MetaMask, and Coinbase Wallet to export private key
+- [x] "Check Any Wallet Balance" section allows looking up any address without private key
+- [x] Balance lookup shows all 5 networks (Ethereum, Polygon, Arbitrum, Optimism, Base)
+- [x] Clear messaging when wallet has funds vs when empty
