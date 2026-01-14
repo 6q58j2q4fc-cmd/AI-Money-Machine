@@ -48,6 +48,13 @@ const categories = [
   "Other"
 ];
 
+// Helper function to decode HTML entities
+function decodeHtmlEntities(text: string): string {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
 const programs = [
   "Amazon Associates",
   "ShareASale",
@@ -318,7 +325,7 @@ export default function AffiliateLinks() {
                     <div className="flex-1 space-y-2">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h3 className="text-lg font-semibold">{link.name}</h3>
+                          <h3 className="text-lg font-semibold">{decodeHtmlEntities(link.name)}</h3>
                           <p className="text-sm text-muted-foreground truncate max-w-md">
                             {link.url}
                           </p>

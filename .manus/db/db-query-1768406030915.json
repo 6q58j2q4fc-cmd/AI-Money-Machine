@@ -1,0 +1,58 @@
+{
+  "query": "SELECT * FROM system_hot_wallet LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT * FROM system_hot_wallet LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "address": "0x9C802a815Ad21A98C5C85f000b34380787353954",
+      "encryptedPrivateKey": "12964a07d7759b13c55c673fe11dc5a205aa77c4b9261727980e8704e54e515850e891032af300589b3b6193e0ae1ebb9bef07c76f5e74f9659dcf764d197ccbac84",
+      "encryptionIv": "366e6c6cecc3b19022806dfe94621576",
+      "encryptionAuthTag": "596a3d21d05e317e29969a1732e18d6e",
+      "isActive": "0",
+      "balanceEthereum": "0",
+      "balancePolygon": "0",
+      "balanceArbitrum": "0",
+      "balanceOptimism": "0",
+      "balanceBase": "0",
+      "lastBalanceCheck": "NULL",
+      "createdAt": "2026-01-14 13:07:50",
+      "updatedAt": "2026-01-14 13:49:30"
+    },
+    {
+      "id": "2",
+      "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "encryptedPrivateKey": "64ef75618c5e871af75570004c83b56daf9de6c688d152d05abafb547d48ec779b6411aadf793dd81f6e75243111a65cae6b781298bce6e9f2025fdfb1b3924ba9e5",
+      "encryptionIv": "3c5af698884079c36da8a0f6af368762",
+      "encryptionAuthTag": "cbf7effc07905dc6e07c87ee455b9fad",
+      "isActive": "0",
+      "balanceEthereum": "0",
+      "balancePolygon": "0",
+      "balanceArbitrum": "0",
+      "balanceOptimism": "0",
+      "balanceBase": "0",
+      "lastBalanceCheck": "NULL",
+      "createdAt": "2026-01-14 13:49:30",
+      "updatedAt": "2026-01-14 14:39:31"
+    },
+    {
+      "id": "3",
+      "address": "0xa1df3378a5642efEeD9D804C205b938DBe7CF477",
+      "encryptedPrivateKey": "0c7c75037b7f17a421e814896f14b5693ef0e45a1860f9c0da7e1960678ac45262a4cfc49badadbc5d53ad46069df701c58ddf20734f6907463ed0295c819e89366c",
+      "encryptionIv": "bfe62a5bd36857eedd15755512078378",
+      "encryptionAuthTag": "12fae7faded798e2df56950b41041442",
+      "isActive": "1",
+      "balanceEthereum": "0",
+      "balancePolygon": "0",
+      "balanceArbitrum": "0",
+      "balanceOptimism": "0",
+      "balanceBase": "0",
+      "lastBalanceCheck": "NULL",
+      "createdAt": "2026-01-14 14:39:31",
+      "updatedAt": "2026-01-14 14:39:31"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\taddress\tencryptedPrivateKey\tencryptionIv\tencryptionAuthTag\tisActive\tbalanceEthereum\tbalancePolygon\tbalanceArbitrum\tbalanceOptimism\tbalanceBase\tlastBalanceCheck\tcreatedAt\tupdatedAt\n1\t0x9C802a815Ad21A98C5C85f000b34380787353954\t12964a07d7759b13c55c673fe11dc5a205aa77c4b9261727980e8704e54e515850e891032af300589b3b6193e0ae1ebb9bef07c76f5e74f9659dcf764d197ccbac84\t366e6c6cecc3b19022806dfe94621576\t596a3d21d05e317e29969a1732e18d6e\t0\t0\t0\t0\t0\t0\tNULL\t2026-01-14 13:07:50\t2026-01-14 13:49:30\n2\t0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\t64ef75618c5e871af75570004c83b56daf9de6c688d152d05abafb547d48ec779b6411aadf793dd81f6e75243111a65cae6b781298bce6e9f2025fdfb1b3924ba9e5\t3c5af698884079c36da8a0f6af368762\tcbf7effc07905dc6e07c87ee455b9fad\t0\t0\t0\t0\t0\t0\tNULL\t2026-01-14 13:49:30\t2026-01-14 14:39:31\n3\t0xa1df3378a5642efEeD9D804C205b938DBe7CF477\t0c7c75037b7f17a421e814896f14b5693ef0e45a1860f9c0da7e1960678ac45262a4cfc49badadbc5d53ad46069df701c58ddf20734f6907463ed0295c819e89366c\tbfe62a5bd36857eedd15755512078378\t12fae7faded798e2df56950b41041442\t1\t0\t0\t0\t0\t0\tNULL\t2026-01-14 14:39:31\t2026-01-14 14:39:31\n",
+  "stderr": "",
+  "execution_time_ms": 406
+}

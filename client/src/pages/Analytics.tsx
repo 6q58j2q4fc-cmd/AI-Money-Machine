@@ -24,6 +24,13 @@ import {
   Bar
 } from "recharts";
 
+// Helper function to decode HTML entities
+function decodeHtmlEntities(text: string): string {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
 export default function Analytics() {
   const [, setLocation] = useLocation();
   
@@ -277,7 +284,7 @@ export default function Analytics() {
                         {i + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{link.name}</p>
+                        <p className="font-medium truncate">{decodeHtmlEntities(link.name)}</p>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <MousePointer className="w-3 h-3" />

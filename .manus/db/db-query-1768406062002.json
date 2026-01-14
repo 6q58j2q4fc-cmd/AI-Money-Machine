@@ -1,0 +1,25 @@
+{
+  "query": "UPDATE system_hot_wallet SET isActive = 0; SELECT id, address, isActive FROM system_hot_wallet;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute UPDATE system_hot_wallet SET isActive = 0; SELECT id, address, isActive FROM system_hot_wallet;",
+  "rows": [
+    {
+      "id": "1",
+      "address": "0x9C802a815Ad21A98C5C85f000b34380787353954",
+      "isActive": "0"
+    },
+    {
+      "id": "2",
+      "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "isActive": "0"
+    },
+    {
+      "id": "3",
+      "address": "0xa1df3378a5642efEeD9D804C205b938DBe7CF477",
+      "isActive": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\taddress\tisActive\n1\t0x9C802a815Ad21A98C5C85f000b34380787353954\t0\n2\t0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\t0\n3\t0xa1df3378a5642efEeD9D804C205b938DBe7CF477\t0\n",
+  "stderr": "",
+  "execution_time_ms": 466
+}

@@ -206,15 +206,21 @@ Return as JSON with: intro, buyingGuide, faq (array of {question, answer}), conc
       anchor: a.title.substring(0, 50),
     }));
 
+  // Clean title - remove duplicate "Best" prefixes and suffixes
+  const cleanTitle = article.title
+    .replace(/^(Best\s*)+/gi, '') // Remove leading "Best" duplicates
+    .replace(/\s*-\s*Top Picks & Reviews$/gi, '') // Remove trailing suffix if present
+    .trim();
+  
   const productPage: ProductPage = {
     slug,
-    title: `Best ${article.title} - Top Picks & Reviews`,
-    description: `Find the best products for ${article.title}. Expert reviews, comparisons, and buying guide.`,
+    title: `Best ${cleanTitle} - Top Picks & Reviews`,
+    description: `Find the best products for ${cleanTitle}. Expert reviews, comparisons, and buying guide.`,
     category: 'general',
     products,
     seoMeta: {
-      title: `Best ${article.title} - Top Picks & Reviews | MoneyMachine`,
-      description: `Discover top-rated products for ${article.title}. Compare prices, read reviews, and find the best deals.`,
+      title: `Best ${cleanTitle} - Top Picks & Reviews | MoneyMachine`,
+      description: `Discover top-rated products for ${cleanTitle}. Compare prices, read reviews, and find the best deals.`,
       keywords: [
         article.title.toLowerCase(),
         'best products',
