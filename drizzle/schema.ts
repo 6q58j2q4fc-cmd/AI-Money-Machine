@@ -601,3 +601,40 @@ export const auditLog = mysqlTable("audit_log", {
 
 export type AuditLog = typeof auditLog.$inferSelect;
 export type InsertAuditLog = typeof auditLog.$inferInsert;
+
+
+/**
+ * User wallet settings for crypto payouts
+ */
+export const walletSettings = mysqlTable("wallet_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // Primary ETH wallet for payouts
+  ethWalletAddress: varchar("ethWalletAddress", { length: 42 }).notNull(),
+  
+  // Additional wallet addresses for different chains
+  polygonWalletAddress: varchar("polygonWalletAddress", { length: 42 }),
+  arbitrumWalletAddress: varchar("arbitrumWalletAddress", { length: 42 }),
+  optimismWalletAddress: varchar("optimismWalletAddress", { length: 42 }),
+  baseWalletAddress: varchar("baseWalletAddress", { length: 42 }),
+  solanaWalletAddress: varchar("solanaWalletAddress", { length: 44 }),
+  
+  // Payout preferences
+  autoPayoutEnabled: boolean("autoPayoutEnabled").default(true).notNull(),
+  minPayoutThreshold: decimal("minPayoutThreshold", { precision: 18, scale: 8 }).default("0.01"),
+  preferredChain: mysqlEnum("preferredChain", ["ethereum", "polygon", "arbitrum", "optimism", "base", "solana"]).default("ethereum"),
+  
+  // Earnings tracking
+  totalEarnings: decimal("totalEarnings", { precision: 18, scale: 8 }).default("0"),
+  pendingPayout: decimal("pendingPayout", { precision: 18, scale: 8 }).default("0"),
+  lastPayoutAt: timestamp("lastPayoutAt"),
+  lastPayoutAmount: decimal("lastPayoutAmount", { precision: 18, scale: 8 }),
+  lastPayoutTxHash: varchar("lastPayoutTxHash", { length: 66 }),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type WalletSettings = typeof walletSettings.$inferSelect;
+export type InsertWalletSettings = typeof walletSettings.$inferInsert;

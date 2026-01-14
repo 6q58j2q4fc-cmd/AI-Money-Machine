@@ -15,7 +15,8 @@ import {
   trackingPixels, InsertTrackingPixel, TrackingPixel,
   botTrainingData, InsertBotTrainingData, BotTrainingData,
   affiliateCookieTracking, InsertAffiliateCookieTracking, AffiliateCookieTracking,
-  auditLog, InsertAuditLog, AuditLog
+  auditLog, InsertAuditLog, AuditLog,
+  walletSettings, InsertWalletSettings, WalletSettings
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1376,4 +1377,95 @@ export async function getAuditLogStats(userId: number): Promise<{
     automationCycles: Number(stats?.automationCycles || 0),
     botDecisions: Number(stats?.botDecisions || 0)
   };
+}
+
+
+// ============ WALLET SETTINGS FUNCTIONS ============
+
+export async function getWalletSettings(userId: number): Promise<WalletSettings | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db
+    .select()
+    .from(walletSettings)
+    .where(eq(walletSettings.userId, userId))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function upsertWalletSettings(settings: InsertWalletSettings): Promise<WalletSettings | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Check if settings exist
+  const existing = await getWalletSettings(settings.userId);
+  
+  if (existing) {
+    // Update existing settings
+    await db
+      .update(walletSettings)
+      .set({
+        ethWalletAddress: settings.ethWalletAddress,
+        polygonWalletAddress: settings.polygonWalletAddress,
+        arbitrumWalletAddress: settings.arbitrumWalletAddress,
+        optimismWalletAddress: settings.optimismWalletAddress,
+        baseWalletAddress: settings.baseWalletAddress,
+        solanaWalletAddress: settings.solanaWalletAddress,
+        autoPayoutEnabled: settings.autoPayoutEnabled,
+        minPayoutThreshold: settings.minPayoutThreshold,
+        preferredChain: settings.preferredChain,
+      })
+      .where(eq(walletSettings.userId, settings.userId));
+  } else {
+    // Insert new settings
+    await db.insert(walletSettings).values(settings);
+  }
+  
+  return getWalletSettings(settings.userId);
+}
+
+export async function updateWalletEarnings(
+  userId: number, 
+  amount: string, 
+  txHash?: string
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const existing = await getWalletSettings(userId);
+  if (!existing) return;
+  
+  const currentEarnings = parseFloat(existing.totalEarnings?.toString() || '0');
+  const newEarnings = currentEarnings + parseFloat(amount);
+  
+  await db
+    .update(walletSettings)
+    .set({
+      totalEarnings: newEarnings.toString(),
+      pendingPayout: '0',
+      lastPayoutAt: new Date(),
+      lastPayoutAmount: amount,
+      lastPayoutTxHash: txHash,
+    })
+    .where(eq(walletSettings.userId, userId));
+}
+
+export async function addPendingPayout(userId: number, amount: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const existing = await getWalletSettings(userId);
+  if (!existing) return;
+  
+  const currentPending = parseFloat(existing.pendingPayout?.toString() || '0');
+  const newPending = currentPending + parseFloat(amount);
+  
+  await db
+    .update(walletSettings)
+    .set({
+      pendingPayout: newPending.toString(),
+    })
+    .where(eq(walletSettings.userId, userId));
 }

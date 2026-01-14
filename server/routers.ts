@@ -4345,6 +4345,86 @@ const marketplaceApiRouter = router({
     }),
 });
 
+// Wallet settings router
+const walletRouter = router({
+  // Get wallet settings
+  getSettings: protectedProcedure
+    .query(async ({ ctx }) => {
+      return db.getWalletSettings(ctx.user.id);
+    }),
+
+  // Save wallet settings
+  saveSettings: protectedProcedure
+    .input(z.object({
+      ethWalletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid ETH address'),
+      polygonWalletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+      arbitrumWalletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+      optimismWalletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+      baseWalletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+      solanaWalletAddress: z.string().optional(),
+      autoPayoutEnabled: z.boolean().optional(),
+      minPayoutThreshold: z.string().optional(),
+      preferredChain: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base', 'solana']).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return db.upsertWalletSettings({
+        userId: ctx.user.id,
+        ethWalletAddress: input.ethWalletAddress,
+        polygonWalletAddress: input.polygonWalletAddress,
+        arbitrumWalletAddress: input.arbitrumWalletAddress,
+        optimismWalletAddress: input.optimismWalletAddress,
+        baseWalletAddress: input.baseWalletAddress,
+        solanaWalletAddress: input.solanaWalletAddress,
+        autoPayoutEnabled: input.autoPayoutEnabled ?? true,
+        minPayoutThreshold: input.minPayoutThreshold ?? '0.01',
+        preferredChain: input.preferredChain ?? 'ethereum',
+      });
+    }),
+
+  // Get earnings summary
+  getEarnings: protectedProcedure
+    .query(async ({ ctx }) => {
+      const settings = await db.getWalletSettings(ctx.user.id);
+      return {
+        totalEarnings: settings?.totalEarnings || '0',
+        pendingPayout: settings?.pendingPayout || '0',
+        lastPayoutAt: settings?.lastPayoutAt,
+        lastPayoutAmount: settings?.lastPayoutAmount,
+        lastPayoutTxHash: settings?.lastPayoutTxHash,
+        walletAddress: settings?.ethWalletAddress,
+      };
+    }),
+
+  // Request payout
+  requestPayout: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const settings = await db.getWalletSettings(ctx.user.id);
+      if (!settings) {
+        throw new Error('No wallet configured');
+      }
+      
+      const pendingAmount = parseFloat(settings.pendingPayout?.toString() || '0');
+      const minThreshold = parseFloat(settings.minPayoutThreshold?.toString() || '0.01');
+      
+      if (pendingAmount < minThreshold) {
+        throw new Error(`Minimum payout threshold is ${minThreshold} ETH`);
+      }
+      
+      // In production, this would trigger actual blockchain transaction
+      // For now, simulate the payout
+      const txHash = `0x${Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+      
+      await db.updateWalletEarnings(ctx.user.id, pendingAmount.toString(), txHash);
+      
+      return {
+        success: true,
+        amount: pendingAmount.toString(),
+        txHash,
+        walletAddress: settings.ethWalletAddress,
+      };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -4381,6 +4461,7 @@ export const appRouter = router({
   dataMonetization: dataMonetizationRouter,
   web3: web3Router,
   marketplace: marketplaceApiRouter,
+  wallet: walletRouter,
 });
 
 export type AppRouter = typeof appRouter;

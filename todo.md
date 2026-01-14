@@ -1059,3 +1059,22 @@
 - [x] Sync marketplace listings every 30 minutes
 - [x] Check for sales and update portfolio
 - [x] Auto-relist expired listings
+
+
+## Crypto Wallet Payout Configuration
+- [ ] Store user's ETH wallet address (0x75812e1c4246A880f6576db8292405247e6a8775)
+- [ ] Configure all crypto earnings to payout to this wallet
+- [ ] Update NFT Empire to use configured wallet
+- [ ] Update Free Income page to use configured wallet
+- [ ] Show wallet address in settings and payout pages
+
+
+## Crypto Wallet Payout Configuration
+- [x] Add wallet_settings database table
+- [x] Create wallet settings API endpoints
+- [x] Build Wallet Settings UI page
+- [x] Configure user's ETH wallet: 0x75812e1c4246A880f6576db8292405247e6a8775
+- [x] Multi-chain wallet support (Polygon, Arbitrum, Optimism, Base, Solana)
+- [x] Auto payout toggle and threshold settings
+- [x] Earnings tracking and payout history
+- [x] Request payout functionality

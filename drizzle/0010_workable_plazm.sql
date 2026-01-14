@@ -1,0 +1,21 @@
+CREATE TABLE `wallet_settings` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`ethWalletAddress` varchar(42) NOT NULL,
+	`polygonWalletAddress` varchar(42),
+	`arbitrumWalletAddress` varchar(42),
+	`optimismWalletAddress` varchar(42),
+	`baseWalletAddress` varchar(42),
+	`solanaWalletAddress` varchar(44),
+	`autoPayoutEnabled` boolean NOT NULL DEFAULT true,
+	`minPayoutThreshold` decimal(18,8) DEFAULT '0.01',
+	`preferredChain` enum('ethereum','polygon','arbitrum','optimism','base','solana') DEFAULT 'ethereum',
+	`totalEarnings` decimal(18,8) DEFAULT '0',
+	`pendingPayout` decimal(18,8) DEFAULT '0',
+	`lastPayoutAt` timestamp,
+	`lastPayoutAmount` decimal(18,8),
+	`lastPayoutTxHash` varchar(66),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `wallet_settings_id` PRIMARY KEY(`id`)
+);
