@@ -4612,6 +4612,133 @@ const walletRouter = router({
     }),
 });
 
+// Hot Wallet router for server-side wallet management
+import { initializeHotWallet, getHotWalletAddress, checkBalance, checkAllBalances, estimateGasPrice, findCheapestNetwork, sendTransaction, transferNFT, getDepositInstructions, getHotWalletStatus, getNetworkList, withdrawToTrustWallet, getTransactionHistory, getRecommendedFunding, type NetworkId } from './_core/hotWallet';
+
+const hotWalletRouter = router({
+  // Initialize hot wallet
+  initialize: protectedProcedure
+    .mutation(async () => {
+      return initializeHotWallet();
+    }),
+
+  // Get hot wallet status
+  getStatus: protectedProcedure
+    .query(async () => {
+      return getHotWalletStatus();
+    }),
+
+  // Get deposit instructions
+  getDepositInstructions: protectedProcedure
+    .query(async () => {
+      const address = getHotWalletAddress();
+      if (!address) {
+        await initializeHotWallet();
+      }
+      return getDepositInstructions();
+    }),
+
+  // Check balance on specific network
+  checkBalance: protectedProcedure
+    .input(z.object({
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']),
+    }))
+    .query(async ({ input }) => {
+      return checkBalance(input.network as NetworkId);
+    }),
+
+  // Check all balances
+  checkAllBalances: protectedProcedure
+    .query(async () => {
+      return checkAllBalances();
+    }),
+
+  // Estimate gas price
+  estimateGas: protectedProcedure
+    .input(z.object({
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']),
+    }))
+    .query(async ({ input }) => {
+      return estimateGasPrice(input.network as NetworkId);
+    }),
+
+  // Find cheapest network
+  findCheapestNetwork: protectedProcedure
+    .query(async () => {
+      return findCheapestNetwork();
+    }),
+
+  // Send ETH transaction
+  sendTransaction: protectedProcedure
+    .input(z.object({
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']),
+      to: z.string(),
+      amount: z.string(),
+      data: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      return sendTransaction({
+        network: input.network as NetworkId,
+        to: input.to,
+        amount: input.amount,
+        data: input.data,
+      });
+    }),
+
+  // Transfer NFT
+  transferNFT: protectedProcedure
+    .input(z.object({
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']),
+      contractAddress: z.string(),
+      tokenId: z.string(),
+      to: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      return transferNFT({
+        network: input.network as NetworkId,
+        contractAddress: input.contractAddress,
+        tokenId: input.tokenId,
+        to: input.to,
+      });
+    }),
+
+  // Get network list
+  getNetworks: protectedProcedure
+    .query(async () => {
+      return getNetworkList();
+    }),
+
+  // Withdraw to Trust Wallet
+  withdraw: protectedProcedure
+    .input(z.object({
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']),
+      amount: z.string(),
+      toAddress: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      return withdrawToTrustWallet({
+        network: input.network as NetworkId,
+        amount: input.amount,
+        toAddress: input.toAddress,
+      });
+    }),
+
+  // Get transaction history
+  getTransactionHistory: protectedProcedure
+    .input(z.object({
+      limit: z.number().optional().default(50),
+    }).optional())
+    .query(async ({ input }) => {
+      return getTransactionHistory(input?.limit || 50);
+    }),
+
+  // Get recommended funding amounts
+  getRecommendedFunding: protectedProcedure
+    .query(async () => {
+      return getRecommendedFunding();
+    }),
+});
+
 // Auto-claims router for Free Income page
 import { startAllAutoClaims, stopAllAutoClaims, getEarningsSummary, getAutoClaimStatus, requestWithdrawal, forceRunAllClaims, AUTO_CLAIM_SOURCES, TRUST_WALLET_ADDRESS } from './_core/autoClaimsService';
 
@@ -4704,6 +4831,7 @@ export const appRouter = router({
   marketplace: marketplaceApiRouter,
   wallet: walletRouter,
   autoClaims: autoClaimsRouter,
+  hotWallet: hotWalletRouter,
 });
 
 export type AppRouter = typeof appRouter;

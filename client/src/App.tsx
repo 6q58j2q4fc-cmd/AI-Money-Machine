@@ -36,6 +36,7 @@ import AwinIntegration from "./pages/AwinIntegration";
 import NFTEmpire from './pages/NFTEmpire';
 import AlwaysAwake from './pages/AlwaysAwake';
 import WalletSettings from './pages/WalletSettings';
+import HotWallet from './pages/HotWallet';
 
 function Router() {
   return (
@@ -77,6 +78,7 @@ function Router() {
       <Route path="/nft-empire" component={NFTEmpire} />
       <Route path="/always-awake" component={AlwaysAwake} />
       <Route path="/wallet-settings" component={WalletSettings} />
+      <Route path="/hot-wallet" component={HotWallet} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
