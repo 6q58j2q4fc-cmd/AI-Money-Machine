@@ -75,13 +75,26 @@ export default function NFTGallery() {
     }
   });
 
-  const autoListMutation = trpc.nft.autoList.useMutation({
+  // Use nftEmpire.listRealOnAll for database-backed NFTs
+  const autoListMutation = trpc.nftEmpire.listRealOnAll.useMutation({
     onSuccess: (data) => {
-      toast.success(`Listed on ${data.listings.length} marketplaces!`);
+      toast.success(`Listed on ${data.length} marketplaces!`);
       refetchNFTs();
+      refetchPortfolio();
     },
     onError: (error) => {
       toast.error(`Listing failed: ${error.message}`);
+    }
+  });
+
+  // Also submit to auto-buyers after listing
+  const submitToAutoBuyersMutation = trpc.nftEmpire.submitRealToAutoBuyers.useMutation({
+    onSuccess: () => {
+      toast.success("Submitted to auto-buyer platforms!");
+      refetchNFTs();
+    },
+    onError: (error) => {
+      console.error("Auto-buyer submission failed:", error);
     }
   });
 
@@ -136,7 +149,23 @@ export default function NFTGallery() {
 
   const handleAutoList = async (nftId: string) => {
     toast.info("Listing on all marketplaces...");
-    await autoListMutation.mutateAsync({ nftId });
+    try {
+      // Convert string ID to number for database-backed NFTs
+      const numericId = parseInt(nftId, 10);
+      if (isNaN(numericId)) {
+        toast.error("Invalid NFT ID");
+        return;
+      }
+      
+      // List on all marketplaces
+      await autoListMutation.mutateAsync({ nftId: numericId });
+      
+      // Also submit to auto-buyers
+      await submitToAutoBuyersMutation.mutateAsync({ nftId: numericId });
+    } catch (error: any) {
+      console.error("Listing error:", error);
+      toast.error(error.message || "Failed to list NFT");
+    }
   };
 
   // Copy wallet address to clipboard

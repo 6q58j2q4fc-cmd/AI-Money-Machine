@@ -15,6 +15,7 @@ import { runDailyOptimization, checkAllProvidersHealth, checkFeatureHealth, rout
 import { auditPage, auditAllPages, learnPageContext, generateFixRecommendations, verifyArticlePosting, generateInternalLinks, PAGE_DEFINITIONS, type PageAuditResult } from './_core/pageAuditor';
 import { logEvent, logArticleEvent, logDistributionEvent, logAutomationEvent, logBotDecision, getPageInsights, communicateWithHiveMind, syncAllPages, getHiveMindState, initializePageContext } from './_core/hiveMind';
 import { generateProductPage, publishProductPage, batchGenerateProductPages } from './_core/productPages';
+import { logError, getSystemHealth, getRecentErrors, resolveError, runDiagnostics, attemptSelfHeal, getDebuggingSummary, startContinuousMonitoring, stopContinuousMonitoring } from './_core/selfDebugger';
 
 // Slug generator helper
 function generateSlug(title: string): string {
@@ -4793,8 +4794,81 @@ const autoClaimsRouter = router({
     }),
 });
 
+// Self-Debugger router for real-time error monitoring and auto-fix
+const selfDebuggerRouter = router({
+  // Get system health status
+  getHealth: protectedProcedure
+    .query(async () => {
+      return getSystemHealth();
+    }),
+
+  // Get debugging summary
+  getSummary: protectedProcedure
+    .query(async () => {
+      return getDebuggingSummary();
+    }),
+
+  // Get recent errors
+  getErrors: protectedProcedure
+    .input(z.object({
+      limit: z.number().optional().default(50),
+    }).optional())
+    .query(async ({ input }) => {
+      return getRecentErrors(input?.limit || 50);
+    }),
+
+  // Run diagnostics
+  runDiagnostics: protectedProcedure
+    .mutation(async () => {
+      return runDiagnostics();
+    }),
+
+  // Attempt self-healing
+  selfHeal: protectedProcedure
+    .mutation(async () => {
+      return attemptSelfHeal();
+    }),
+
+  // Resolve an error manually
+  resolveError: protectedProcedure
+    .input(z.object({
+      errorId: z.string(),
+      resolution: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      return resolveError(input.errorId, input.resolution);
+    }),
+
+  // Log a new error (for client-side error reporting)
+  logError: protectedProcedure
+    .input(z.object({
+      message: z.string(),
+      stack: z.string().optional(),
+      context: z.record(z.string(), z.any()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const error = new Error(input.message);
+      if (input.stack) error.stack = input.stack;
+      return logError(error, { ...input.context, userId: ctx.user.id, source: 'client' });
+    }),
+
+  // Start/stop continuous monitoring
+  startMonitoring: protectedProcedure
+    .mutation(async () => {
+      startContinuousMonitoring();
+      return { success: true, message: 'Continuous monitoring started' };
+    }),
+
+  stopMonitoring: protectedProcedure
+    .mutation(async () => {
+      stopContinuousMonitoring();
+      return { success: true, message: 'Continuous monitoring stopped' };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
+  selfDebugger: selfDebuggerRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
