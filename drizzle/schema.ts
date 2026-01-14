@@ -787,3 +787,109 @@ export const autoBuyerSubmissions = mysqlTable("auto_buyer_submissions", {
 });
 export type AutoBuyerSubmission = typeof autoBuyerSubmissions.$inferSelect;
 export type InsertAutoBuyerSubmission = typeof autoBuyerSubmissions.$inferInsert;
+
+
+/**
+ * System Hot Wallet - Persisted server-side wallet for gas fees and transactions
+ * Only one row should exist - the system hot wallet
+ */
+export const systemHotWallet = mysqlTable("system_hot_wallet", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Wallet address (public)
+  address: varchar("address", { length: 42 }).notNull().unique(),
+  
+  // Encrypted private key (AES-256-GCM encrypted)
+  encryptedPrivateKey: text("encryptedPrivateKey").notNull(),
+  
+  // Encryption metadata
+  encryptionIv: varchar("encryptionIv", { length: 32 }).notNull(),
+  encryptionAuthTag: varchar("encryptionAuthTag", { length: 32 }).notNull(),
+  
+  // Status
+  isActive: boolean("isActive").default(true).notNull(),
+  
+  // Cached balances (updated periodically)
+  balanceEthereum: varchar("balanceEthereum", { length: 50 }).default("0"),
+  balancePolygon: varchar("balancePolygon", { length: 50 }).default("0"),
+  balanceArbitrum: varchar("balanceArbitrum", { length: 50 }).default("0"),
+  balanceOptimism: varchar("balanceOptimism", { length: 50 }).default("0"),
+  balanceBase: varchar("balanceBase", { length: 50 }).default("0"),
+  
+  lastBalanceCheck: timestamp("lastBalanceCheck"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SystemHotWallet = typeof systemHotWallet.$inferSelect;
+export type InsertSystemHotWallet = typeof systemHotWallet.$inferInsert;
+
+
+/**
+ * Crypto Transaction Log - Comprehensive log of all crypto transactions
+ * Tracks all incoming and outgoing transactions with blockchain verification
+ */
+export const cryptoTransactionLog = mysqlTable("crypto_transaction_log", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Transaction identification
+  txHash: varchar("txHash", { length: 66 }).unique(),
+  
+  // Direction and type
+  direction: mysqlEnum("direction", ["incoming", "outgoing"]).notNull(),
+  txType: mysqlEnum("txType", ["deposit", "withdrawal", "nft_mint", "nft_sale", "gas_fee", "transfer", "contract_deploy"]).notNull(),
+  
+  // Network info
+  network: varchar("network", { length: 50 }).notNull(),
+  chainId: int("chainId").notNull(),
+  
+  // Addresses
+  fromAddress: varchar("fromAddress", { length: 42 }).notNull(),
+  toAddress: varchar("toAddress", { length: 42 }).notNull(),
+  
+  // Amount
+  amount: varchar("amount", { length: 78 }).notNull(), // Wei as string for precision
+  amountFormatted: varchar("amountFormatted", { length: 50 }).notNull(), // Human readable
+  currency: varchar("currency", { length: 10 }).notNull(),
+  usdValue: decimal("usdValue", { precision: 18, scale: 2 }),
+  
+  // Gas info
+  gasUsed: varchar("gasUsed", { length: 50 }),
+  gasPrice: varchar("gasPrice", { length: 50 }),
+  gasCost: varchar("gasCost", { length: 50 }),
+  gasCostUsd: decimal("gasCostUsd", { precision: 18, scale: 4 }),
+  
+  // Block info
+  blockNumber: int("blockNumber"),
+  blockHash: varchar("blockHash", { length: 66 }),
+  blockTimestamp: timestamp("blockTimestamp"),
+  
+  // Verification status
+  status: mysqlEnum("status", ["pending", "confirming", "confirmed", "failed", "dropped"]).default("pending").notNull(),
+  confirmations: int("confirmations").default(0),
+  requiredConfirmations: int("requiredConfirmations").default(12),
+  
+  // Verification timestamps
+  firstSeenAt: timestamp("firstSeenAt"),
+  confirmedAt: timestamp("confirmedAt"),
+  
+  // Explorer link
+  explorerUrl: text("explorerUrl"),
+  
+  // Related entities
+  userId: int("userId"),
+  nftAssetId: int("nftAssetId"),
+  relatedTxId: int("relatedTxId"), // For linked transactions (e.g., gas fee for NFT mint)
+  
+  // Metadata
+  description: text("description"),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  
+  // Error handling
+  errorMessage: text("errorMessage"),
+  retryCount: int("retryCount").default(0),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CryptoTransactionLog = typeof cryptoTransactionLog.$inferSelect;
+export type InsertCryptoTransactionLog = typeof cryptoTransactionLog.$inferInsert;

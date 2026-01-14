@@ -4615,7 +4615,7 @@ const walletRouter = router({
 });
 
 // Hot Wallet router for server-side wallet management
-import { initializeHotWallet, getHotWalletAddress, checkBalance, checkAllBalances, estimateGasPrice, findCheapestNetwork, sendTransaction, transferNFT, getDepositInstructions, getHotWalletStatus, getNetworkList, withdrawToTrustWallet, getTransactionHistory, getRecommendedFunding, type NetworkId } from './_core/hotWallet';
+import { initializeHotWallet, getHotWalletAddress, checkBalance, checkAllBalances, estimateGasPrice, findCheapestNetwork, sendTransaction, transferNFT, getDepositInstructions, getHotWalletStatus, getNetworkList, withdrawToTrustWallet, getTransactionHistory, getRecommendedFunding, importWalletFromPrivateKey, logTransaction, verifyTransaction, updateTransactionStatus, sendTransactionWithLogging, type NetworkId } from './_core/hotWallet';
 
 const hotWalletRouter = router({
   // Initialize hot wallet
@@ -4731,13 +4731,60 @@ const hotWalletRouter = router({
       limit: z.number().optional().default(50),
     }).optional())
     .query(async ({ input }) => {
-      return getTransactionHistory(input?.limit || 50);
+      return getTransactionHistory({ limit: input?.limit || 50 });
     }),
 
   // Get recommended funding amounts
   getRecommendedFunding: protectedProcedure
     .query(async () => {
       return getRecommendedFunding();
+    }),
+
+  // Import wallet from private key
+  importWallet: protectedProcedure
+    .input(z.object({
+      privateKey: z.string().min(64).max(66),
+    }))
+    .mutation(async ({ input }) => {
+      return importWalletFromPrivateKey(input.privateKey);
+    }),
+
+  // Verify a transaction on blockchain
+  verifyTransaction: protectedProcedure
+    .input(z.object({
+      txHash: z.string(),
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']),
+    }))
+    .query(async ({ input }) => {
+      return verifyTransaction(input.txHash, input.network as NetworkId);
+    }),
+
+  // Update transaction status from blockchain
+  updateTransactionStatus: protectedProcedure
+    .input(z.object({
+      txHash: z.string(),
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']),
+    }))
+    .mutation(async ({ input }) => {
+      return updateTransactionStatus(input.txHash, input.network as NetworkId);
+    }),
+
+  // Send transaction with logging
+  sendWithLogging: protectedProcedure
+    .input(z.object({
+      network: z.enum(['ethereum', 'polygon', 'arbitrum', 'optimism', 'base']),
+      to: z.string(),
+      amount: z.string(),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return sendTransactionWithLogging({
+        network: input.network as NetworkId,
+        to: input.to,
+        amount: input.amount,
+        description: input.description,
+        userId: ctx.user?.id,
+      });
     }),
 });
 

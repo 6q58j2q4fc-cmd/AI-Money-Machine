@@ -1451,3 +1451,48 @@
 - [ ] Store data for optimization and bug fixing
 - [ ] Harmonize all features to work together
 
+
+
+## Hot Wallet Persistence Fix (CRITICAL)
+- [ ] Fix hot wallet to persist across server restarts
+- [ ] Store encrypted private key in database
+- [ ] Recover user's $2.00 ETH deposit if possible
+- [ ] Ensure wallet address never changes after creation
+
+
+
+## Wallet Import & Transaction Log
+- [ ] Add wallet private key import feature
+- [ ] Create transaction log table in database
+- [ ] Implement real blockchain transaction verification
+- [ ] Add explorer links for all transactions
+- [ ] Create transaction log UI on Hot Wallet page
+- [ ] Verify all transactions are 100% live and accurate
+
+
+
+## Wallet Import & Transaction Log System (Completed)
+
+### Wallet Import Feature
+- [x] Add private key import functionality to hotWallet.ts
+- [x] Create importWallet router procedure
+- [x] Add Import tab to Hot Wallet page UI
+- [x] Security warning for private key handling
+- [x] Show current wallet address
+- [x] Validate 64 hex character input
+
+### Transaction Log System
+- [x] Create cryptoTransactionLog table in database
+- [x] Implement logTransaction function with blockchain verification
+- [x] Add getTransactionHistory function with pagination
+- [x] Create History tab in Hot Wallet page
+- [x] Show transaction direction (incoming/outgoing)
+- [x] Display confirmation count and status
+- [x] Include explorer links for verification
+- [x] Add Refresh button for real-time updates
+
+### Hot Wallet Persistence
+- [x] Create hotWalletStorage table in database
+- [x] Persist wallet private key with AES-256-GCM encryption
+- [x] Load wallet from database on server restart
+- [x] Wallet address now permanent: 0x9C802a815Ad21A98C5C85f000b34380787353954

@@ -34,6 +34,8 @@ export default function HotWallet() {
   const [sendAmount, setSendAmount] = useState('');
   const [sendTo, setSendTo] = useState(TRUST_WALLET);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [privateKeyInput, setPrivateKeyInput] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Queries
   const { data: status, refetch: refetchStatus, isLoading: statusLoading } = trpc.hotWallet.getStatus.useQuery();
@@ -44,6 +46,7 @@ export default function HotWallet() {
   );
   const { data: cheapestNetwork } = trpc.hotWallet.findCheapestNetwork.useQuery();
   const { data: networks } = trpc.hotWallet.getNetworks.useQuery();
+  const { data: transactionHistory, refetch: refetchHistory } = trpc.hotWallet.getTransactionHistory.useQuery({ limit: 50 });
 
   // Mutations
   const initializeMutation = trpc.hotWallet.initialize.useMutation({
@@ -54,6 +57,24 @@ export default function HotWallet() {
     },
     onError: (error) => {
       toast.error(`Failed to initialize: ${error.message}`);
+    },
+  });
+
+  // Import wallet mutation
+  const importWalletMutation = trpc.hotWallet.importWallet.useMutation({
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(`Wallet imported successfully! Address: ${result.address?.slice(0, 10)}...`);
+        setPrivateKeyInput('');
+        setShowImportModal(false);
+        refetchStatus();
+        refetchDeposit();
+      } else {
+        toast.error(result.error || 'Failed to import wallet');
+      }
+    },
+    onError: (error) => {
+      toast.error(`Import failed: ${error.message}`);
     },
   });
 
@@ -272,6 +293,14 @@ export default function HotWallet() {
             <TabsTrigger value="gas">
               <Fuel className="h-4 w-4 mr-2" />
               Gas Prices
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              <DollarSign className="h-4 w-4 mr-2" />
+              History
+            </TabsTrigger>
+            <TabsTrigger value="import">
+              <Wallet className="h-4 w-4 mr-2" />
+              Import
             </TabsTrigger>
           </TabsList>
 
@@ -498,6 +527,166 @@ export default function HotWallet() {
                   {networks?.map((network) => (
                     <GasPriceCard key={network.id} networkId={network.id} networkName={network.name} symbol={network.symbol} />
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Transaction History Tab */}
+          <TabsContent value="history">
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-white">Transaction History</CardTitle>
+                    <CardDescription>
+                      All verified blockchain transactions with tracking numbers
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchHistory()}
+                    className="border-zinc-700"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {transactionHistory?.transactions && transactionHistory.transactions.length > 0 ? (
+                  <div className="space-y-3">
+                    {transactionHistory.transactions.map((tx) => (
+                      <div
+                        key={tx.id}
+                        className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg border border-zinc-700"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`p-2 rounded-full ${tx.direction === 'incoming' ? 'bg-emerald-500/20' : 'bg-orange-500/20'}`}>
+                            {tx.direction === 'incoming' ? (
+                              <ArrowDownLeft className={`h-5 w-5 ${tx.direction === 'incoming' ? 'text-emerald-500' : 'text-orange-500'}`} />
+                            ) : (
+                              <ArrowUpRight className={`h-5 w-5 text-orange-500`} />
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-white">
+                                {tx.direction === 'incoming' ? 'Received' : 'Sent'} {tx.amountFormatted} {tx.currency}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${
+                                  tx.status === 'confirmed' ? 'text-emerald-400 border-emerald-400' :
+                                  tx.status === 'confirming' ? 'text-yellow-400 border-yellow-400' :
+                                  tx.status === 'failed' ? 'text-red-400 border-red-400' :
+                                  'text-zinc-400 border-zinc-600'
+                                }`}
+                              >
+                                {tx.status} ({tx.confirmations}/12)
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-zinc-400">
+                              {tx.description || `${tx.txType} on ${tx.network}`}
+                            </p>
+                            <p className="text-xs text-zinc-500 font-mono mt-1">
+                              TX: {tx.txHash?.slice(0, 20)}...{tx.txHash?.slice(-8)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-zinc-400">
+                            {tx.usdValue ? `$${parseFloat(tx.usdValue).toFixed(2)}` : '-'}
+                          </p>
+                          {tx.explorerUrl && (
+                            <a
+                              href={tx.explorerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-emerald-400 hover:underline flex items-center gap-1 justify-end mt-1"
+                            >
+                              View on Explorer <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Wallet className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
+                    <p className="text-zinc-400">No transactions yet</p>
+                    <p className="text-sm text-zinc-500 mt-2">
+                      Transactions will appear here once you send or receive crypto
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Import Wallet Tab */}
+          <TabsContent value="import">
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardHeader>
+                <CardTitle className="text-white">Import Existing Wallet</CardTitle>
+                <CardDescription>
+                  Recover a wallet using its private key to access existing funds
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-yellow-500">Security Warning</h4>
+                      <p className="text-sm text-yellow-400/80 mt-1">
+                        Never share your private key with anyone. Only import wallets you own.
+                        This will replace your current hot wallet.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Private Key</Label>
+                  <Input
+                    type="password"
+                    placeholder="Enter your private key (64 hex characters)"
+                    value={privateKeyInput}
+                    onChange={(e) => setPrivateKeyInput(e.target.value)}
+                    className="bg-zinc-800 border-zinc-700 font-mono"
+                  />
+                  <p className="text-xs text-zinc-500">
+                    Your private key should be 64 hexadecimal characters (with or without 0x prefix)
+                  </p>
+                </div>
+
+                <Button
+                  onClick={() => importWalletMutation.mutate({ privateKey: privateKeyInput })}
+                  disabled={!privateKeyInput || privateKeyInput.length < 64 || importWalletMutation.isPending}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {importWalletMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Wallet className="h-4 w-4 mr-2" />
+                      Import Wallet
+                    </>
+                  )}
+                </Button>
+
+                <div className="border-t border-zinc-800 pt-4 mt-4">
+                  <h4 className="font-medium text-white mb-2">Current Wallet</h4>
+                  <div className="bg-zinc-800 rounded-lg p-3">
+                    <p className="text-sm text-zinc-400">Address:</p>
+                    <p className="font-mono text-emerald-400">{status?.address || 'Not initialized'}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
