@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,9 +18,59 @@ import {
 export default function NFTEmpire() {
   const [selectedCategory, setSelectedCategory] = useState<string>("auto");
   const [batchCount, setBatchCount] = useState(3);
+  const [autoMintEnabled, setAutoMintEnabled] = useState(false);
   // Trust Wallet address - pre-configured, no MetaMask required
   const TRUST_WALLET_ADDRESS = "0x75812e1c4246A880f6576db8292405247e6a8775";
   const walletConnected = true; // Always connected to Trust Wallet
+  
+  // Auto-mint queries
+  const { data: autoMintConfig, refetch: refetchAutoMintConfig } = trpc.nftEmpire.getAutoMintConfig.useQuery();
+  const { data: autoMintStats, refetch: refetchAutoMintStats } = trpc.nftEmpire.getAutoMintStats.useQuery();
+  
+  // Auto-mint mutations
+  const startAutoMintMutation = trpc.nftEmpire.startAutoMint.useMutation({
+    onSuccess: () => {
+      toast.success('Auto-mint scheduler started!');
+      setAutoMintEnabled(true);
+      refetchAutoMintConfig();
+      refetchAutoMintStats();
+    },
+    onError: (error) => toast.error(`Failed to start: ${error.message}`),
+  });
+  
+  const stopAutoMintMutation = trpc.nftEmpire.stopAutoMint.useMutation({
+    onSuccess: () => {
+      toast.success('Auto-mint scheduler stopped');
+      setAutoMintEnabled(false);
+      refetchAutoMintConfig();
+    },
+    onError: (error) => toast.error(`Failed to stop: ${error.message}`),
+  });
+  
+  const runMintCycleMutation = trpc.nftEmpire.runMintCycle.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Minted ${data.nftsMinted} NFTs worth ${data.totalValue.toFixed(4)} ETH!`);
+      refetchNfts();
+      refetchPortfolio();
+      refetchAutoMintStats();
+    },
+    onError: (error) => toast.error(`Mint cycle failed: ${error.message}`),
+  });
+  
+  const updateAutoMintConfigMutation = trpc.nftEmpire.updateAutoMintConfig.useMutation({
+    onSuccess: () => {
+      toast.success('Auto-mint configuration updated');
+      refetchAutoMintConfig();
+    },
+    onError: (error) => toast.error(`Update failed: ${error.message}`),
+  });
+  
+  // Sync auto-mint enabled state
+  useEffect(() => {
+    if (autoMintConfig) {
+      setAutoMintEnabled(autoMintConfig.enabled);
+    }
+  }, [autoMintConfig]);
   
   // Real NFT queries - NO DEMO DATA
   const { data: userNfts, isLoading: nftsLoading, refetch: refetchNfts } = trpc.nftEmpire.getUserNfts.useQuery();
@@ -242,6 +292,10 @@ export default function NFTEmpire() {
             <TabsTrigger value="autobuyers">
               <ShoppingCart className="w-4 h-4 mr-2" />
               Auto-Buyers
+            </TabsTrigger>
+            <TabsTrigger value="automint">
+              <Zap className="w-4 h-4 mr-2" />
+              Auto-Mint {autoMintEnabled && <span className="ml-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
             </TabsTrigger>
           </TabsList>
           
@@ -576,6 +630,181 @@ export default function NFTEmpire() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          {/* Auto-Mint Tab */}
+          <TabsContent value="automint" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Auto-Mint Control Panel */}
+              <Card className="bg-zinc-900/50 border-zinc-800">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-yellow-400" />
+                    Auto-Mint Scheduler
+                    {autoMintEnabled && (
+                      <Badge className="bg-green-500/20 text-green-400 ml-2">
+                        <span className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse" />
+                        Running
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    Automatically generate and list NFTs on a schedule
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-2">
+                    {!autoMintEnabled ? (
+                      <Button
+                        onClick={() => startAutoMintMutation.mutate()}
+                        disabled={startAutoMintMutation.isPending}
+                        className="bg-green-500 hover:bg-green-600 flex-1"
+                      >
+                        {startAutoMintMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Zap className="w-4 h-4 mr-2" />
+                        )}
+                        Start Auto-Mint
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => stopAutoMintMutation.mutate()}
+                        disabled={stopAutoMintMutation.isPending}
+                        variant="destructive"
+                        className="flex-1"
+                      >
+                        {stopAutoMintMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 mr-2" />
+                        )}
+                        Stop Auto-Mint
+                      </Button>
+                    )}
+                    <Button
+                      onClick={() => runMintCycleMutation.mutate({})}
+                      disabled={runMintCycleMutation.isPending}
+                      variant="outline"
+                    >
+                      {runMintCycleMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      )}
+                      Run Now
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm text-zinc-400">NFTs per Cycle</label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={10}
+                        value={autoMintConfig?.nftsPerCycle || 3}
+                        onChange={(e) => updateAutoMintConfigMutation.mutate({ nftsPerCycle: parseInt(e.target.value) || 3 })}
+                        className="bg-zinc-800 border-zinc-700"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-zinc-400">Interval (minutes)</label>
+                      <Input
+                        type="number"
+                        min={5}
+                        max={120}
+                        value={autoMintConfig?.intervalMinutes || 30}
+                        onChange={(e) => updateAutoMintConfigMutation.mutate({ intervalMinutes: parseInt(e.target.value) || 30 })}
+                        className="bg-zinc-800 border-zinc-700"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm text-zinc-400">Min Price to Auto-Accept (ETH)</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min={0.01}
+                      value={autoMintConfig?.minPriceThreshold || 0.05}
+                      onChange={(e) => updateAutoMintConfigMutation.mutate({ minPriceThreshold: parseFloat(e.target.value) || 0.05 })}
+                      className="bg-zinc-800 border-zinc-700"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 text-sm text-zinc-400">
+                      <input
+                        type="checkbox"
+                        checked={autoMintConfig?.autoList ?? true}
+                        onChange={(e) => updateAutoMintConfigMutation.mutate({ autoList: e.target.checked })}
+                        className="rounded"
+                      />
+                      Auto-List on Marketplaces
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-zinc-400">
+                      <input
+                        type="checkbox"
+                        checked={autoMintConfig?.autoSubmitToBuyers ?? true}
+                        onChange={(e) => updateAutoMintConfigMutation.mutate({ autoSubmitToBuyers: e.target.checked })}
+                        className="rounded"
+                      />
+                      Submit to Auto-Buyers
+                    </label>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Auto-Mint Statistics */}
+              <Card className="bg-zinc-900/50 border-zinc-800">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-green-400" />
+                    Auto-Mint Statistics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-zinc-800/50 rounded-lg p-4">
+                      <p className="text-sm text-zinc-400">Total Auto-Minted</p>
+                      <p className="text-2xl font-bold text-white">{autoMintStats?.totalMinted || 0}</p>
+                    </div>
+                    <div className="bg-zinc-800/50 rounded-lg p-4">
+                      <p className="text-sm text-zinc-400">Total Earnings</p>
+                      <p className="text-2xl font-bold text-green-400">${(autoMintStats?.totalEarnings || 0).toFixed(2)}</p>
+                    </div>
+                    <div className="bg-zinc-800/50 rounded-lg p-4">
+                      <p className="text-sm text-zinc-400">Last Run</p>
+                      <p className="text-lg font-medium text-white">
+                        {autoMintStats?.lastRunAt 
+                          ? new Date(autoMintStats.lastRunAt).toLocaleTimeString()
+                          : 'Never'}
+                      </p>
+                    </div>
+                    <div className="bg-zinc-800/50 rounded-lg p-4">
+                      <p className="text-sm text-zinc-400">Next Run</p>
+                      <p className="text-lg font-medium text-white">
+                        {autoMintStats?.nextRunAt && autoMintStats.enabled
+                          ? new Date(autoMintStats.nextRunAt).toLocaleTimeString()
+                          : 'Not scheduled'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                    <h4 className="text-sm font-medium text-yellow-400 mb-2">How Auto-Mint Works</h4>
+                    <ul className="text-xs text-zinc-400 space-y-1">
+                      <li>• Generates high-value AI NFTs on schedule</li>
+                      <li>• Auto-lists on OpenSea, Blur, Magic Eden, and more</li>
+                      <li>• Submits to auto-buyer platforms for instant sales</li>
+                      <li>• Auto-accepts offers above your price threshold</li>
+                      <li>• Earnings accumulate in your portfolio wallet</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

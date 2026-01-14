@@ -3939,6 +3939,63 @@ const nftEmpireRouter = router({
       return getHighValueCategories();
     }),
 
+  // Get auto-mint configuration
+  getAutoMintConfig: protectedProcedure
+    .query(async () => {
+      const { getAutoMintConfig } = await import('./_core/nftEmpire');
+      return getAutoMintConfig();
+    }),
+
+  // Update auto-mint configuration
+  updateAutoMintConfig: protectedProcedure
+    .input(z.object({
+      enabled: z.boolean().optional(),
+      intervalMinutes: z.number().optional(),
+      nftsPerCycle: z.number().optional(),
+      autoList: z.boolean().optional(),
+      autoSubmitToBuyers: z.boolean().optional(),
+      minPriceThreshold: z.number().optional(),
+      targetCategories: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { updateAutoMintConfig } = await import('./_core/nftEmpire');
+      return updateAutoMintConfig(input);
+    }),
+
+  // Start auto-mint scheduler
+  startAutoMint: protectedProcedure
+    .mutation(async () => {
+      const { startAutoMintScheduler } = await import('./_core/nftEmpire');
+      startAutoMintScheduler();
+      return { success: true, message: 'Auto-mint scheduler started' };
+    }),
+
+  // Stop auto-mint scheduler
+  stopAutoMint: protectedProcedure
+    .mutation(async () => {
+      const { stopAutoMintScheduler } = await import('./_core/nftEmpire');
+      stopAutoMintScheduler();
+      return { success: true, message: 'Auto-mint scheduler stopped' };
+    }),
+
+  // Run manual mint cycle
+  runMintCycle: protectedProcedure
+    .input(z.object({
+      count: z.number().optional(),
+      category: z.string().optional(),
+    }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const { triggerManualMintCycle } = await import('./_core/nftEmpire');
+      return triggerManualMintCycle(ctx.user.id, input?.count, input?.category);
+    }),
+
+  // Get auto-mint statistics
+  getAutoMintStats: protectedProcedure
+    .query(async () => {
+      const { getAutoMintStats } = await import('./_core/nftEmpire');
+      return getAutoMintStats();
+    }),
+
   // OpenSea API Status
   getOpenSeaStatus: protectedProcedure
     .query(async () => {

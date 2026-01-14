@@ -890,3 +890,279 @@ function calculateAutoBuyOffer(nft: EmpireNFT, platform: typeof AUTO_BUY_PLATFOR
   
   return Math.round(baseValue * typeMultiplier * Math.sqrt(rarityMultiplier) * 100) / 100;
 }
+
+
+// Auto-minting scheduler configuration
+interface AutoMintConfig {
+  enabled: boolean;
+  intervalMinutes: number;
+  nftsPerCycle: number;
+  autoList: boolean;
+  autoSubmitToBuyers: boolean;
+  minPriceThreshold: number; // Minimum price to auto-accept offers
+  targetCategories: string[];
+  lastRunAt?: Date;
+  totalMinted: number;
+  totalEarnings: number;
+}
+
+let autoMintConfig: AutoMintConfig = {
+  enabled: false,
+  intervalMinutes: 30,
+  nftsPerCycle: 3,
+  autoList: true,
+  autoSubmitToBuyers: true,
+  minPriceThreshold: 0.05, // 0.05 ETH minimum
+  targetCategories: ["ai_art", "generative", "pfp"],
+  totalMinted: 0,
+  totalEarnings: 0
+};
+
+let autoMintInterval: NodeJS.Timeout | null = null;
+
+/**
+ * Get auto-mint configuration
+ */
+export function getAutoMintConfig(): AutoMintConfig {
+  return { ...autoMintConfig };
+}
+
+/**
+ * Update auto-mint configuration
+ */
+export function updateAutoMintConfig(config: Partial<AutoMintConfig>): AutoMintConfig {
+  autoMintConfig = { ...autoMintConfig, ...config };
+  
+  // Restart scheduler if enabled status changed
+  if (config.enabled !== undefined) {
+    if (config.enabled) {
+      startAutoMintScheduler();
+    } else {
+      stopAutoMintScheduler();
+    }
+  }
+  
+  return autoMintConfig;
+}
+
+/**
+ * Start the auto-minting scheduler
+ */
+export function startAutoMintScheduler(): void {
+  if (autoMintInterval) {
+    clearInterval(autoMintInterval);
+  }
+  
+  autoMintConfig.enabled = true;
+  
+  console.log(`[NFT Empire] Starting auto-mint scheduler: ${autoMintConfig.nftsPerCycle} NFTs every ${autoMintConfig.intervalMinutes} minutes`);
+  
+  // Run immediately
+  runAutoMintCycle();
+  
+  // Then run on interval
+  autoMintInterval = setInterval(() => {
+    runAutoMintCycle();
+  }, autoMintConfig.intervalMinutes * 60 * 1000);
+}
+
+/**
+ * Stop the auto-minting scheduler
+ */
+export function stopAutoMintScheduler(): void {
+  if (autoMintInterval) {
+    clearInterval(autoMintInterval);
+    autoMintInterval = null;
+  }
+  autoMintConfig.enabled = false;
+  console.log("[NFT Empire] Auto-mint scheduler stopped");
+}
+
+/**
+ * Run a single auto-mint cycle
+ */
+export async function runAutoMintCycle(): Promise<{
+  success: boolean;
+  nftsMinted: number;
+  nftsListed: number;
+  totalValue: number;
+  offersReceived: number;
+  autoAccepted: number;
+}> {
+  const userId = 1; // System user
+  
+  console.log(`[NFT Empire] Running auto-mint cycle: ${autoMintConfig.nftsPerCycle} NFTs`);
+  
+  try {
+    await logEvent(userId, "system_event", {
+      message: `🤖 Auto-mint cycle started: Generating ${autoMintConfig.nftsPerCycle} high-value NFTs`,
+      metadata: { config: autoMintConfig }
+    });
+    
+    let nftsMinted = 0;
+    let nftsListed = 0;
+    let totalValue = 0;
+    let offersReceived = 0;
+    let autoAccepted = 0;
+    
+    for (let i = 0; i < autoMintConfig.nftsPerCycle; i++) {
+      // Select random category from targets
+      const category = autoMintConfig.targetCategories[
+        Math.floor(Math.random() * autoMintConfig.targetCategories.length)
+      ];
+      
+      try {
+        // Generate NFT
+        const nft = await generateHighValueNFT(userId, { category });
+        nftsMinted++;
+        totalValue += nft.currentValue;
+        autoMintConfig.totalMinted++;
+        
+        // Auto-list on marketplaces
+        if (autoMintConfig.autoList) {
+          const listResult = await listOnAllMarketplaces(userId, nft.id);
+          if (listResult.success) {
+            nftsListed++;
+          }
+        }
+        
+        // Submit to auto-buy platforms
+        if (autoMintConfig.autoSubmitToBuyers) {
+          const buyResult = await submitToAutoBuyPlatforms(userId, nft.id);
+          offersReceived += buyResult.offers.length;
+          
+          // Count auto-accepted offers
+          const accepted = buyResult.offers.filter(o => o.status === "accepted");
+          autoAccepted += accepted.length;
+          
+          // Add earnings from auto-accepted offers
+          const earnings = accepted.reduce((sum, o) => sum + o.offerPrice, 0);
+          autoMintConfig.totalEarnings += earnings;
+        }
+        
+        // Check for offers above threshold and auto-accept
+        await processAutoAcceptOffers(userId, nft.id);
+        
+        // Small delay between mints
+        await new Promise(r => setTimeout(r, 1000));
+        
+      } catch (error) {
+        console.error(`[NFT Empire] Failed to mint NFT ${i + 1}:`, error);
+      }
+    }
+    
+    autoMintConfig.lastRunAt = new Date();
+    
+    await logEvent(userId, "system_event", {
+      message: `✅ Auto-mint cycle complete: ${nftsMinted} minted, ${nftsListed} listed, ${autoAccepted} auto-sold`,
+      metadata: { nftsMinted, nftsListed, totalValue, offersReceived, autoAccepted }
+    });
+    
+    return { success: true, nftsMinted, nftsListed, totalValue, offersReceived, autoAccepted };
+    
+  } catch (error) {
+    console.error("[NFT Empire] Auto-mint cycle failed:", error);
+    return { success: false, nftsMinted: 0, nftsListed: 0, totalValue: 0, offersReceived: 0, autoAccepted: 0 };
+  }
+}
+
+/**
+ * Process and auto-accept offers above threshold
+ */
+async function processAutoAcceptOffers(userId: number, nftId: string): Promise<number> {
+  const nft = empireNFTs.find(n => n.id === nftId);
+  if (!nft) return 0;
+  
+  let acceptedCount = 0;
+  
+  // Check marketplace offers
+  for (const listing of nft.listings) {
+    if (listing.bestOffer && listing.bestOffer >= autoMintConfig.minPriceThreshold) {
+      // Auto-accept the offer
+      listing.status = "sold";
+      nft.status = "sold";
+      
+      nft.transactionHistory.push({
+        type: "sale",
+        amount: listing.bestOffer,
+        currency: "ETH",
+        timestamp: new Date()
+      });
+      
+      portfolioStats.totalEarnings += listing.bestOffer * 2500; // Convert to USD
+      portfolioStats.totalSales++;
+      portfolioStats.walletBalance += listing.bestOffer * 2500;
+      
+      await logEvent(userId, "system_event", {
+        message: `💰 Auto-accepted offer: ${listing.bestOffer.toFixed(4)} ETH on ${listing.marketplace}`,
+        metadata: { nftId, marketplace: listing.marketplace, price: listing.bestOffer }
+      });
+      
+      acceptedCount++;
+      break; // Only accept one offer per NFT
+    }
+  }
+  
+  return acceptedCount;
+}
+
+/**
+ * Get auto-mint statistics
+ */
+export function getAutoMintStats(): {
+  enabled: boolean;
+  totalMinted: number;
+  totalEarnings: number;
+  lastRunAt?: Date;
+  nextRunAt?: Date;
+  config: AutoMintConfig;
+} {
+  const nextRunAt = autoMintConfig.lastRunAt && autoMintConfig.enabled
+    ? new Date(autoMintConfig.lastRunAt.getTime() + autoMintConfig.intervalMinutes * 60 * 1000)
+    : undefined;
+  
+  return {
+    enabled: autoMintConfig.enabled,
+    totalMinted: autoMintConfig.totalMinted,
+    totalEarnings: autoMintConfig.totalEarnings,
+    lastRunAt: autoMintConfig.lastRunAt,
+    nextRunAt,
+    config: { ...autoMintConfig }
+  };
+}
+
+/**
+ * Manually trigger a mint cycle
+ */
+export async function triggerManualMintCycle(
+  userId: number,
+  count?: number,
+  category?: string
+): Promise<{
+  success: boolean;
+  nftsMinted: number;
+  totalValue: number;
+  nfts: EmpireNFT[];
+}> {
+  const nftsToMint = count || autoMintConfig.nftsPerCycle;
+  
+  await logEvent(userId, "system_event", {
+    message: `🎯 Manual mint triggered: ${nftsToMint} NFTs`,
+    metadata: { count: nftsToMint, category }
+  });
+  
+  const result = await batchGenerateEmpireNFTs(userId, nftsToMint, {
+    category,
+    autoList: true,
+    autoSubmitToBuyers: true
+  });
+  
+  autoMintConfig.totalMinted += result.generated;
+  
+  return {
+    success: result.generated > 0,
+    nftsMinted: result.generated,
+    totalValue: result.totalValue,
+    nfts: result.nfts
+  };
+}
