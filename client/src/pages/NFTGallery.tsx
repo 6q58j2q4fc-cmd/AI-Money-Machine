@@ -140,11 +140,17 @@ export default function NFTGallery() {
     setIsBatchGenerating(true);
     toast.info(`Starting batch generation of ${batchCount} NFTs...`);
     
-    await batchGenerateMutation.mutateAsync({
-      count: batchCount,
-      collectionName,
-      style: selectedStyle || undefined
-    });
+    try {
+      await batchGenerateMutation.mutateAsync({
+        count: batchCount,
+        collectionName,
+        style: selectedStyle === 'random' ? undefined : selectedStyle || undefined
+      });
+    } catch (error: any) {
+      console.error('Batch generation error:', error);
+      toast.error(error.message || 'Batch generation failed');
+      setIsBatchGenerating(false);
+    }
   };
 
   const handleAutoList = async (nftId: string) => {
@@ -634,7 +640,7 @@ const stats = useMemo(() => {
                         <SelectValue placeholder="Random styles" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Random (AI chooses best)</SelectItem>
+                        <SelectItem value="random">Random (AI chooses best)</SelectItem>
                         {artStyles?.map((style) => (
                           <SelectItem key={style.style} value={style.style}>
                             {style.style}

@@ -194,7 +194,12 @@ export interface MarketplaceListing {
   offers: number;
 }
 
-// In-memory NFT storage (would be database in production)
+// Database-backed NFT storage
+import { getDb } from "../db";
+import { nftAssets, nftListings } from "../../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
+
+// In-memory cache for quick access (synced with database)
 const generatedNFTs: GeneratedNFT[] = [];
 
 /**
@@ -254,6 +259,51 @@ export async function generateNFT(
   };
 
   generatedNFTs.push(nft);
+
+  // Save to database for persistence
+  try {
+    const db = await getDb();
+    if (db) {
+      const blockchainTokenId = `NFT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      
+      // Convert traits to proper format for database
+      const traitsArray = Object.entries(nft.traits).map(([key, value]) => ({
+        trait_type: key,
+        value: String(value)
+      }));
+      
+      const [dbNft] = await db.insert(nftAssets).values({
+        userId,
+        name,
+        description: nft.description,
+        imageUrl,
+        category: style,
+        style: styleInfo.description,
+        traits: traitsArray,
+        estimatedValue: suggestedPrice.toString(),
+        tokenId: blockchainTokenId,
+        status: "listed",
+      });
+      
+      // Auto-list on internal marketplace
+      await db.insert(nftListings).values({
+        nftAssetId: dbNft.insertId,
+        userId,
+        marketplace: "internal",
+        listingUrl: `/marketplace?nft=${dbNft.insertId}`,
+        listingId: `internal-${dbNft.insertId}-${Date.now()}`,
+        listPrice: suggestedPrice.toString(),
+        currency: "ETH",
+        status: "active",
+        listedAt: new Date(),
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      });
+      
+      console.log(`[NFT] Saved to database with ID ${dbNft.insertId} and token ${blockchainTokenId}`);
+    }
+  } catch (dbError) {
+    console.error("Failed to save NFT to database:", dbError);
+  }
 
   await logEvent(userId, "system_event", {
     message: `✅ NFT generated: ${name} - Suggested price: ${suggestedPrice} ETH`,

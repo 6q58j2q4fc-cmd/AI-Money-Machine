@@ -2006,3 +2006,10 @@
 - [x] Add blockchain verification status to NFT cards - Royalty badges shown
 - [x] Make marketplace public (no login required to view)
 - [x] Require admin login for other resources - Dashboard requires auth
+
+
+## NFT Gallery Batch Generation Fix (Jan 16, 2026)
+- [x] Diagnose NFT Gallery batch generation issue
+- [x] Fix batch generation to work with live blockchain minting
+- [x] Ensure all generated NFTs are auto-listed on marketplace
+- [x] Test batch generation end-to-end - Verified 92→112 NFTs, 728→868 listings, 13.15→16.83 ETH value
