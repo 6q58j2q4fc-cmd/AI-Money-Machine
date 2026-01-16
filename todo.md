@@ -2086,3 +2086,9 @@
 - [x] Show real-time system health indicators - Green pulse indicators for all systems
 - [x] Display NFT generation, listing, and sales stats - Live data from portfolio query
 - [x] Add overall system performance score - System status bar with blockchain/API status
+
+
+## Configuration Tasks (Jan 16, 2026)
+- [x] Enable Auto-Mint Scheduler in NFT Gallery - Enabled with 6-hour interval, 3 NFTs per cycle, next run 6:15 PM
+- [x] Verify OpenSea API key connection is working - Connected with key ...031q7fpz, auto-listing enabled
+- [x] Configure price alert thresholds in NFT Watchlist - Buy alert at 10% drop, Sell alert at 20% increase
