@@ -60,7 +60,8 @@ interface OpenSeaCollection {
  * Get OpenSea API key from environment
  */
 function getOpenSeaApiKey(): string | null {
-  return process.env.OPENSEA_API_KEY || null;
+  // Check multiple possible env var names
+  return process.env.OPENSEA_API_KEY || process.env.OPENSEA_API || null;
 }
 
 /**

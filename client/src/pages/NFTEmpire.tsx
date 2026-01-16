@@ -996,7 +996,8 @@ export default function NFTEmpire() {
                             </div>
                           )}
                         </div>
-                      )})}
+                      )
+                    })}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-zinc-400">

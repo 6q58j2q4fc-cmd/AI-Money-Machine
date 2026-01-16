@@ -51,10 +51,8 @@ export const stripeRouter = router({
 
   // Get user's payment history
   getPaymentHistory: protectedProcedure
-    .input(z.object({ userId: z.string().optional() }))
-    .query(async ({ ctx, input }) => {
-      const userId = input.userId || ctx.user.id.toString();
-      return getUserPaymentHistory(userId);
+    .query(async ({ ctx }) => {
+      return getUserPaymentHistory(ctx.user.id.toString());
     }),
 
   // Get sales statistics (admin only)

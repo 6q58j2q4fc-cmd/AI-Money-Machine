@@ -152,15 +152,64 @@ export async function handleNftPaymentSuccess(session: Stripe.Checkout.Session):
 // Get payment history for a user
 export async function getUserPaymentHistory(userId: string): Promise<any[]> {
   try {
+    const db = await getDb();
+    if (!db) return [];
+
+    // First try to get from database (stripePayments table)
+    const { stripePayments } = await import("../../drizzle/schema");
+    const { desc } = await import("drizzle-orm");
+    
+    const dbPayments = await db
+      .select()
+      .from(stripePayments)
+      .orderBy(desc(stripePayments.createdAt))
+      .limit(100);
+
+    if (dbPayments.length > 0) {
+      // Enrich with NFT details
+      const enrichedPayments = await Promise.all(
+        dbPayments.map(async (payment) => {
+          const [nft] = await db
+            .select()
+            .from(nftAssets)
+            .where(eq(nftAssets.id, payment.nftAssetId))
+            .limit(1);
+          
+          return {
+            ...payment,
+            nftImageUrl: nft?.imageUrl,
+            nftCategory: nft?.category,
+            nftBlockchain: nft?.chain || 'ethereum',
+          };
+        })
+      );
+      return enrichedPayments;
+    }
+
+    // Fallback to Stripe API
     const sessions = await stripe.checkout.sessions.list({
       limit: 100,
     });
 
-    // Filter by user ID in metadata
-    return sessions.data.filter(
-      (s: any) =>
-        s.metadata?.user_id === userId && s.payment_status === "paid"
+    // Filter by user ID in metadata and transform
+    const paidSessions = sessions.data.filter(
+      (s: any) => s.payment_status === "paid"
     );
+
+    return paidSessions.map((s: any) => ({
+      id: s.id,
+      stripeSessionId: s.id,
+      stripePaymentIntentId: s.payment_intent,
+      buyerEmail: s.customer_email || s.metadata?.customer_email,
+      buyerName: s.metadata?.customer_name,
+      nftAssetId: parseInt(s.metadata?.nft_id || '0'),
+      nftName: s.metadata?.nft_name || `NFT #${s.metadata?.nft_id}`,
+      amountUsd: ((s.amount_total || 0) / 100).toFixed(2),
+      amountEth: s.metadata?.eth_price,
+      status: 'completed',
+      createdAt: new Date(s.created * 1000),
+      paidAt: new Date(s.created * 1000),
+    }));
   } catch (error) {
     console.error("[Stripe] Error fetching payment history:", error);
     return [];

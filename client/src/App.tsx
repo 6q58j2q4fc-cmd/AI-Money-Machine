@@ -52,6 +52,7 @@ import FaucetConnections from './pages/FaucetConnections';
 import PublicMarketplace from './pages/PublicMarketplace';
 import PublicNFTDetail from './pages/PublicNFTDetail';
 import MarketplaceProfile from './pages/MarketplaceProfile';
+import PaymentHistory from './pages/PaymentHistory';
 import AdminOnly from './components/AdminOnly';
 
 // Admin-protected page wrapper
@@ -116,6 +117,7 @@ function Router() {
       <Route path="/nft-blog">{() => <AdminPage component={NftBlog} />}</Route>
       <Route path="/real-earnings">{() => <AdminPage component={RealEarnings} />}</Route>
       <Route path="/faucet-connections">{() => <AdminPage component={FaucetConnections} />}</Route>
+      <Route path="/payment-history" component={PaymentHistory} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

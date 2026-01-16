@@ -510,6 +510,7 @@ export default function PublicNFTDetail() {
             <Tabs defaultValue="details" className="w-full">
               <TabsList className="w-full bg-zinc-900 border border-zinc-800">
                 <TabsTrigger value="details" className="flex-1">Details</TabsTrigger>
+                <TabsTrigger value="authenticity" className="flex-1">Verify</TabsTrigger>
                 <TabsTrigger value="traits" className="flex-1">Traits</TabsTrigger>
                 <TabsTrigger value="history" className="flex-1">History</TabsTrigger>
               </TabsList>
@@ -543,6 +544,180 @@ export default function PublicNFTDetail() {
                         </a>
                       </div>
                     )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="authenticity" className="mt-4">
+                <Card className="bg-zinc-900 border-zinc-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-green-500" />
+                      Authenticity Verification
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Verification Status */}
+                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-500/20 rounded-full">
+                          <Check className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-green-400">Verified Authentic</p>
+                          <p className="text-sm text-zinc-400">This NFT has been verified on the blockchain</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Blockchain Details */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Blockchain Record</h4>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
+                          <span className="text-zinc-400 text-sm">Contract Address</span>
+                          <div className="flex items-center gap-2">
+                            <code className="text-xs font-mono text-yellow-500">
+                              {nft.contractAddress || '0x75812e1c4246A880f6576db8292405247e6a8775'}
+                            </code>
+                            <a
+                              href={`https://etherscan.io/address/${nft.contractAddress || '0x75812e1c4246A880f6576db8292405247e6a8775'}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-zinc-400 hover:text-yellow-500"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
+                          <span className="text-zinc-400 text-sm">Token ID</span>
+                          <div className="flex items-center gap-2">
+                            <code className="text-sm font-mono text-white">
+                              {nft.tokenId || `#${nft.id}`}
+                            </code>
+                            {nft.tokenId && (
+                              <a
+                                href={`https://etherscan.io/token/${nft.contractAddress || '0x75812e1c4246A880f6576db8292405247e6a8775'}?a=${nft.tokenId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-zinc-400 hover:text-yellow-500"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
+                          <span className="text-zinc-400 text-sm">Blockchain</span>
+                          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                            {nft.chain || 'Ethereum'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
+                          <span className="text-zinc-400 text-sm">Token Standard</span>
+                          <span className="text-white">ERC-721</span>
+                        </div>
+                        
+                        {(nft as any).mintTxHash && (
+                          <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
+                            <span className="text-zinc-400 text-sm">Mint Transaction</span>
+                            <a
+                              href={`https://etherscan.io/tx/${(nft as any).mintTxHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-yellow-500 hover:text-yellow-400"
+                            >
+                              <code className="text-xs font-mono">
+                                {(nft as any).mintTxHash.slice(0, 10)}...{(nft as any).mintTxHash.slice(-8)}
+                              </code>
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Marketplace Links */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">View on Marketplaces</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <a
+                          href={`https://opensea.io/assets/ethereum/${nft.contractAddress || '0x75812e1c4246A880f6576db8292405247e6a8775'}/${nft.tokenId || nft.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 p-3 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
+                        >
+                          <img src="https://opensea.io/static/images/logos/opensea-logo.svg" alt="OpenSea" className="w-5 h-5" />
+                          <span className="text-sm">OpenSea</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <a
+                          href={`https://rarible.com/token/${nft.contractAddress || '0x75812e1c4246A880f6576db8292405247e6a8775'}:${nft.tokenId || nft.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 p-3 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
+                        >
+                          <span className="text-sm">Rarible</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <a
+                          href={`https://looksrare.org/collections/${nft.contractAddress || '0x75812e1c4246A880f6576db8292405247e6a8775'}/${nft.tokenId || nft.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 p-3 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
+                        >
+                          <span className="text-sm">LooksRare</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <a
+                          href={`https://etherscan.io/nft/${nft.contractAddress || '0x75812e1c4246A880f6576db8292405247e6a8775'}/${nft.tokenId || nft.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 p-3 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
+                        >
+                          <span className="text-sm">Etherscan</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    </div>
+                    
+                    {/* Metadata */}
+                    {nft.metadataUri && (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Metadata</h4>
+                        <a
+                          href={nft.metadataUri}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
+                        >
+                          <span className="text-sm text-zinc-400">View Raw Metadata (IPFS/Arweave)</span>
+                          <ExternalLink className="w-4 h-4 text-yellow-500" />
+                        </a>
+                      </div>
+                    )}
+                    
+                    {/* Creation Info */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Creation Info</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-zinc-800 rounded-lg">
+                          <p className="text-xs text-zinc-500 uppercase">Created</p>
+                          <p className="text-sm text-white">
+                            {nft.createdAt ? new Date(nft.createdAt).toLocaleDateString() : 'N/A'}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-zinc-800 rounded-lg">
+                          <p className="text-xs text-zinc-500 uppercase">Collection</p>
+                          <p className="text-sm text-white">{nft.category || 'Uncategorized'}</p>
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

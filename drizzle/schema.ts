@@ -1344,3 +1344,42 @@ export const nftCollections = mysqlTable("nft_collections", {
 });
 export type NftCollection = typeof nftCollections.$inferSelect;
 export type InsertNftCollection = typeof nftCollections.$inferInsert;
+
+
+/**
+ * Stripe Payments - Track NFT purchases via Stripe
+ */
+export const stripePayments = mysqlTable("stripe_payments", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // User info
+  userId: int("userId"), // Optional - may be guest checkout
+  buyerEmail: varchar("buyerEmail", { length: 320 }).notNull(),
+  buyerName: varchar("buyerName", { length: 200 }),
+  
+  // NFT info
+  nftAssetId: int("nftAssetId").notNull(),
+  nftName: varchar("nftName", { length: 500 }),
+  
+  // Payment details
+  amountUsd: decimal("amountUsd", { precision: 10, scale: 2 }).notNull(),
+  amountEth: decimal("amountEth", { precision: 18, scale: 8 }),
+  
+  // Stripe identifiers
+  stripeSessionId: varchar("stripeSessionId", { length: 200 }).notNull(),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 200 }),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 200 }),
+  
+  // Status
+  status: mysqlEnum("status", ["pending", "completed", "failed", "refunded", "cancelled"]).default("pending").notNull(),
+  
+  // Transaction details
+  receiptUrl: text("receiptUrl"),
+  
+  // Timestamps
+  paidAt: timestamp("paidAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type StripePayment = typeof stripePayments.$inferSelect;
+export type InsertStripePayment = typeof stripePayments.$inferInsert;
