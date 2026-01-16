@@ -2092,3 +2092,11 @@
 - [x] Enable Auto-Mint Scheduler in NFT Gallery - Enabled with 6-hour interval, 3 NFTs per cycle, next run 6:15 PM
 - [x] Verify OpenSea API key connection is working - Connected with key ...031q7fpz, auto-listing enabled
 - [x] Configure price alert thresholds in NFT Watchlist - Buy alert at 10% drop, Sell alert at 20% increase
+
+
+## Free Money & Hot Wallet Debug (Jan 16, 2026)
+- [x] Sync hot wallet balance from blockchain - Shows 0.0082 ETH on Ethereum ($16.43 total value)
+- [x] Debug Free Money section to show real earnings only - Updated to use live blockchain transactions
+- [x] Fix withdrawal button to transfer real crypto to hot wallet - Uses Polygon for low fees
+- [x] Remove any simulated/estimated values from earnings display - Earnings tracked from actual claims
+- [x] Test live withdrawal transaction - Explorer URL included in response

@@ -1,0 +1,12 @@
+{
+  "query": "SELECT COUNT(*) as total_nfts FROM nft_assets; SELECT COUNT(*) as total_listings FROM nft_listings WHERE status = 'active'; SELECT SUM(CAST(price AS DECIMAL(20,8))) as total_value FROM nft_listings WHERE status = 'active';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT COUNT(*) as total_nfts FROM nft_assets; SELECT COUNT(*) as total_listings FROM nft_listings WHERE status = 'active'; SELECT SUM(CAST(price AS DECIMAL(20,8))) as total_value FROM nft_listings WHERE status = 'active';",
+  "returncode": 1,
+  "logs": [
+    "total_nfts",
+    "119",
+    "total_listings",
+    "891",
+    "ERROR 1054 (42S22) at line 1: Unknown column 'price' in 'where clause'"
+  ]
+}

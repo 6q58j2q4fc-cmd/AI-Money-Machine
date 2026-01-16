@@ -672,26 +672,88 @@ export async function cashOutEarnings(
 }
 
 /**
- * Get full portfolio with all NFTs and stats
+ * Get full portfolio with all NFTs and stats - pulls from database
  */
-export function getEmpirePortfolio(): EmpirePortfolio {
-  const totalValue = empireNFTs.reduce((sum, nft) => sum + nft.currentValue, 0);
-  const activeListings = empireNFTs.filter(n => n.status === "listed").length;
-  const soldNFTs = empireNFTs.filter(n => n.status === "sold").length;
-  const pendingOffers = empireNFTs.reduce((sum, nft) => 
-    sum + nft.autoBuyOffers.filter(o => o.status === "pending").length, 0
-  );
+export async function getEmpirePortfolio(): Promise<EmpirePortfolio> {
+  // Try to get real data from database first
+  try {
+    const { getDb } = await import('../db');
+    const { nftAssets, nftListings } = await import('../../drizzle/schema');
+    const db = await getDb();
+    
+    if (!db) {
+      throw new Error('Database not available');
+    }
+    
+    // Get all NFT assets from database
+    const dbNfts = await db.select().from(nftAssets).execute();
+    const dbListings = await db.select().from(nftListings).execute();
+    
+    // Calculate stats from database
+    const totalNFTs = dbNfts.length;
+    const activeListings = dbListings.filter(l => l.status === 'active').length;
+    const soldNFTs = dbNfts.filter(n => n.status === 'sold').length;
+    
+    // Calculate total value from listings
+    let totalValue = 0;
+    for (const listing of dbListings) {
+      if (listing.status === 'active' && listing.listPrice) {
+        totalValue += parseFloat(listing.listPrice);
+      }
+    }
+    
+    // If no database NFTs, fall back to in-memory
+    if (totalNFTs === 0 && empireNFTs.length > 0) {
+      const inMemoryValue = empireNFTs.reduce((sum, nft) => sum + nft.currentValue, 0);
+      const inMemoryListings = empireNFTs.filter(n => n.status === "listed").length;
+      const inMemorySold = empireNFTs.filter(n => n.status === "sold").length;
+      const pendingOffers = empireNFTs.reduce((sum, nft) => 
+        sum + nft.autoBuyOffers.filter(o => o.status === "pending").length, 0
+      );
+      
+      return {
+        totalNFTs: empireNFTs.length,
+        totalValue: inMemoryValue,
+        totalEarnings: portfolioStats.totalEarnings,
+        pendingOffers,
+        activeListings: inMemoryListings,
+        soldNFTs: inMemorySold,
+        walletBalance: portfolioStats.walletBalance,
+        nfts: [...empireNFTs]
+      };
+    }
+    
+    // Return database-backed portfolio
+    return {
+      totalNFTs,
+      totalValue,
+      totalEarnings: portfolioStats.totalEarnings,
+      pendingOffers: 0,
+      activeListings,
+      soldNFTs,
+      walletBalance: portfolioStats.walletBalance,
+      nfts: [...empireNFTs]
+    };
+  } catch (error) {
+    // Fall back to in-memory storage on error
+    const totalValue = empireNFTs.reduce((sum, nft) => sum + nft.currentValue, 0);
+    const activeListings = empireNFTs.filter(n => n.status === "listed").length;
+    const soldNFTs = empireNFTs.filter(n => n.status === "sold").length;
+    const pendingOffers = empireNFTs.reduce((sum, nft) => 
+      sum + nft.autoBuyOffers.filter(o => o.status === "pending").length, 0
+    );
 
-  return {
-    totalNFTs: empireNFTs.length,
-    totalValue,
-    totalEarnings: portfolioStats.totalEarnings,
-    pendingOffers,
-    activeListings,
-    soldNFTs,
-    walletBalance: portfolioStats.walletBalance,
-    nfts: [...empireNFTs]
-  };
+    return {
+      totalNFTs: empireNFTs.length,
+      totalValue,
+      totalEarnings: portfolioStats.totalEarnings,
+      pendingOffers,
+      activeListings,
+      soldNFTs,
+      walletBalance: portfolioStats.walletBalance,
+      nfts: [...empireNFTs]
+    };
+  }
 }
 
 /**
