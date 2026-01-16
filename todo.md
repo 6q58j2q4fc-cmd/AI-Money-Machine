@@ -2307,3 +2307,47 @@
 - [x] Add quick copy fields (Name, Description, Price, Image URL)
 - [x] Add "View on OpenSea" button on NFT detail page (for minted NFTs)
 - [x] Test OpenSea export functionality - working correctly
+
+
+## January 16, 2026 - Complete Custom Notification System
+
+### Database & Backend
+- [x] Create notifications table in database schema
+- [x] Create notification preferences table for user settings
+- [x] Create push subscriptions table for web push
+- [x] Build notification service with CRUD operations (notificationService.ts)
+- [x] Add notification triggers for key events
+
+### In-App Notifications
+- [x] Create notification bell component with unread count badge (NotificationBell.tsx)
+- [x] Build notification dropdown with list of notifications
+- [x] Add mark as read/unread functionality
+- [x] Add mark all as read button
+- [x] Add notification settings page (/notifications)
+- [x] Add notifications router with tRPC endpoints
+
+### Email Notifications
+- [x] Create email service (emailService.ts)
+- [x] Create email templates for different notification types
+- [x] NFT sale notification template
+- [x] Purchase confirmation template
+- [x] Payment received template
+- [x] Welcome email template
+- [x] Weekly summary template
+
+### Push Notifications
+- [x] Create push notification service (pushService.ts)
+- [x] Add push subscription database table
+- [x] Implement push notification triggers
+- [x] Add NFT sold/purchased push notifications
+- [x] Add payment received push notifications
+- [x] Add price alert push notifications
+
+### Event Integration
+- [x] Trigger notifications on NFT purchase (Stripe webhook)
+- [x] Trigger notifications on NFT sale (Stripe webhook)
+- [x] Send in-app, email, and push notifications on sale
+- [x] Add test notification button in settings
+- [ ] Trigger notifications on price changes
+- [ ] Trigger notifications on new listings
+- [ ] Trigger notifications on article distribution

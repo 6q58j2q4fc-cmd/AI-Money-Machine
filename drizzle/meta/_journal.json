@@ -141,6 +141,13 @@
       "when": 1768581579226,
       "tag": "0019_wealthy_glorian",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1768589984286,
+      "tag": "0020_wet_blizzard",
+      "breakpoints": true
     }
   ]
 }

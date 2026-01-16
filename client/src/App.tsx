@@ -53,6 +53,7 @@ import PublicMarketplace from './pages/PublicMarketplace';
 import PublicNFTDetail from './pages/PublicNFTDetail';
 import MarketplaceProfile from './pages/MarketplaceProfile';
 import PaymentHistory from './pages/PaymentHistory';
+import NotificationSettings from './pages/NotificationSettings';
 import AdminOnly from './components/AdminOnly';
 
 // Admin-protected page wrapper
@@ -118,6 +119,7 @@ function Router() {
       <Route path="/real-earnings">{() => <AdminPage component={RealEarnings} />}</Route>
       <Route path="/faucet-connections">{() => <AdminPage component={FaucetConnections} />}</Route>
       <Route path="/payment-history" component={PaymentHistory} />
+      <Route path="/notifications" component={NotificationSettings} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

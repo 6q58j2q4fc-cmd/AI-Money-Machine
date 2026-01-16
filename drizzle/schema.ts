@@ -1383,3 +1383,128 @@ export const stripePayments = mysqlTable("stripe_payments", {
 });
 export type StripePayment = typeof stripePayments.$inferSelect;
 export type InsertStripePayment = typeof stripePayments.$inferInsert;
+
+
+/**
+ * Notifications - In-app notifications for users
+ */
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Target user
+  userId: int("userId").notNull(),
+  
+  // Notification content
+  type: mysqlEnum("type", [
+    "nft_sold",
+    "nft_purchased", 
+    "price_alert",
+    "new_listing",
+    "article_published",
+    "article_distributed",
+    "payment_received",
+    "payment_sent",
+    "system",
+    "promotion"
+  ]).notNull(),
+  
+  title: varchar("title", { length: 200 }).notNull(),
+  message: text("message").notNull(),
+  
+  // Optional link to related content
+  linkUrl: text("linkUrl"),
+  linkText: varchar("linkText", { length: 100 }),
+  
+  // Related entity IDs
+  relatedNftId: int("relatedNftId"),
+  relatedArticleId: int("relatedArticleId"),
+  relatedPaymentId: int("relatedPaymentId"),
+  
+  // Metadata
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  
+  // Status
+  isRead: boolean("isRead").default(false).notNull(),
+  readAt: timestamp("readAt"),
+  
+  // Delivery status
+  emailSent: boolean("emailSent").default(false),
+  emailSentAt: timestamp("emailSentAt"),
+  pushSent: boolean("pushSent").default(false),
+  pushSentAt: timestamp("pushSentAt"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+/**
+ * Notification Preferences - User settings for notifications
+ */
+export const notificationPreferences = mysqlTable("notification_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull().unique(),
+  
+  // In-app notifications
+  inAppEnabled: boolean("inAppEnabled").default(true).notNull(),
+  inAppNftSold: boolean("inAppNftSold").default(true).notNull(),
+  inAppNftPurchased: boolean("inAppNftPurchased").default(true).notNull(),
+  inAppPriceAlert: boolean("inAppPriceAlert").default(true).notNull(),
+  inAppNewListing: boolean("inAppNewListing").default(true).notNull(),
+  inAppArticle: boolean("inAppArticle").default(true).notNull(),
+  inAppPayment: boolean("inAppPayment").default(true).notNull(),
+  inAppSystem: boolean("inAppSystem").default(true).notNull(),
+  inAppPromotion: boolean("inAppPromotion").default(false).notNull(),
+  
+  // Email notifications
+  emailEnabled: boolean("emailEnabled").default(true).notNull(),
+  emailNftSold: boolean("emailNftSold").default(true).notNull(),
+  emailNftPurchased: boolean("emailNftPurchased").default(true).notNull(),
+  emailPriceAlert: boolean("emailPriceAlert").default(false).notNull(),
+  emailNewListing: boolean("emailNewListing").default(false).notNull(),
+  emailArticle: boolean("emailArticle").default(false).notNull(),
+  emailPayment: boolean("emailPayment").default(true).notNull(),
+  emailWeeklySummary: boolean("emailWeeklySummary").default(true).notNull(),
+  
+  // Push notifications
+  pushEnabled: boolean("pushEnabled").default(false).notNull(),
+  pushSubscription: json("pushSubscription").$type<{
+    endpoint: string;
+    keys: { p256dh: string; auth: string };
+  }>(),
+  pushNftSold: boolean("pushNftSold").default(true).notNull(),
+  pushNftPurchased: boolean("pushNftPurchased").default(true).notNull(),
+  pushPriceAlert: boolean("pushPriceAlert").default(true).notNull(),
+  pushPayment: boolean("pushPayment").default(true).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreference = typeof notificationPreferences.$inferInsert;
+
+/**
+ * Push Subscriptions - Browser push notification subscriptions
+ */
+export const pushSubscriptions = mysqlTable("push_subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull(),
+  
+  // Push subscription data
+  endpoint: text("endpoint").notNull(),
+  p256dhKey: text("p256dhKey").notNull(),
+  authKey: text("authKey").notNull(),
+  
+  // Browser/device info
+  userAgent: text("userAgent"),
+  
+  // Status
+  isActive: boolean("isActive").default(true).notNull(),
+  lastUsed: timestamp("lastUsed"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;

@@ -19,6 +19,7 @@ import { logEvent, logArticleEvent, logDistributionEvent, logAutomationEvent, lo
 import { generateProductPage, publishProductPage, batchGenerateProductPages } from './_core/productPages';
 import { logError, getSystemHealth, getRecentErrors, resolveError, runDiagnostics, attemptSelfHeal, getDebuggingSummary, startContinuousMonitoring, stopContinuousMonitoring } from './_core/selfDebugger';
 import { stripeRouter } from './_core/stripeRouter';
+import { notificationsRouter } from './_core/notificationsRouter';
 import * as debugAdmin from './_core/debugAdmin';
 import * as faucetAccounts from './_core/faucetAccounts';
 import * as captchaSolver from './_core/captchaSolver';
@@ -6298,6 +6299,7 @@ export const appRouter = router({
   captcha: captchaRouter,
   publicMarketplace: publicMarketplaceRouter,
   stripe: stripeRouter,
+  notifications: notificationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

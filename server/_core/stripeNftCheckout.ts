@@ -3,6 +3,9 @@ import { getDb } from "../db";
 import { nftAssets, nftSales } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { notifyOwner } from "./notification";
+import { notifyNftSold, notifyPaymentReceived } from "./notificationService";
+import { sendNftSoldEmail, sendNftPurchasedEmail } from "./emailService";
+import { sendNftSoldPush, sendNftPurchasedPush } from "./pushService";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2025-12-15.clover",
@@ -147,6 +150,72 @@ export async function handleNftPaymentSuccess(session: Stripe.Checkout.Session):
   });
 
   console.log(`[Stripe] NFT #${nftId} sold to ${customerEmail} for ${ethPrice} ETH`);
+
+  // Send in-app notifications
+  const buyerId = parseInt(userId) || 0;
+  const sellerId = nft.userId || 1; // Default to owner if no creator
+  const usdPrice = ((session.amount_total || 0) / 100).toFixed(2);
+  
+  if (buyerId > 0) {
+    // Notify buyer
+    await notifyNftSold({
+      sellerId: sellerId,
+      buyerId: buyerId,
+      nftId: nftId,
+      nftName: nft.name || `NFT #${nftId}`,
+      price: ethPrice.toString(),
+      currency: "ETH",
+    });
+    
+    // Notify seller of payment received
+    await notifyPaymentReceived({
+      userId: sellerId,
+      amount: `$${usdPrice}`,
+      currency: "USD",
+      paymentId: 0, // Will be updated when we have payment record ID
+      source: `NFT Sale: ${nft.name}`,
+    });
+  }
+  
+  // Send email notifications (async, don't block)
+  sendNftSoldEmail({
+    sellerId: sellerId,
+    nftName: nft.name || `NFT #${nftId}`,
+    price: ethPrice.toString(),
+    currency: "ETH",
+    buyerName: customerName,
+    linkUrl: `/nft/${nftId}`,
+  }).catch(err => console.error("[Stripe] Email notification error:", err));
+  
+  if (buyerId > 0) {
+    sendNftPurchasedEmail({
+      buyerId: buyerId,
+      nftName: nft.name || `NFT #${nftId}`,
+      price: ethPrice.toString(),
+      currency: "ETH",
+      sellerName: "MoneyMachine",
+      linkUrl: `/nft/${nftId}`,
+    }).catch(err => console.error("[Stripe] Email notification error:", err));
+  }
+  
+  // Send push notifications (async, don't block)
+  sendNftSoldPush({
+    userId: sellerId,
+    nftName: nft.name || `NFT #${nftId}`,
+    price: ethPrice.toString(),
+    currency: "ETH",
+    url: `/nft/${nftId}`,
+  }).catch(err => console.error("[Stripe] Push notification error:", err));
+  
+  if (buyerId > 0) {
+    sendNftPurchasedPush({
+      userId: buyerId,
+      nftName: nft.name || `NFT #${nftId}`,
+      price: ethPrice.toString(),
+      currency: "ETH",
+      url: `/nft/${nftId}`,
+    }).catch(err => console.error("[Stripe] Push notification error:", err));
+  }
 }
 
 // Get payment history for a user
