@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,12 @@ export default function NFTGallery() {
   const [batchCount, setBatchCount] = useState(5);
   const [collectionName, setCollectionName] = useState("");
   const [autoListEnabled, setAutoListEnabled] = useState(true);
+  // Auto-mint scheduler state
+  const [autoMintEnabled, setAutoMintEnabled] = useState(false);
+  const [autoMintInterval, setAutoMintInterval] = useState("6"); // hours
+  const [autoMintCount, setAutoMintCount] = useState(3);
+  const [nextAutoMint, setNextAutoMint] = useState<Date | null>(null);
+  const [autoMintHistory, setAutoMintHistory] = useState<Array<{time: Date, count: number, success: boolean}>>([]);
   // Trust Wallet - pre-configured, no MetaMask required
   const TRUST_WALLET_ADDRESS = "0x75812e1c4246A880f6576db8292405247e6a8775";
   const OPENSEA_API_KEY = "042g5w5cQcCYJsK2CIS0jiCV8yV3qT6tMMHcUT2u031q7fpz";
@@ -130,6 +136,32 @@ export default function NFTGallery() {
       setIsGenerating(false);
     }
   };
+
+  // Auto-mint scheduler effect
+  useEffect(() => {
+    if (!autoMintEnabled) return;
+    
+    const intervalMs = parseInt(autoMintInterval) * 60 * 60 * 1000; // Convert hours to ms
+    setNextAutoMint(new Date(Date.now() + intervalMs));
+    
+    const timer = setInterval(async () => {
+      try {
+        toast.info(`Auto-minting ${autoMintCount} NFTs...`);
+        await batchGenerateMutation.mutateAsync({
+          count: autoMintCount,
+          collectionName: `Auto Collection ${new Date().toLocaleDateString()}`,
+          style: undefined
+        });
+        setAutoMintHistory(prev => [...prev, { time: new Date(), count: autoMintCount, success: true }]);
+        setNextAutoMint(new Date(Date.now() + intervalMs));
+      } catch (error) {
+        setAutoMintHistory(prev => [...prev, { time: new Date(), count: autoMintCount, success: false }]);
+        toast.error('Auto-mint failed');
+      }
+    }, intervalMs);
+    
+    return () => clearInterval(timer);
+  }, [autoMintEnabled, autoMintInterval, autoMintCount]);
 
   const handleBatchGenerate = async () => {
     if (!collectionName) {
@@ -594,6 +626,91 @@ const stats = useMemo(() => {
 
           {/* Batch Generate Tab */}
           <TabsContent value="batch" className="mt-4">
+            {/* Auto-Mint Scheduler Card */}
+            <Card className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border-purple-500/30 mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-purple-400" />
+                    Auto-Mint Scheduler
+                  </div>
+                  <Switch
+                    checked={autoMintEnabled}
+                    onCheckedChange={setAutoMintEnabled}
+                  />
+                </CardTitle>
+                <CardDescription>
+                  Automatically generate and list NFTs on a recurring schedule
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-sm text-zinc-400 mb-2 block">Interval</label>
+                    <Select value={autoMintInterval} onValueChange={setAutoMintInterval}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Every 1 hour</SelectItem>
+                        <SelectItem value="3">Every 3 hours</SelectItem>
+                        <SelectItem value="6">Every 6 hours</SelectItem>
+                        <SelectItem value="12">Every 12 hours</SelectItem>
+                        <SelectItem value="24">Every 24 hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-zinc-400 mb-2 block">NFTs per cycle: {autoMintCount}</label>
+                    <input
+                      type="range"
+                      min={1}
+                      max={10}
+                      value={autoMintCount}
+                      onChange={(e) => setAutoMintCount(parseInt(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-zinc-400 mb-2 block">Status</label>
+                    <div className="flex items-center gap-2">
+                      {autoMintEnabled ? (
+                        <>
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                          <span className="text-green-400 text-sm">Active</span>
+                          {nextAutoMint && (
+                            <span className="text-zinc-500 text-xs ml-2">
+                              Next: {nextAutoMint.toLocaleTimeString()}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-2 h-2 bg-zinc-500 rounded-full" />
+                          <span className="text-zinc-400 text-sm">Disabled</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {autoMintHistory.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-zinc-700">
+                    <h4 className="text-sm font-medium text-white mb-2">Recent Auto-Mints</h4>
+                    <div className="space-y-1 max-h-24 overflow-y-auto">
+                      {autoMintHistory.slice(-5).reverse().map((entry, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-400">{entry.time.toLocaleString()}</span>
+                          <span className={entry.success ? "text-green-400" : "text-red-400"}>
+                            {entry.success ? `✓ ${entry.count} NFTs minted` : "✗ Failed"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="bg-zinc-900/50 border-zinc-800">
                 <CardHeader>

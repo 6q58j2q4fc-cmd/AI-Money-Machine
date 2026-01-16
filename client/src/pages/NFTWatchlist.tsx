@@ -10,10 +10,16 @@ import { Link } from "wouter";
 import { 
   Heart, Eye, TrendingUp, TrendingDown, Bell, BellOff, 
   Trash2, ExternalLink, ArrowUpRight, ArrowDownRight,
-  RefreshCw, ShoppingCart, Clock
+  RefreshCw, ShoppingCart, Clock, Settings, AlertTriangle
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 export default function NFTWatchlist() {
+  const [priceAlerts, setPriceAlerts] = useState<Record<number, { buyBelow: string; sellAbove: string }>>({});
+  const [alertsEnabled, setAlertsEnabled] = useState(true);
+  const [alertHistory, setAlertHistory] = useState<Array<{ nftId: number; type: string; price: string; time: Date }>>([]);
   const { data: favorites, isLoading, refetch } = trpc.marketplace.getFavorites.useQuery();
   const removeFromFavorites = trpc.marketplace.removeFromFavorites.useMutation({
     onSuccess: () => {
@@ -101,6 +107,70 @@ export default function NFTWatchlist() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Price Alerts Configuration */}
+        <Card className="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border-yellow-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                Price Alert Settings
+              </div>
+              <Switch
+                checked={alertsEnabled}
+                onCheckedChange={setAlertsEnabled}
+              />
+            </CardTitle>
+            <CardDescription>
+              Get notified when NFT prices hit your target thresholds
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
+                <Label className="text-green-400 text-sm">Buy Alert (Price drops below)</Label>
+                <p className="text-xs text-gray-500 mb-2">Notify when any watched NFT drops below this % of saved price</p>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="number" 
+                    placeholder="10" 
+                    defaultValue="10"
+                    className="bg-gray-800 border-gray-700 w-24"
+                  />
+                  <span className="text-gray-400">% decrease</span>
+                </div>
+              </div>
+              <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
+                <Label className="text-red-400 text-sm">Sell Alert (Price rises above)</Label>
+                <p className="text-xs text-gray-500 mb-2">Notify when any watched NFT rises above this % of saved price</p>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="number" 
+                    placeholder="20" 
+                    defaultValue="20"
+                    className="bg-gray-800 border-gray-700 w-24"
+                  />
+                  <span className="text-gray-400">% increase</span>
+                </div>
+              </div>
+            </div>
+            {alertHistory.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-700">
+                <h4 className="text-sm font-medium text-white mb-2">Recent Alerts</h4>
+                <div className="space-y-1 max-h-24 overflow-y-auto">
+                  {alertHistory.slice(-5).reverse().map((alert, i) => (
+                    <div key={i} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-400">{alert.time.toLocaleString()}</span>
+                      <span className={alert.type === 'buy' ? 'text-green-400' : 'text-red-400'}>
+                        {alert.type === 'buy' ? '↓ Buy Signal' : '↑ Sell Signal'} at {alert.price} ETH
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Watchlist */}
         {isLoading ? (

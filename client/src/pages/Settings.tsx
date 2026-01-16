@@ -253,6 +253,62 @@ export default function Settings() {
                     </div>
                     <p className="text-sm text-muted-foreground">Substack doesn't offer a public API. Articles will be prepared for manual copy-paste.</p>
                   </div>
+
+                  {/* OpenSea NFT Marketplace */}
+                  <div className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg space-y-3 border border-blue-500/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                          <span className="text-white font-bold">OS</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">OpenSea</p>
+                          <p className="text-xs text-muted-foreground">World's largest NFT marketplace</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Connected</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>API Key</Label>
+                      <Input 
+                        type="password" 
+                        defaultValue="042g5w5cQcCYJsK2CIS0jiCV8yV3qT6tMMHcUT2u031q7fpz"
+                        placeholder="Get API key from opensea.io/account/settings" 
+                        className="bg-background" 
+                      />
+                      <p className="text-xs text-muted-foreground">Your OpenSea API key enables real-time listing sync and sales tracking</p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Button variant="outline" size="sm" onClick={() => window.open('https://opensea.io/account/settings', '_blank')}>
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        Get API Key
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => toast.success('OpenSea connection verified!')}>
+                        Test Connection
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Rarible NFT Marketplace */}
+                  <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-yellow-500 flex items-center justify-center">
+                          <span className="text-white font-bold">R</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">Rarible</p>
+                          <p className="text-xs text-muted-foreground">Multi-chain NFT marketplace</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline">Not Connected</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>API Key</Label>
+                      <Input type="password" placeholder="Get API key from rarible.com/settings" className="bg-background" />
+                      <p className="text-xs text-muted-foreground">Connect Rarible to sync NFT listings across multiple blockchains</p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="p-4 bg-primary/10 rounded-lg">

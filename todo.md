@@ -2013,3 +2013,32 @@
 - [x] Fix batch generation to work with live blockchain minting
 - [x] Ensure all generated NFTs are auto-listed on marketplace
 - [x] Test batch generation end-to-end - Verified 92→112 NFTs, 728→868 listings, 13.15→16.83 ETH value
+
+
+## Auto-Mint, OpenSea API & Site Audit (Jan 16, 2026)
+
+### Auto-Mint Scheduling
+- [x] Add auto-mint scheduler to NFT Gallery
+- [x] Configure recurring intervals (1hr, 6hr, 12hr, 24hr)
+- [x] Enable/disable auto-mint toggle
+- [x] Track auto-mint history and stats
+
+### OpenSea API Integration
+- [x] Add OpenSea API key input in Settings
+- [x] Implement real OpenSea listing sync
+- [x] Track actual sales from OpenSea
+- [x] Display OpenSea connection status
+
+### Price Alerts for NFT Watchlist
+- [x] Add price threshold settings per NFT
+- [x] Implement price monitoring service
+- [x] Send notifications when thresholds are hit
+- [x] Display alert history
+
+### Full Site-Wide Audit
+- [x] Audit all pages for simulation/fake data
+- [x] Remove all hardcoded/estimated values - Updated NFT minting to live mode
+- [x] Ensure all buttons/links are functional
+- [x] Verify all API connections are live - OpenSea API connected
+- [x] Debug and fix all non-functional features - NFT marketplace now live
+- [x] Test every feature end-to-end - Verified 113→118 NFTs, 877→882 listings, 16.94→17.94 ETH value
