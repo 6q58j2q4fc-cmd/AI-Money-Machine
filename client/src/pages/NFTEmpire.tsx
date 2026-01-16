@@ -549,6 +549,49 @@ export default function NFTEmpire() {
                               Submit to Auto-Buyers
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              // Download NFT image
+                              if (nft.imageUrl) {
+                                const link = document.createElement('a');
+                                link.href = nft.imageUrl;
+                                link.download = `${nft.name.replace(/\s+/g, '_')}.png`;
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                toast.success('NFT image download started!');
+                              }
+                            }}
+                          >
+                            <Database className="w-3 h-3 mr-1" />
+                            Download NFT
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              // Copy metadata JSON
+                              const metadata = {
+                                name: nft.name,
+                                description: nft.description || `${nft.name} - AI-generated NFT artwork`,
+                                image: nft.imageUrl,
+                                external_url: `https://monetizemac-rymvrvam.manus.space/marketplace/${nft.id}`,
+                                attributes: [
+                                  { trait_type: 'Category', value: nft.category },
+                                  { trait_type: 'Token ID', value: nft.tokenId || nft.id },
+                                  { trait_type: 'Chain', value: nft.chain || 'polygon' }
+                                ]
+                              };
+                              navigator.clipboard.writeText(JSON.stringify(metadata, null, 2));
+                              toast.success('NFT metadata copied to clipboard!');
+                            }}
+                          >
+                            <Send className="w-3 h-3 mr-1" />
+                            Copy Metadata
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -598,17 +641,35 @@ export default function NFTEmpire() {
           
           {/* Auto-Buyers Tab */}
           <TabsContent value="autobuyers" className="space-y-4">
+            {/* Quick Submit Instructions */}
+            <Card className="bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-yellow-500/10 border-purple-500/30">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-purple-500/20 rounded-lg">
+                    <Zap className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white mb-1">How to Submit to Auto-Buyers</h3>
+                    <p className="text-sm text-zinc-400">1. Click "Download NFT" on any NFT card to get the image file</p>
+                    <p className="text-sm text-zinc-400">2. Click "Copy Metadata" to get the JSON metadata</p>
+                    <p className="text-sm text-zinc-400">3. Visit the platform below and upload your NFT</p>
+                    <p className="text-sm text-zinc-400">4. Paste the metadata when prompted for description/attributes</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
             <Card className="bg-zinc-900/50 border-zinc-800">
               <CardHeader>
                 <CardTitle className="text-white">Auto-Buyer Platforms</CardTitle>
                 <CardDescription>
-                  Platforms that automatically purchase AI-generated art and content
+                  Platforms that automatically purchase AI-generated art and content. Click to submit your NFTs directly.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {autoBuyerPlatforms?.map((platform) => (
-                    <div key={platform.id} className="bg-zinc-800/50 rounded-lg p-4">
+                    <div key={platform.id} className="bg-zinc-800/50 rounded-lg p-4 hover:bg-zinc-800/70 transition-colors">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium text-white">{platform.name}</h4>
                         <Badge className="bg-green-500/20 text-green-400">
@@ -616,17 +677,57 @@ export default function NFTEmpire() {
                         </Badge>
                       </div>
                       <p className="text-xs text-zinc-400 mb-2">{platform.type}</p>
+                      <p className="text-xs text-zinc-500 mb-3">Accepts: Images, AI Art, Digital Content</p>
                       
-                      <a
-                        href={platform.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-yellow-400 hover:text-yellow-300 flex items-center gap-1"
-                      >
-                        Submit Content <ExternalLink className="w-3 h-3" />
-                      </a>
+                      <div className="flex flex-col gap-2">
+                        <a
+                          href={platform.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors"
+                        >
+                          Upload to {platform.name} <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => {
+                            navigator.clipboard.writeText(platform.url);
+                            toast.success(`${platform.name} URL copied!`);
+                          }}
+                        >
+                          Copy Link
+                        </Button>
+                      </div>
                     </div>
                   ))}
+                </div>
+                
+                {/* Manual Upload Section */}
+                <div className="mt-6 p-4 bg-zinc-800/30 rounded-lg border border-zinc-700">
+                  <h4 className="font-medium text-white mb-3 flex items-center gap-2">
+                    <Store className="w-4 h-4 text-blue-400" />
+                    Additional Marketplaces for Manual Upload
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <a href="https://opensea.io/asset/create" target="_blank" rel="noopener noreferrer" className="p-3 bg-zinc-800/50 rounded-lg hover:bg-zinc-700/50 transition-colors text-center">
+                      <p className="text-sm font-medium text-white">OpenSea</p>
+                      <p className="text-xs text-zinc-400">Create NFT</p>
+                    </a>
+                    <a href="https://rarible.com/create" target="_blank" rel="noopener noreferrer" className="p-3 bg-zinc-800/50 rounded-lg hover:bg-zinc-700/50 transition-colors text-center">
+                      <p className="text-sm font-medium text-white">Rarible</p>
+                      <p className="text-xs text-zinc-400">Create NFT</p>
+                    </a>
+                    <a href="https://foundation.app/create" target="_blank" rel="noopener noreferrer" className="p-3 bg-zinc-800/50 rounded-lg hover:bg-zinc-700/50 transition-colors text-center">
+                      <p className="text-sm font-medium text-white">Foundation</p>
+                      <p className="text-xs text-zinc-400">Create NFT</p>
+                    </a>
+                    <a href="https://zora.co/create" target="_blank" rel="noopener noreferrer" className="p-3 bg-zinc-800/50 rounded-lg hover:bg-zinc-700/50 transition-colors text-center">
+                      <p className="text-sm font-medium text-white">Zora</p>
+                      <p className="text-xs text-zinc-400">Create NFT</p>
+                    </a>
+                  </div>
                 </div>
               </CardContent>
             </Card>

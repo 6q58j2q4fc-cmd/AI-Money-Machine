@@ -4197,6 +4197,37 @@ const nftEmpireRouter = router({
     .query(async ({ input }) => {
       const { getExplorerUrl } = await import('./_core/realNftMinting');
       return { url: getExplorerUrl(input.transactionHash, input.network) };
+    }),  // ===== NFT EXPORT FOR EXTERNAL MARKETPLACES =====
+  
+  // Get NFT export package with metadata for all marketplaces
+  getExportPackage: protectedProcedure
+    .input(z.object({ nftId: z.number() }))
+    .query(async ({ input }) => {
+      const { getNftExportPackage } = await import('./_core/nftExport');
+      return getNftExportPackage(input.nftId);
+    }),
+  
+  // Get all marketplace upload links
+  getMarketplaceUploadLinks: protectedProcedure
+    .query(async () => {
+      const { getMarketplaceUploadLinks } = await import('./_core/nftExport');
+      return getMarketplaceUploadLinks();
+    }),
+  
+  // Get all auto-buyer platform info with submission links
+  getAutoBuyerInfo: protectedProcedure
+    .query(async () => {
+      const { getAutoBuyerPlatformInfo } = await import('./_core/nftExport');
+      return getAutoBuyerPlatformInfo();
+    }),
+  
+  // Generate SEO-optimized description for NFT
+  getSeoDescription: protectedProcedure
+    .input(z.object({ nftId: z.number() }))
+    .query(async ({ input }) => {
+      const { getNftExportPackage, generateSeoDescription } = await import('./_core/nftExport');
+      const pkg = await getNftExportPackage(input.nftId);
+      return generateSeoDescription(pkg.nft);
     }),
 });
 

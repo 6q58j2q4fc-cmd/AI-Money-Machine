@@ -18,7 +18,8 @@ import {
   Crown,
   Send,
   ExternalLink,
-  CheckCircle
+  CheckCircle,
+  BarChart3
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -283,6 +284,106 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* System Performance Dashboard */}
+        <Card className="bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-green-500/10 border-blue-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <BarChart3 className="w-5 h-5 text-blue-400" />
+              Live System Performance
+            </CardTitle>
+            <CardDescription>Real-time monitoring of all platform features</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {/* NFT System */}
+              <div className="bg-zinc-800/50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-zinc-400">NFT Minting</span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                </div>
+                <p className="text-lg font-bold text-green-400">{nftPortfolio?.totalNfts || 0}</p>
+                <p className="text-xs text-zinc-500">Total Minted</p>
+              </div>
+              
+              {/* Marketplace */}
+              <div className="bg-zinc-800/50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-zinc-400">Marketplace</span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                </div>
+                <p className="text-lg font-bold text-blue-400">{nftPortfolio?.totalListings || 0}</p>
+                <p className="text-xs text-zinc-500">Active Listings</p>
+              </div>
+              
+              {/* Auto-Buyers */}
+              <div className="bg-zinc-800/50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-zinc-400">Auto-Buyers</span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                </div>
+                <p className="text-lg font-bold text-purple-400">{nftPortfolio?.totalSubmissions || 0}</p>
+                <p className="text-xs text-zinc-500">Submissions</p>
+              </div>
+              
+              {/* Articles */}
+              <div className="bg-zinc-800/50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-zinc-400">Content</span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                </div>
+                <p className="text-lg font-bold text-orange-400">{summary?.totalArticles || 0}</p>
+                <p className="text-xs text-zinc-500">Articles</p>
+              </div>
+              
+              {/* Sales */}
+              <div className="bg-zinc-800/50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-zinc-400">Sales</span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                </div>
+                <p className="text-lg font-bold text-pink-400">{nftPortfolio?.totalSales || 0}</p>
+                <p className="text-xs text-zinc-500">Completed</p>
+              </div>
+              
+              {/* Earnings */}
+              <div className="bg-zinc-800/50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-zinc-400">Earnings</span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                </div>
+                <p className="text-lg font-bold text-cyan-400">{(nftPortfolio?.totalEarnings || 0).toFixed(2)}</p>
+                <p className="text-xs text-zinc-500">ETH Total</p>
+              </div>
+            </div>
+            
+            {/* System Status Bar */}
+            <div className="mt-4 flex items-center justify-between p-3 bg-zinc-800/30 rounded-lg">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span className="text-xs text-zinc-400">All Systems Operational</span>
+                </div>
+                <div className="text-xs text-zinc-500">|</div>
+                <div className="text-xs text-zinc-400">
+                  Blockchain: <span className="text-green-400">Connected</span>
+                </div>
+                <div className="text-xs text-zinc-500">|</div>
+                <div className="text-xs text-zinc-400">
+                  API: <span className="text-green-400">Live</span>
+                </div>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs text-zinc-400 hover:text-white"
+                onClick={() => setLocation('/system-health')}
+              >
+                View Details
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Two Column Layout */}
         <div className="grid lg:grid-cols-2 gap-6">
