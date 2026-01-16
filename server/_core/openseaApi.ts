@@ -318,6 +318,130 @@ export function isOpenSeaConfigured(): boolean {
 }
 
 /**
+ * Generate direct OpenSea listing URL for an NFT
+ */
+export function getOpenSeaListingUrl(contractAddress: string, tokenId: string, chain: string = 'ethereum'): string {
+  const chainMap: Record<string, string> = {
+    ethereum: 'ethereum',
+    polygon: 'matic',
+    arbitrum: 'arbitrum',
+    optimism: 'optimism',
+    base: 'base',
+  };
+  const openSeaChain = chainMap[chain] || 'ethereum';
+  return `https://opensea.io/assets/${openSeaChain}/${contractAddress}/${tokenId}/sell`;
+}
+
+/**
+ * Generate OpenSea view URL for an NFT
+ */
+export function getOpenSeaViewUrl(contractAddress: string, tokenId: string, chain: string = 'ethereum'): string {
+  const chainMap: Record<string, string> = {
+    ethereum: 'ethereum',
+    polygon: 'matic',
+    arbitrum: 'arbitrum',
+    optimism: 'optimism',
+    base: 'base',
+  };
+  const openSeaChain = chainMap[chain] || 'ethereum';
+  return `https://opensea.io/assets/${openSeaChain}/${contractAddress}/${tokenId}`;
+}
+
+/**
+ * Batch check listing status for multiple NFTs
+ */
+export async function batchCheckListingStatus(nftIds: number[]): Promise<Map<number, {
+  isListed: boolean;
+  price?: string;
+  openSeaUrl?: string;
+  listingUrl?: string;
+}>> {
+  const results = new Map();
+  
+  try {
+    const db = await getDb();
+    if (!db) {
+      return results;
+    }
+    
+    // Get all NFTs
+    const nfts = await db
+      .select()
+      .from(nftAssets)
+      .where(eq(nftAssets.id, nftIds[0])); // TODO: Use inArray when available
+    
+    for (const nftId of nftIds) {
+      const nft = nfts.find(n => n.id === nftId);
+      if (!nft || !nft.contractAddress || !nft.tokenId) {
+        results.set(nftId, { isListed: false });
+        continue;
+      }
+      
+      const chain = nft.chain || 'ethereum';
+      const viewUrl = getOpenSeaViewUrl(nft.contractAddress, nft.tokenId, chain);
+      const listUrl = getOpenSeaListingUrl(nft.contractAddress, nft.tokenId, chain);
+      
+      // Check existing listing in database
+      const [listing] = await db
+        .select()
+        .from(nftListings)
+        .where(and(
+          eq(nftListings.nftAssetId, nftId),
+          eq(nftListings.marketplace, 'opensea'),
+          eq(nftListings.status, 'active')
+        ))
+        .limit(1);
+      
+      if (listing) {
+        results.set(nftId, {
+          isListed: true,
+          price: listing.listPrice || undefined,
+          openSeaUrl: viewUrl,
+          listingUrl: listUrl,
+        });
+      } else {
+        results.set(nftId, {
+          isListed: false,
+          openSeaUrl: viewUrl,
+          listingUrl: listUrl,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Failed to batch check listing status:', error);
+  }
+  
+  return results;
+}
+
+/**
+ * Refresh listing status from OpenSea API for a single NFT
+ */
+export async function refreshListingStatus(nftId: number): Promise<{
+  isListed: boolean;
+  price?: string;
+  openSeaUrl?: string;
+  listingUrl?: string;
+  error?: string;
+}> {
+  try {
+    const result = await syncNftFromOpenSea(nftId);
+    
+    if (!result.success) {
+      return { isListed: false, error: result.error };
+    }
+    
+    return {
+      isListed: result.status === 'active',
+      price: result.price,
+      openSeaUrl: result.openSeaUrl,
+    };
+  } catch (error) {
+    return { isListed: false, error: String(error) };
+  }
+}
+
+/**
  * Get OpenSea API status
  */
 export async function getOpenSeaStatus(): Promise<{

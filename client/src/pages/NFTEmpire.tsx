@@ -954,10 +954,22 @@ export default function NFTEmpire() {
                 
                 {/* NFT Grid for Export */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-white flex items-center gap-2">
-                    <FileJson className="w-4 h-4 text-yellow-400" />
-                    Select NFT to Export ({userNfts?.length || 0} available)
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-white flex items-center gap-2">
+                      <FileJson className="w-4 h-4 text-yellow-400" />
+                      Select NFT to Export ({userNfts?.length || 0} available)
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-500/20 text-green-400 text-xs">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Listed on OpenSea
+                      </Badge>
+                      <Badge className="bg-zinc-500/20 text-zinc-400 text-xs">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Not Listed
+                      </Badge>
+                    </div>
+                  </div>
                   
                   {nftsLoading ? (
                     <div className="flex items-center justify-center py-8">
@@ -1140,36 +1152,106 @@ export default function NFTEmpire() {
                         </pre>
                       </div>
                       
-                      {/* Direct Links */}
-                      <div className="flex flex-wrap gap-2">
-                        <a
-                          href="https://opensea.io/asset/create"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Create on OpenSea
-                        </a>
-                        <a
-                          href="https://rarible.com/create"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Create on Rarible
-                        </a>
-                        <a
-                          href="https://foundation.app/create"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-600 hover:bg-zinc-700 text-white rounded-lg transition-colors"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Create on Foundation
-                        </a>
+                      {/* Direct Listing Buttons */}
+                      <div className="p-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/30">
+                        <p className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+                          <Store className="w-4 h-4 text-blue-400" />
+                          List Directly on Marketplaces
+                        </p>
+                        <p className="text-xs text-zinc-400 mb-3">
+                          Click below to open the listing page. Your NFT details will be ready to paste.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedNft.contractAddress && selectedNft.tokenId ? (
+                            <a
+                              href={`https://opensea.io/assets/${selectedNft.chain || 'ethereum'}/${selectedNft.contractAddress}/${selectedNft.tokenId}/sell`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              List on OpenSea
+                            </a>
+                          ) : (
+                            <a
+                              href="https://opensea.io/asset/create"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Create on OpenSea
+                            </a>
+                          )}
+                          {selectedNft.contractAddress && selectedNft.tokenId ? (
+                            <a
+                              href={`https://rarible.com/token/${selectedNft.chain || 'ethereum'}/${selectedNft.contractAddress}:${selectedNft.tokenId}/sell`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              List on Rarible
+                            </a>
+                          ) : (
+                            <a
+                              href="https://rarible.com/create"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Create on Rarible
+                            </a>
+                          )}
+                          <a
+                            href="https://foundation.app/create"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-600 hover:bg-zinc-700 text-white rounded-lg transition-colors"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Create on Foundation
+                          </a>
+                        </div>
                       </div>
+                      
+                      {/* Blockchain Info */}
+                      {selectedNft.contractAddress && selectedNft.tokenId && (
+                        <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-700">
+                          <p className="text-sm font-medium text-white mb-2 flex items-center gap-2">
+                            <Database className="w-4 h-4 text-green-400" />
+                            Blockchain Details
+                          </p>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <span className="text-zinc-500">Contract:</span>
+                              <p className="text-zinc-300 font-mono truncate">{selectedNft.contractAddress}</p>
+                            </div>
+                            <div>
+                              <span className="text-zinc-500">Token ID:</span>
+                              <p className="text-zinc-300 font-mono">{selectedNft.tokenId}</p>
+                            </div>
+                            <div>
+                              <span className="text-zinc-500">Chain:</span>
+                              <p className="text-zinc-300 capitalize">{selectedNft.chain || 'ethereum'}</p>
+                            </div>
+                            <div>
+                              <span className="text-zinc-500">View on Explorer:</span>
+                              <a
+                                href={`https://etherscan.io/token/${selectedNft.contractAddress}?a=${selectedNft.tokenId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:underline flex items-center gap-1"
+                              >
+                                Etherscan <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+
                     </div>
                   );
                 })()}

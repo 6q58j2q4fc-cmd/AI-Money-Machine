@@ -5162,6 +5162,110 @@ const marketplaceApiRouter = router({
       return getOpenSeaStatus();
     }),
 
+  // Get OpenSea listing URL for an NFT
+  getOpenSeaListingUrl: publicProcedure
+    .input(z.object({ nftId: z.number() }))
+    .query(async ({ input }) => {
+      const { nftAssets } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      const { getOpenSeaListingUrl, getOpenSeaViewUrl } = await import('./_core/openseaApi');
+      
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new Error('Database not available');
+      
+      const [nft] = await dbInstance
+        .select()
+        .from(nftAssets)
+        .where(eq(nftAssets.id, input.nftId))
+        .limit(1);
+      
+      if (!nft || !nft.contractAddress || !nft.tokenId) {
+        return { 
+          success: false, 
+          error: 'NFT not minted on blockchain',
+          listingUrl: null,
+          viewUrl: null,
+        };
+      }
+      
+      const chain = nft.chain || 'ethereum';
+      return {
+        success: true,
+        listingUrl: getOpenSeaListingUrl(nft.contractAddress, nft.tokenId, chain),
+        viewUrl: getOpenSeaViewUrl(nft.contractAddress, nft.tokenId, chain),
+        contractAddress: nft.contractAddress,
+        tokenId: nft.tokenId,
+        chain,
+      };
+    }),
+
+  // Batch get OpenSea listing status for multiple NFTs
+  batchGetListingStatus: publicProcedure
+    .input(z.object({ nftIds: z.array(z.number()) }))
+    .query(async ({ input }) => {
+      const { nftAssets, nftListings } = await import('../drizzle/schema');
+      const { eq, and, inArray } = await import('drizzle-orm');
+      const { getOpenSeaListingUrl, getOpenSeaViewUrl } = await import('./_core/openseaApi');
+      
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new Error('Database not available');
+      
+      // Get all NFTs
+      const nfts = await dbInstance
+        .select()
+        .from(nftAssets)
+        .where(inArray(nftAssets.id, input.nftIds));
+      
+      // Get all active OpenSea listings for these NFTs
+      const listings = await dbInstance
+        .select()
+        .from(nftListings)
+        .where(and(
+          inArray(nftListings.nftAssetId, input.nftIds),
+          eq(nftListings.marketplace, 'opensea'),
+          eq(nftListings.status, 'active')
+        ));
+      
+      const listingMap = new Map(listings.map(l => [l.nftAssetId, l]));
+      
+      const results: Record<number, {
+        isListed: boolean;
+        price?: string;
+        listingUrl?: string;
+        viewUrl?: string;
+        contractAddress?: string;
+        tokenId?: string;
+      }> = {};
+      
+      for (const nft of nfts) {
+        const listing = listingMap.get(nft.id);
+        const chain = nft.chain || 'ethereum';
+        
+        if (nft.contractAddress && nft.tokenId) {
+          results[nft.id] = {
+            isListed: !!listing,
+            price: listing?.listPrice || undefined,
+            listingUrl: getOpenSeaListingUrl(nft.contractAddress, nft.tokenId, chain),
+            viewUrl: getOpenSeaViewUrl(nft.contractAddress, nft.tokenId, chain),
+            contractAddress: nft.contractAddress,
+            tokenId: nft.tokenId,
+          };
+        } else {
+          results[nft.id] = { isListed: false };
+        }
+      }
+      
+      return results;
+    }),
+
+  // Refresh listing status from OpenSea API
+  refreshOpenSeaStatus: protectedProcedure
+    .input(z.object({ nftId: z.number() }))
+    .mutation(async ({ input }) => {
+      const { refreshListingStatus } = await import('./_core/openseaApi');
+      return refreshListingStatus(input.nftId);
+    }),
+
   // Get Rarible API status
   getRaribleStatus: protectedProcedure
     .query(async () => {
