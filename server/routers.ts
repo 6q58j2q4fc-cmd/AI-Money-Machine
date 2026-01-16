@@ -4111,6 +4111,13 @@ const nftEmpireRouter = router({
     }),
 
   // Get real NFT portfolio summary
+  // Get NFTs from database
+  getNFTsFromDB: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getUserNfts } = await import("./_core/realNftService");
+      return getUserNfts(ctx.user.id);
+    }),
+
   getPortfolioSummary: protectedProcedure
     .query(async ({ ctx }) => {
       const { getNftPortfolioSummary } = await import('./_core/realNftService');
