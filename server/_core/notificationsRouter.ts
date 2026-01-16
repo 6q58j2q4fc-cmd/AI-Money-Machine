@@ -98,16 +98,14 @@ export const notificationsRouter = router({
   subscribePush: protectedProcedure
     .input(z.object({
       endpoint: z.string(),
-      keys: z.object({
-        p256dh: z.string(),
-        auth: z.string(),
-      }),
+      p256dhKey: z.string(),
+      authKey: z.string(),
       userAgent: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const success = await subscribeToPush(
         ctx.user.id,
-        { endpoint: input.endpoint, keys: input.keys },
+        { endpoint: input.endpoint, keys: { p256dh: input.p256dhKey, auth: input.authKey } },
         input.userAgent
       );
       return { success };

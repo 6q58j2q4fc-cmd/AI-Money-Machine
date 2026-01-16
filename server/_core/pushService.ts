@@ -3,15 +3,22 @@
  * Handles web push notifications using the Web Push API
  */
 
+import webPush from 'web-push';
 import { getDb } from "../db";
 import { pushSubscriptions } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
-// VAPID keys would normally be generated and stored securely
-// For now, we'll use placeholder values that can be configured
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || "";
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:admin@moneymachine.com";
+// VAPID keys for web push authentication
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BGJhHSCx4qYqOSkGDTKp9mWHAvpNNZL32oi12cVQ91_NoNzhUDUpajk2xPB7VytVhPp8Xoap8gD7_ILAN3DNKV8';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'zLB2dfaagSX3vW210TTpLOiZ4OUUoB2--YdXk3kchgg';
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:notifications@moneymachine.app';
+
+// Configure web-push with VAPID details
+webPush.setVapidDetails(
+  VAPID_SUBJECT,
+  VAPID_PUBLIC_KEY,
+  VAPID_PRIVATE_KEY
+);
 
 interface PushPayload {
   title: string;
@@ -68,16 +75,22 @@ export async function sendPushToUser(
     
     for (const sub of subscriptions) {
       try {
-        // In production, use web-push library:
-        // await webpush.sendNotification(
-        //   { endpoint: sub.endpoint, keys: { p256dh: sub.p256dhKey, auth: sub.authKey } },
-        //   JSON.stringify(payload),
-        //   { vapidDetails: { subject: VAPID_SUBJECT, publicKey: VAPID_PUBLIC_KEY, privateKey: VAPID_PRIVATE_KEY } }
-        // );
+        // Create push subscription object
+        const pushSubscription = {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: sub.p256dhKey,
+            auth: sub.authKey
+          }
+        };
         
-        // For now, simulate sending
+        // Send the push notification using web-push
+        await webPush.sendNotification(
+          pushSubscription,
+          JSON.stringify(payload)
+        );
+        
         console.log(`[PushService] Push sent to endpoint: ${sub.endpoint.substring(0, 50)}...`);
-        console.log(`[PushService] Payload: ${JSON.stringify(payload)}`);
         
         // Update last used timestamp
         await db.update(pushSubscriptions)
@@ -88,9 +101,9 @@ export async function sendPushToUser(
       } catch (error: unknown) {
         console.error(`[PushService] Failed to send to subscription ${sub.id}:`, error);
         
-        // Check if subscription is expired or invalid
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (errorMessage.includes("expired") || errorMessage.includes("unsubscribed") || errorMessage.includes("410")) {
+        // Check if subscription is expired or invalid (410 Gone or 404 Not Found)
+        const statusCode = (error as { statusCode?: number })?.statusCode;
+        if (statusCode === 410 || statusCode === 404) {
           // Deactivate the subscription
           await db.update(pushSubscriptions)
             .set({ isActive: false })
@@ -222,5 +235,5 @@ export async function sendPriceAlertPush(params: {
   });
 }
 
-console.log("[PushService] Service initialized");
+console.log("[PushService] Service initialized with VAPID keys");
 console.log(`[PushService] Push configured: ${isPushConfigured()}`);

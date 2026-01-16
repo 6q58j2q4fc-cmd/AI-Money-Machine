@@ -54,6 +54,7 @@ import PublicNFTDetail from './pages/PublicNFTDetail';
 import MarketplaceProfile from './pages/MarketplaceProfile';
 import PaymentHistory from './pages/PaymentHistory';
 import NotificationSettings from './pages/NotificationSettings';
+import NotificationHistory from './pages/NotificationHistory';
 import AdminOnly from './components/AdminOnly';
 
 // Admin-protected page wrapper
@@ -72,6 +73,7 @@ function Router() {
       <Route path="/marketplace" component={NFTMarketplace} />
       <Route path="/marketplace/nft/:id" component={NFTMarketplace} />
       <Route path="/transactions" component={TransactionHistory} />
+      <Route path="/notification-history" component={NotificationHistory} />
       <Route path="/watchlist" component={NFTWatchlist} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={PublicArticle} />

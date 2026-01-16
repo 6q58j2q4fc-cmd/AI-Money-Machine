@@ -2351,3 +2351,33 @@
 - [ ] Trigger notifications on price changes
 - [ ] Trigger notifications on new listings
 - [ ] Trigger notifications on article distribution
+
+
+## January 16, 2026 - Notification System Enhancements
+
+### Real Push Notifications
+- [x] Generate VAPID keys for web push (BGJhHSCx4qYqOSkGDTKp9mWHAvpNNZL32oi12cVQ91_NoNzhUDUpajk2xPB7VytVhPp8Xoap8gD7_ILAN3DNKV8)
+- [x] Create service worker for push notifications (client/public/sw.js)
+- [x] Add push subscription endpoint (notifications.subscribePush)
+- [x] Create usePushNotifications hook for frontend
+- [x] Install web-push package for real push delivery
+- [x] Update pushService.ts with real web-push integration
+
+### Notification History Page
+- [x] Create notification history page at /notification-history (NotificationHistory.tsx)
+- [x] Display all past notifications with timestamps
+- [x] Add filtering by notification type (8 types)
+- [x] Add search functionality
+- [x] Add pagination for large notification lists
+- [x] Add bulk actions (mark all read, delete)
+- [x] Add stats cards (total, unread, read, filtered)
+- [x] Add route to App.tsx
+
+### Email Service Integration
+- [x] Implement SendGrid API integration
+- [x] Implement Mailgun API integration
+- [x] Add email provider configuration via env vars (EMAIL_PROVIDER, SENDGRID_API_KEY, MAILGUN_API_KEY)
+- [x] Create responsive HTML email templates
+- [x] Add price alert and new listing email templates
+- [x] Add unsubscribe links to all emails
+- [x] Add isEmailConfigured() helper function
