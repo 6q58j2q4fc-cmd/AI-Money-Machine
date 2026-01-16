@@ -53,6 +53,7 @@ const menuItems = [
   { icon: Bug, label: "Debug Admin", path: "/debug-admin" },
   { icon: ClipboardCheck, label: "Master TODO", path: "/master-todo" },
   { icon: Key, label: "Faucet Accounts", path: "/faucet-accounts" },
+  { icon: Coins, label: "Faucet Connections", path: "/faucet-connections" },
   { icon: Store, label: "NFT Marketplace", path: "/marketplace" },
   { icon: Clock, label: "Transaction History", path: "/transactions" },
   { icon: Heart, label: "NFT Watchlist", path: "/watchlist" },

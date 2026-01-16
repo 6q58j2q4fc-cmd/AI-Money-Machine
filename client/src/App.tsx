@@ -47,6 +47,7 @@ import NFTWatchlist from './pages/NFTWatchlist';
 import NFTPortfolio from './pages/NFTPortfolio';
 import NftBlog from './pages/NftBlog';
 import RealEarnings from './pages/RealEarnings';
+import FaucetConnections from './pages/FaucetConnections';
 import PublicMarketplace from './pages/PublicMarketplace';
 import PublicNFTDetail from './pages/PublicNFTDetail';
 import MarketplaceProfile from './pages/MarketplaceProfile';
@@ -112,6 +113,7 @@ function Router() {
       <Route path="/nft-portfolio">{() => <AdminPage component={NFTPortfolio} />}</Route>
       <Route path="/nft-blog">{() => <AdminPage component={NftBlog} />}</Route>
       <Route path="/real-earnings">{() => <AdminPage component={RealEarnings} />}</Route>
+      <Route path="/faucet-connections">{() => <AdminPage component={FaucetConnections} />}</Route>
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
