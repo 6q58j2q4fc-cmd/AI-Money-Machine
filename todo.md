@@ -2213,3 +2213,40 @@
 - [x] Fix any pages where data runs off margins - verified all pages
 - [x] Ensure responsive design on all pages - using Tailwind responsive classes
 - [x] Test layout on different screen sizes - verified
+
+
+## Stripe Payment, Featured Collections, Email Notifications, OpenSea Integration (Jan 16, 2026)
+
+### Stripe Payment Processing
+- [x] Add Stripe integration using webdev_add_feature
+- [x] Create checkout flow for NFT purchases (stripeRouter.ts)
+- [x] Add Stripe webhook handler for payment confirmation
+- [x] Add "Buy with Card" button to NFT detail page
+- [x] Handle payment success/cancelled URL redirects
+- [ ] Add payment history tracking page
+- [ ] Connect payments to hot wallet
+
+### Featured Collections
+- [ ] Create collections management page
+- [ ] Add ability to create themed collections
+- [ ] Feature collections on marketplace homepage
+- [ ] Add collection detail pages
+- [ ] Track collection performance
+
+### Email Notifications
+- [ ] Notify buyers when purchase is confirmed
+- [ ] Notify sellers when NFT is sold
+- [ ] Send transaction receipts
+- [ ] Add email preferences in settings
+
+### OpenSea Listing Integration
+- [x] Create NFT export package with metadata (OpenSea Export tab)
+- [x] Add step-by-step guide for listing on OpenSea
+- [x] Add NFT selection grid for export
+- [x] Add single NFT export with metadata JSON copy
+- [x] Add bulk export (JSON and CSV) functionality
+- [x] Add quick copy fields (name, description, price, image URL)
+- [x] Add direct links to OpenSea, Rarible, Foundation create pages
+- [ ] Add direct upload to OpenSea API (requires OpenSea API key)
+- [ ] Track listing status on OpenSea
+- [ ] Sync sales data from OpenSea

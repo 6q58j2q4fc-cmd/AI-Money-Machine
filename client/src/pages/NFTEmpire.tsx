@@ -12,13 +12,24 @@ import {
   Image, Sparkles, TrendingUp, DollarSign, ExternalLink, 
   Loader2, RefreshCw, Wallet, ShoppingCart, Eye, Heart,
   CheckCircle, Clock, AlertCircle, Zap, Crown, Store,
-  Target, Coins, Database, Send
+  Target, Coins, Database, Send, Upload, Download, Package,
+  FileJson, Copy, Check
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function NFTEmpire() {
   const [selectedCategory, setSelectedCategory] = useState<string>("auto");
   const [batchCount, setBatchCount] = useState(3);
   const [autoMintEnabled, setAutoMintEnabled] = useState(false);
+  const [selectedNftForExport, setSelectedNftForExport] = useState<number | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   // Trust Wallet address - pre-configured, no MetaMask required
   const TRUST_WALLET_ADDRESS = "0x75812e1c4246A880f6576db8292405247e6a8775";
   const walletConnected = true; // Always connected to Trust Wallet
@@ -296,6 +307,10 @@ export default function NFTEmpire() {
             <TabsTrigger value="automint">
               <Zap className="w-4 h-4 mr-2" />
               Auto-Mint {autoMintEnabled && <span className="ml-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
+            </TabsTrigger>
+            <TabsTrigger value="opensea">
+              <Upload className="w-4 h-4 mr-2" />
+              OpenSea Export
             </TabsTrigger>
           </TabsList>
           
@@ -906,6 +921,337 @@ export default function NFTEmpire() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+          
+          {/* OpenSea Export Tab */}
+          <TabsContent value="opensea" className="space-y-4">
+            <Card className="bg-zinc-900/50 border-zinc-800">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-blue-400" />
+                  Export NFTs to OpenSea
+                </CardTitle>
+                <CardDescription>
+                  Export your NFT packages for manual upload to OpenSea and other marketplaces.
+                  Each package includes the image, metadata JSON, and listing details.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Quick Export Guide */}
+                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <h4 className="font-medium text-blue-400 mb-2 flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    How to List on OpenSea
+                  </h4>
+                  <ol className="text-sm text-zinc-400 space-y-2 list-decimal list-inside">
+                    <li>Select an NFT below and click "Export Package"</li>
+                    <li>Download the image and copy the metadata</li>
+                    <li>Go to <a href="https://opensea.io/asset/create" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">OpenSea Create</a> and upload the image</li>
+                    <li>Fill in the name, description, and properties from the metadata</li>
+                    <li>Set your price and list the NFT!</li>
+                  </ol>
+                </div>
+                
+                {/* NFT Grid for Export */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-white flex items-center gap-2">
+                    <FileJson className="w-4 h-4 text-yellow-400" />
+                    Select NFT to Export ({userNfts?.length || 0} available)
+                  </h4>
+                  
+                  {nftsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-yellow-500" />
+                    </div>
+                  ) : userNfts && userNfts.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {userNfts.map((nftData: any) => {
+                        const nft = nftData.nft;
+                        return (
+                        <div
+                          key={nft.id}
+                          className={`relative rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                            selectedNftForExport === nft.id
+                              ? 'border-yellow-500 ring-2 ring-yellow-500/50'
+                              : 'border-zinc-700 hover:border-zinc-600'
+                          }`}
+                          onClick={() => setSelectedNftForExport(nft.id)}
+                        >
+                          <img
+                            src={nft.imageUrl || '/placeholder-nft.png'}
+                            alt={nft.name}
+                            className="w-full aspect-square object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                          <div className="absolute bottom-0 left-0 right-0 p-3">
+                            <p className="text-sm font-medium text-white truncate">{nft.name}</p>
+                            <p className="text-xs text-zinc-400">{nft.category}</p>
+                            <p className="text-xs text-yellow-400 mt-1">
+                              {parseFloat(nft.estimatedValue || '0').toFixed(4)} ETH
+                            </p>
+                          </div>
+                          {selectedNftForExport === nft.id && (
+                            <div className="absolute top-2 right-2">
+                              <CheckCircle className="w-6 h-6 text-yellow-500" />
+                            </div>
+                          )}
+                        </div>
+                      )})}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-zinc-400">
+                      <Image className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>No NFTs available. Generate some NFTs first!</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Export Details Panel */}
+                {selectedNftForExport && userNfts && (() => {
+                  const selectedNftData = userNfts.find((n: any) => n.nft.id === selectedNftForExport);
+                  const selectedNft = selectedNftData?.nft;
+                  if (!selectedNft) return null;
+                  
+                  const copyToClipboard = (text: string, field: string) => {
+                    navigator.clipboard.writeText(text);
+                    setCopiedField(field);
+                    toast.success(`${field} copied to clipboard!`);
+                    setTimeout(() => setCopiedField(null), 2000);
+                  };
+                  
+                  const metadata = {
+                    name: selectedNft.name,
+                    description: selectedNft.description || `A unique ${selectedNft.category} NFT generated by AI`,
+                    image: selectedNft.imageUrl,
+                    external_url: `https://moneymachine.app/nft/${selectedNft.id}`,
+                    attributes: [
+                      { trait_type: "Category", value: selectedNft.category },
+                      { trait_type: "Style", value: selectedNft.style || "AI Generated" },
+                      { trait_type: "Rarity", value: (selectedNft.traits as any)?.find((t: any) => t.trait_type === 'Rarity')?.value || "Common" },
+                      { trait_type: "Created", value: new Date(selectedNft.createdAt).toISOString().split('T')[0] },
+                    ]
+                  };
+                  
+                  return (
+                    <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700 space-y-4">
+                      <div className="flex items-start gap-4">
+                        <img
+                          src={selectedNft.imageUrl || '/placeholder-nft.png'}
+                          alt={selectedNft.name}
+                          className="w-24 h-24 rounded-lg object-cover"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-bold text-white text-lg">{selectedNft.name}</h4>
+                          <p className="text-sm text-zinc-400 mt-1">{selectedNft.description}</p>
+                          <div className="flex items-center gap-4 mt-2">
+                            <Badge className="bg-yellow-500/20 text-yellow-400">
+                              {parseFloat(selectedNft.estimatedValue || '0').toFixed(4)} ETH
+                            </Badge>
+                            <Badge variant="outline" className="border-zinc-600">
+                              {selectedNft.category}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Export Actions */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Download Image */}
+                        <div className="p-3 bg-zinc-900/50 rounded-lg">
+                          <p className="text-sm font-medium text-white mb-2">1. Download Image</p>
+                          <a
+                            href={selectedNft.imageUrl}
+                            download={`${selectedNft.name.replace(/\s+/g, '_')}.png`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download Image
+                          </a>
+                        </div>
+                        
+                        {/* Copy Metadata */}
+                        <div className="p-3 bg-zinc-900/50 rounded-lg">
+                          <p className="text-sm font-medium text-white mb-2">2. Copy Metadata JSON</p>
+                          <Button
+                            onClick={() => copyToClipboard(JSON.stringify(metadata, null, 2), 'Metadata')}
+                            variant="outline"
+                            className="border-zinc-600"
+                          >
+                            {copiedField === 'Metadata' ? (
+                              <><Check className="w-4 h-4 mr-2" /> Copied!</>
+                            ) : (
+                              <><Copy className="w-4 h-4 mr-2" /> Copy Metadata</>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Quick Copy Fields */}
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-white">Quick Copy Fields:</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="justify-start text-xs"
+                            onClick={() => copyToClipboard(selectedNft.name, 'Name')}
+                          >
+                            {copiedField === 'Name' ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                            Name
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="justify-start text-xs"
+                            onClick={() => copyToClipboard(selectedNft.description || '', 'Description')}
+                          >
+                            {copiedField === 'Description' ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                            Description
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="justify-start text-xs"
+                            onClick={() => copyToClipboard(parseFloat(selectedNft.estimatedValue || '0').toFixed(4), 'Price')}
+                          >
+                            {copiedField === 'Price' ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                            Price (ETH)
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="justify-start text-xs"
+                            onClick={() => copyToClipboard(selectedNft.imageUrl || '', 'Image URL')}
+                          >
+                            {copiedField === 'Image URL' ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                            Image URL
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Metadata Preview */}
+                      <div className="p-3 bg-zinc-900 rounded-lg">
+                        <p className="text-sm font-medium text-white mb-2">Metadata Preview:</p>
+                        <pre className="text-xs text-zinc-400 overflow-x-auto max-h-40 overflow-y-auto">
+                          {JSON.stringify(metadata, null, 2)}
+                        </pre>
+                      </div>
+                      
+                      {/* Direct Links */}
+                      <div className="flex flex-wrap gap-2">
+                        <a
+                          href="https://opensea.io/asset/create"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Create on OpenSea
+                        </a>
+                        <a
+                          href="https://rarible.com/create"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Create on Rarible
+                        </a>
+                        <a
+                          href="https://foundation.app/create"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-600 hover:bg-zinc-700 text-white rounded-lg transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Create on Foundation
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })()}
+                
+                {/* Bulk Export Section */}
+                <div className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-700">
+                  <h4 className="font-medium text-white mb-3 flex items-center gap-2">
+                    <Package className="w-4 h-4 text-green-400" />
+                    Bulk Export Options
+                  </h4>
+                  <p className="text-sm text-zinc-400 mb-4">
+                    Export all your NFTs at once for batch uploading to marketplaces.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      variant="outline"
+                      className="border-zinc-600"
+                      onClick={() => {
+                        if (!userNfts || userNfts.length === 0) {
+                          toast.error('No NFTs to export');
+                          return;
+                        }
+                        const allMetadata = userNfts.map((nft: any) => ({
+                          id: nft.id,
+                          name: nft.name,
+                          description: nft.description,
+                          image: nft.imageUrl,
+                          price_eth: parseFloat(nft.estimatedValue || '0').toFixed(4),
+                          category: nft.category,
+                          attributes: [
+                            { trait_type: "Category", value: nft.category },
+                            { trait_type: "Rarity", value: nft.rarity || "Common" },
+                          ]
+                        }));
+                        const blob = new Blob([JSON.stringify(allMetadata, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'nft_collection_metadata.json';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success(`Exported metadata for ${userNfts.length} NFTs`);
+                      }}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export All Metadata (JSON)
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-zinc-600"
+                      onClick={() => {
+                        if (!userNfts || userNfts.length === 0) {
+                          toast.error('No NFTs to export');
+                          return;
+                        }
+                        const csv = [
+                          ['ID', 'Name', 'Description', 'Image URL', 'Price (ETH)', 'Category'].join(','),
+                          ...userNfts.map((nft: any) => [
+                            nft.id,
+                            `"${nft.name}"`,
+                            `"${(nft.description || '').replace(/"/g, '""')}"`,
+                            nft.imageUrl,
+                            parseFloat(nft.estimatedValue || '0').toFixed(4),
+                            nft.category
+                          ].join(','))
+                        ].join('\n');
+                        const blob = new Blob([csv], { type: 'text/csv' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'nft_collection.csv';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success(`Exported ${userNfts.length} NFTs to CSV`);
+                      }}
+                    >
+                      <FileJson className="w-4 h-4 mr-2" />
+                      Export as CSV
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

@@ -1,3 +1,4 @@
+import { desc, eq } from "drizzle-orm";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -5,6 +6,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
 import * as db from "./db";
+import { nftCollections } from "../drizzle/schema";
 import { publishToPlatform, getConfiguredPlatforms } from "./_core/platformPublisher";
 import { searchCJLinks, getJoinedAdvertiserLinks, getNonJoinedAdvertiserLinks, searchCJAdvertisers, getNonJoinedAdvertisers, getJoinedAdvertisers, getCJProgramUrl } from "./_core/cjApi";
 import { syncApprovedCJLinks, getApprovedAdvertiserIds, getApprovedAdvertiserNames, isLinkApproved } from "./_core/cjSync";
@@ -16,6 +18,7 @@ import { auditPage, auditAllPages, learnPageContext, generateFixRecommendations,
 import { logEvent, logArticleEvent, logDistributionEvent, logAutomationEvent, logBotDecision, getPageInsights, communicateWithHiveMind, syncAllPages, getHiveMindState, initializePageContext } from './_core/hiveMind';
 import { generateProductPage, publishProductPage, batchGenerateProductPages } from './_core/productPages';
 import { logError, getSystemHealth, getRecentErrors, resolveError, runDiagnostics, attemptSelfHeal, getDebuggingSummary, startContinuousMonitoring, stopContinuousMonitoring } from './_core/selfDebugger';
+import { stripeRouter } from './_core/stripeRouter';
 import * as debugAdmin from './_core/debugAdmin';
 import * as faucetAccounts from './_core/faucetAccounts';
 import * as captchaSolver from './_core/captchaSolver';
@@ -4590,14 +4593,14 @@ const marketplaceApiRouter = router({
     }))
     .query(async ({ input }) => {
       const { nftAssets } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { eq, or } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) return [];
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return [];
       
       // Get all NFTs that are listed or generated
-      const nfts = await db
+      const nfts = await dbInstance
         .select()
         .from(nftAssets)
         .where(
@@ -4669,30 +4672,30 @@ const marketplaceApiRouter = router({
   getStats: publicProcedure
     .query(async () => {
       const { nftAssets, nftListings } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { count, eq, sql } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) return { totalNfts: 0, activeListings: 0, totalVolume: '0', uniqueCollectors: 0 };
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return { totalNfts: 0, activeListings: 0, totalVolume: '0', uniqueCollectors: 0 };
       
       // Count total NFTs
-      const [nftCount] = await db
+      const [nftCount] = await dbInstance
         .select({ count: count() })
         .from(nftAssets);
       
       // Count active listings
-      const [listingCount] = await db
+      const [listingCount] = await dbInstance
         .select({ count: count() })
         .from(nftListings)
         .where(eq(nftListings.status, 'active'));
       
       // Calculate total volume
-      const [volumeResult] = await db
+      const [volumeResult] = await dbInstance
         .select({ total: sql<string>`COALESCE(SUM(CAST(${nftAssets.estimatedValue} AS DECIMAL(18,8))), 0)` })
         .from(nftAssets);
       
       // Count unique users (collectors)
-      const [collectorsResult] = await db
+      const [collectorsResult] = await dbInstance
         .select({ count: sql<number>`COUNT(DISTINCT ${nftAssets.userId})` })
         .from(nftAssets);
       
@@ -4709,13 +4712,13 @@ const marketplaceApiRouter = router({
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const { nftAssets, nftListings } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { eq } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) return null;
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return null;
       
-      const [nft] = await db
+      const [nft] = await dbInstance
         .select()
         .from(nftAssets)
         .where(eq(nftAssets.id, input.id));
@@ -4723,13 +4726,13 @@ const marketplaceApiRouter = router({
       if (!nft) return null;
       
       // Get listings for this NFT
-      const listings = await db
+      const listings = await dbInstance
         .select()
         .from(nftListings)
         .where(eq(nftListings.nftAssetId, input.id));
       
       // Increment view count
-      await db
+      await dbInstance
         .update(nftAssets)
         .set({ views: (nft.views || 0) + 1 })
         .where(eq(nftAssets.id, input.id));
@@ -4754,11 +4757,11 @@ const marketplaceApiRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const { nftAssets, nftListings } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { storagePut } = await import('./storage');
       
-      const db = await getDb();
-      if (!db) throw new Error('Database not available');
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new Error('Database not available');
       
       let finalImageUrl = input.imageUrl || '';
       
@@ -4796,7 +4799,7 @@ const marketplaceApiRouter = router({
       const mappedChain = chainMap[input.chain] || 'polygon';
       
       // Insert NFT into database
-      const [newNft] = await db
+      const [newNft] = await dbInstance
         .insert(nftAssets)
         .values({
           userId: ctx.user.id,
@@ -4816,7 +4819,7 @@ const marketplaceApiRouter = router({
         .$returningId();
       
       // Create listing
-      await db
+      await dbInstance
         .insert(nftListings)
         .values({
           nftAssetId: newNft.id,
@@ -4842,13 +4845,13 @@ const marketplaceApiRouter = router({
   getUserNfts: protectedProcedure
     .query(async ({ ctx }) => {
       const { nftAssets } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { eq } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) return [];
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return [];
       
-      const nfts = await db
+      const nfts = await dbInstance
         .select()
         .from(nftAssets)
         .where(eq(nftAssets.userId, ctx.user.id));
@@ -4934,14 +4937,14 @@ const marketplaceApiRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const { nftFavorites, nftAssets } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { eq, and } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) throw new Error('Database not available');
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new Error('Database not available');
       
       // Check if already favorited
-      const existing = await db
+      const existing = await dbInstance
         .select()
         .from(nftFavorites)
         .where(and(
@@ -4955,13 +4958,13 @@ const marketplaceApiRouter = router({
       }
       
       // Get current price
-      const [nft] = await db
+      const [nft] = await dbInstance
         .select()
         .from(nftAssets)
         .where(eq(nftAssets.id, input.nftAssetId))
         .limit(1);
       
-      await db.insert(nftFavorites).values({
+      await dbInstance.insert(nftFavorites).values({
         userId: ctx.user.id,
         nftAssetId: input.nftAssetId,
         priceAtSave: nft?.estimatedValue || '0',
@@ -4977,13 +4980,13 @@ const marketplaceApiRouter = router({
     .input(z.object({ nftAssetId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const { nftFavorites } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { eq, and } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) throw new Error('Database not available');
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new Error('Database not available');
       
-      await db
+      await dbInstance
         .delete(nftFavorites)
         .where(and(
           eq(nftFavorites.userId, ctx.user.id),
@@ -4997,13 +5000,13 @@ const marketplaceApiRouter = router({
   getFavorites: protectedProcedure
     .query(async ({ ctx }) => {
       const { nftFavorites, nftAssets } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { eq } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) return [];
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return [];
       
-      const favorites = await db
+      const favorites = await dbInstance
         .select({
           favoriteId: nftFavorites.id,
           nftAssetId: nftFavorites.nftAssetId,
@@ -5039,13 +5042,13 @@ const marketplaceApiRouter = router({
     .input(z.object({ nftAssetId: z.number() }))
     .query(async ({ ctx, input }) => {
       const { nftFavorites } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { eq, and } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) return false;
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return false;
       
-      const existing = await db
+      const existing = await dbInstance
         .select()
         .from(nftFavorites)
         .where(and(
@@ -5068,14 +5071,14 @@ const marketplaceApiRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const { nftRoyalties, nftAssets } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { eq, and } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) throw new Error('Database not available');
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new Error('Database not available');
       
       // Verify ownership
-      const [nft] = await db
+      const [nft] = await dbInstance
         .select()
         .from(nftAssets)
         .where(and(
@@ -5089,14 +5092,14 @@ const marketplaceApiRouter = router({
       }
       
       // Check if royalty exists
-      const existing = await db
+      const existing = await dbInstance
         .select()
         .from(nftRoyalties)
         .where(eq(nftRoyalties.nftAssetId, input.nftAssetId))
         .limit(1);
       
       if (existing.length > 0) {
-        await db
+        await dbInstance
           .update(nftRoyalties)
           .set({
             royaltyPercentage: input.royaltyPercentage,
@@ -5104,7 +5107,7 @@ const marketplaceApiRouter = router({
           })
           .where(eq(nftRoyalties.nftAssetId, input.nftAssetId));
       } else {
-        await db.insert(nftRoyalties).values({
+        await dbInstance.insert(nftRoyalties).values({
           nftAssetId: input.nftAssetId,
           royaltyPercentage: input.royaltyPercentage,
           recipientAddress: input.recipientAddress,
@@ -5119,13 +5122,13 @@ const marketplaceApiRouter = router({
     .input(z.object({ nftAssetId: z.number() }))
     .query(async ({ input }) => {
       const { nftRoyalties } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { eq } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) return null;
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return null;
       
-      const [royalty] = await db
+      const [royalty] = await dbInstance
         .select()
         .from(nftRoyalties)
         .where(eq(nftRoyalties.nftAssetId, input.nftAssetId))
@@ -5176,14 +5179,14 @@ const marketplaceApiRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const { marketplaceApiSettings } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { eq, and } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) throw new Error('Database not available');
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new Error('Database not available');
       
       // Check if settings exist
-      const existing = await db
+      const existing = await dbInstance
         .select()
         .from(marketplaceApiSettings)
         .where(and(
@@ -5193,7 +5196,7 @@ const marketplaceApiRouter = router({
         .limit(1);
       
       if (existing.length > 0) {
-        await db
+        await dbInstance
           .update(marketplaceApiSettings)
           .set({
             apiKey: input.apiKey,
@@ -5202,7 +5205,7 @@ const marketplaceApiRouter = router({
           })
           .where(eq(marketplaceApiSettings.id, existing[0].id));
       } else {
-        await db.insert(marketplaceApiSettings).values({
+        await dbInstance.insert(marketplaceApiSettings).values({
           userId: ctx.user.id,
           marketplace: input.marketplace,
           apiKey: input.apiKey,
@@ -5218,13 +5221,13 @@ const marketplaceApiRouter = router({
   getApiSettings: protectedProcedure
     .query(async ({ ctx }) => {
       const { marketplaceApiSettings } = await import('../drizzle/schema');
-      const { getDb } = await import('./db');
+      // Using db import
       const { eq } = await import('drizzle-orm');
       
-      const db = await getDb();
-      if (!db) return [];
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return [];
       
-      const settings = await db
+      const settings = await dbInstance
         .select()
         .from(marketplaceApiSettings)
         .where(eq(marketplaceApiSettings.userId, ctx.user.id));
@@ -6099,6 +6102,51 @@ const publicMarketplaceRouter = router({
     .query(async ({ input }) => {
       return publicMarketplace.getUserCollection(input.userId);
     }),
+
+  // Get all collections
+  getCollections: publicProcedure.query(async () => {
+    const dbInstance = await db.getDb();
+    if (!dbInstance) return [];
+    return dbInstance.select().from(nftCollections).orderBy(desc(nftCollections.createdAt));
+  }),
+
+  // Create a new collection (admin only)
+  createCollection: protectedProcedure
+    .input(z.object({
+      name: z.string(),
+      description: z.string().optional(),
+      coverImage: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new Error("Database not available");
+      const [collection] = await dbInstance.insert(nftCollections).values({
+        userId: ctx.user.id,
+        name: input.name,
+        description: input.description || "",
+        coverImage: input.coverImage || "",
+        slug: input.name.toLowerCase().replace(/\s+/g, "-"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      return { id: collection.insertId, ...input };
+    }),
+
+  // Feature/unfeature a collection (admin only)
+  featureCollection: protectedProcedure
+    .input(z.object({
+      collectionId: z.number(),
+      featured: z.boolean(),
+    }))
+    .mutation(async ({ input }) => {
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new Error("Database not available");
+      await dbInstance.update(nftCollections)
+        .set({ isFeatured: input.featured, updatedAt: new Date() })
+        .where(eq(nftCollections.id, input.collectionId));
+      return { success: true };
+    }),
+
 });
 export const appRouter = router({
   system: systemRouter,
@@ -6145,6 +6193,7 @@ export const appRouter = router({
   faucetAccounts: faucetAccountsRouter,
   captcha: captchaRouter,
   publicMarketplace: publicMarketplaceRouter,
+  stripe: stripeRouter,
 });
 
 export type AppRouter = typeof appRouter;

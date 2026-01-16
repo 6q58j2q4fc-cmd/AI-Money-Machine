@@ -571,3 +571,26 @@ export async function getCategories() {
 }
 
 // Get user by wallet address
+
+// Stripe checkout for NFT purchase
+import { createNftCheckoutSession, verifyPayment } from "./stripeNftCheckout";
+
+export async function createCheckoutForNft(
+  nftId: number,
+  userId: string,
+  userEmail: string,
+  userName: string,
+  origin: string
+): Promise<{ url: string; sessionId: string }> {
+  return createNftCheckoutSession({
+    nftId,
+    userId,
+    userEmail,
+    userName,
+    origin,
+  });
+}
+
+export async function verifyNftPayment(sessionId: string) {
+  return verifyPayment(sessionId);
+}

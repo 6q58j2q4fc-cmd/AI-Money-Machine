@@ -45,6 +45,7 @@ import NFTMarketplace from './pages/NFTMarketplace';
 import TransactionHistory from './pages/TransactionHistory';
 import NFTWatchlist from './pages/NFTWatchlist';
 import NFTPortfolio from './pages/NFTPortfolio';
+import Collections from './pages/Collections';
 import NftBlog from './pages/NftBlog';
 import RealEarnings from './pages/RealEarnings';
 import FaucetConnections from './pages/FaucetConnections';
@@ -111,6 +112,7 @@ function Router() {
       <Route path="/master-todo">{() => <AdminPage component={MasterTodo} />}</Route>
       <Route path="/faucet-accounts">{() => <AdminPage component={FaucetAccounts} />}</Route>
       <Route path="/nft-portfolio">{() => <AdminPage component={NFTPortfolio} />}</Route>
+      <Route path="/collections">{() => <AdminPage component={Collections} />}</Route>
       <Route path="/nft-blog">{() => <AdminPage component={NftBlog} />}</Route>
       <Route path="/real-earnings">{() => <AdminPage component={RealEarnings} />}</Route>
       <Route path="/faucet-connections">{() => <AdminPage component={FaucetConnections} />}</Route>

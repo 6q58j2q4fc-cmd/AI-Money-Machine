@@ -8,8 +8,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Wallet, Heart, Share2, ExternalLink, ArrowLeft, 
   Clock, Eye, Tag, Layers, Shield, Copy, Check,
-  Twitter, Send, Sparkles
+  Twitter, Send, Sparkles, CreditCard, DollarSign
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 // Wallet hook (same as marketplace)
@@ -58,6 +68,10 @@ export default function PublicNFTDetail() {
   const [isLiked, setIsLiked] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isStripeCheckout, setIsStripeCheckout] = useState(false);
+  const [buyerEmail, setBuyerEmail] = useState("");
+  const [buyerName, setBuyerName] = useState("");
+  const [showStripeDialog, setShowStripeDialog] = useState(false);
   
   const wallet = useWallet();
   
@@ -71,6 +85,23 @@ export default function PublicNFTDetail() {
   const walletAuth = trpc.publicMarketplace.walletAuth.useMutation();
   const recordPurchase = trpc.publicMarketplace.recordPurchase.useMutation();
   const addFavorite = trpc.publicMarketplace.addFavorite.useMutation();
+  const createStripeCheckout = trpc.stripe.createCheckoutSession.useMutation();
+  
+  // Check for payment success from URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    const sessionId = urlParams.get('session_id');
+    
+    if (paymentStatus === 'success' && sessionId) {
+      toast.success('Payment successful! Your NFT purchase is being processed.');
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (paymentStatus === 'cancelled') {
+      toast.info('Payment cancelled');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
   
   // SEO
   useEffect(() => {
@@ -155,6 +186,38 @@ export default function PublicNFTDetail() {
       toast.error("Failed to complete purchase");
     }
     setIsPurchasing(false);
+  };
+  
+  // Handle Stripe checkout
+  const handleStripeCheckout = async () => {
+    if (!buyerEmail) {
+      toast.error("Please enter your email address");
+      return;
+    }
+    
+    if (!nft) return;
+    
+    setIsStripeCheckout(true);
+    try {
+      const result = await createStripeCheckout.mutateAsync({
+        nftId: nft.id,
+        userEmail: buyerEmail,
+        userName: buyerName || "Guest Buyer",
+        userId: wallet.address || "guest",
+      });
+      
+      if (result.url) {
+        toast.info("Redirecting to checkout...");
+        window.open(result.url, "_blank");
+        setShowStripeDialog(false);
+      } else {
+        toast.error("Failed to create checkout session");
+      }
+    } catch (err: any) {
+      console.error("Stripe checkout error:", err);
+      toast.error(err.message || "Failed to initiate checkout");
+    }
+    setIsStripeCheckout(false);
   };
   
   const handleFavorite = async () => {
@@ -316,30 +379,128 @@ export default function PublicNFTDetail() {
                   <span className="text-xl text-zinc-400">ETH</span>
                 </div>
                 
-                <Button
-                  size="lg"
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-lg"
-                  onClick={handleBuy}
-                  disabled={isPurchasing || nft.status === "sold"}
-                >
-                  {isPurchasing ? (
-                    <>
-                      <div className="animate-spin w-5 h-5 border-2 border-black border-t-transparent rounded-full mr-2" />
-                      Processing...
-                    </>
-                  ) : nft.status === "sold" ? (
-                    "Sold"
-                  ) : (
-                    <>
-                      <Wallet className="w-5 h-5 mr-2" />
-                      Buy Now
-                    </>
-                  )}
-                </Button>
+                <div className="space-y-3">
+                  {/* Crypto Payment */}
+                  <Button
+                    size="lg"
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-lg"
+                    onClick={handleBuy}
+                    disabled={isPurchasing || nft.status === "sold"}
+                  >
+                    {isPurchasing ? (
+                      <>
+                        <div className="animate-spin w-5 h-5 border-2 border-black border-t-transparent rounded-full mr-2" />
+                        Processing...
+                      </>
+                    ) : nft.status === "sold" ? (
+                      "Sold"
+                    ) : (
+                      <>
+                        <Wallet className="w-5 h-5 mr-2" />
+                        Buy with Crypto
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Stripe Payment */}
+                  <Dialog open={showStripeDialog} onOpenChange={setShowStripeDialog}>
+                    <DialogTrigger asChild>
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="w-full border-zinc-700 hover:bg-zinc-800 font-bold text-lg"
+                        disabled={nft.status === "sold"}
+                      >
+                        <CreditCard className="w-5 h-5 mr-2" />
+                        Buy with Card
+                        <span className="ml-2 text-sm text-zinc-400">
+                          (~${(parseFloat(String(price)) * 2000).toFixed(2)})
+                        </span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-zinc-900 border-zinc-800">
+                      <DialogHeader>
+                        <DialogTitle className="text-white">Complete Purchase</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                          Enter your details to purchase {nft.name} with a credit card.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={nft.imageUrl || "/placeholder-nft.png"}
+                              alt={nft.name}
+                              className="w-12 h-12 rounded-lg object-cover"
+                            />
+                            <div>
+                              <p className="font-semibold text-white">{nft.name}</p>
+                              <p className="text-sm text-zinc-400">{nft.category}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-yellow-500">
+                              {parseFloat(String(price)).toFixed(4)} ETH
+                            </p>
+                            <p className="text-sm text-zinc-400">
+                              ~${(parseFloat(String(price)) * 2000).toFixed(2)} USD
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="email" className="text-white">Email Address *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="your@email.com"
+                            value={buyerEmail}
+                            onChange={(e) => setBuyerEmail(e.target.value)}
+                            className="bg-zinc-800 border-zinc-700 text-white"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="name" className="text-white">Name (Optional)</Label>
+                          <Input
+                            id="name"
+                            type="text"
+                            placeholder="Your Name"
+                            value={buyerName}
+                            onChange={(e) => setBuyerName(e.target.value)}
+                            className="bg-zinc-800 border-zinc-700 text-white"
+                          />
+                        </div>
+                        
+                        <Button
+                          className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+                          onClick={handleStripeCheckout}
+                          disabled={isStripeCheckout || !buyerEmail}
+                        >
+                          {isStripeCheckout ? (
+                            <>
+                              <div className="animate-spin w-5 h-5 border-2 border-black border-t-transparent rounded-full mr-2" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <DollarSign className="w-5 h-5 mr-2" />
+                              Pay ${(parseFloat(String(price)) * 2000).toFixed(2)}
+                            </>
+                          )}
+                        </Button>
+                        
+                        <p className="text-xs text-zinc-500 text-center">
+                          Secure payment powered by Stripe. Test card: 4242 4242 4242 4242
+                        </p>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 
                 {!wallet.address && (
                   <p className="text-center text-sm text-zinc-400 mt-3">
-                    Connect your wallet to purchase
+                    Connect wallet for crypto, or use card payment
                   </p>
                 )}
               </CardContent>

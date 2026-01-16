@@ -35,6 +35,54 @@ async function startServer() {
   // Security middleware temporarily disabled for debugging
   // applySecurityMiddleware(app);
   
+  // Stripe webhook - MUST be before express.json() for raw body access
+  app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const Stripe = (await import('stripe')).default;
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+      apiVersion: '2025-12-15.clover',
+    });
+    
+    const sig = req.headers['stripe-signature'] as string;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    if (!webhookSecret) {
+      console.error('[Stripe Webhook] No webhook secret configured');
+      return res.status(500).json({ error: 'Webhook secret not configured' });
+    }
+    
+    try {
+      const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+      
+      // Handle test events
+      if (event.id.startsWith('evt_test_')) {
+        console.log('[Stripe Webhook] Test event detected, returning verification response');
+        return res.json({ verified: true });
+      }
+      
+      console.log(`[Stripe Webhook] Received event: ${event.type}`);
+      
+      switch (event.type) {
+        case 'checkout.session.completed': {
+          const session = event.data.object as any;
+          const { handleNftPaymentSuccess } = await import('./stripeNftCheckout');
+          await handleNftPaymentSuccess(session);
+          break;
+        }
+        case 'payment_intent.succeeded': {
+          console.log('[Stripe Webhook] Payment intent succeeded:', event.data.object);
+          break;
+        }
+        default:
+          console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
+      }
+      
+      res.json({ received: true });
+    } catch (err: any) {
+      console.error('[Stripe Webhook] Error:', err.message);
+      res.status(400).json({ error: `Webhook Error: ${err.message}` });
+    }
+  });
+  
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

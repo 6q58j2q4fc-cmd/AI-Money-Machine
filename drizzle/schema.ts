@@ -1311,3 +1311,36 @@ export const userFavorites = mysqlTable("user_favorites", {
 });
 export type UserFavorite = typeof userFavorites.$inferSelect;
 export type InsertUserFavorite = typeof userFavorites.$inferInsert;
+
+
+/**
+ * NFT Collections - Curated themed collections
+ */
+export const nftCollections = mysqlTable("nft_collections", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  slug: varchar("slug", { length: 200 }).notNull(),
+  description: text("description"),
+  coverImage: text("coverImage"),
+  
+  // Stats
+  nftCount: int("nftCount").default(0),
+  floorPrice: decimal("floorPrice", { precision: 18, scale: 8 }).default("0"),
+  totalVolume: decimal("totalVolume", { precision: 18, scale: 8 }).default("0"),
+  viewCount: int("viewCount").default(0),
+  
+  // Featured status
+  isFeatured: boolean("isFeatured").default(false),
+  featuredAt: timestamp("featuredAt"),
+  
+  // Metadata
+  category: varchar("category", { length: 100 }),
+  tags: json("tags").$type<string[]>(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NftCollection = typeof nftCollections.$inferSelect;
+export type InsertNftCollection = typeof nftCollections.$inferInsert;
