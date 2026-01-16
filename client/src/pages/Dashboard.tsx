@@ -75,15 +75,19 @@ export default function Dashboard() {
     },
   });
   
+  // Calculate REAL withdrawable funds (only from confirmed sales)
+  const confirmedSalesEarnings = nftPortfolio?.pendingEarnings || 0;
+  const estimatedPortfolioValue = nftPortfolio?.totalEstimatedValue || 0;
+  const hasRealFunds = confirmedSalesEarnings > 0;
+  
   const handleWithdraw = () => {
-    const amount = nftPortfolio?.totalEstimatedValue || 0;
-    if (amount <= 0) {
-      toast.error("No funds available to withdraw");
+    if (confirmedSalesEarnings <= 0) {
+      toast.error("No confirmed sales to withdraw. Estimated value cannot be withdrawn until NFTs are sold.");
       return;
     }
     
     withdrawETH.mutate({
-      amount,
+      amount: confirmedSalesEarnings,
       network: 'ethereum',
     });
   };
@@ -164,19 +168,47 @@ export default function Dashboard() {
         <Card className="bg-gradient-to-r from-yellow-500/10 via-purple-500/10 to-blue-500/10 border-yellow-500/30">
           <CardContent className="p-6">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              {/* NFT Portfolio Value */}
-              <div className="flex items-center gap-4">
-                <div className="p-4 bg-yellow-500/20 rounded-xl">
-                  <Crown className="w-10 h-10 text-yellow-400" />
+              {/* NFT Portfolio - Estimated vs Withdrawable */}
+              <div className="flex items-center gap-6">
+                {/* Estimated Value */}
+                <div className="flex items-center gap-4">
+                  <div className="p-4 bg-yellow-500/20 rounded-xl">
+                    <Crown className="w-10 h-10 text-yellow-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-yellow-400 font-medium flex items-center gap-2">
+                      Portfolio Value (Estimated)
+                      <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded">NOT REAL</span>
+                    </p>
+                    <p className="text-3xl font-bold text-yellow-400">
+                      {estimatedPortfolioValue.toFixed(4)} ETH
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      {nftPortfolio?.totalNfts || 0} NFTs • {nftPortfolio?.totalListings || 0} Listings
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-yellow-400 font-medium">Total NFT Portfolio Value</p>
-                  <p className="text-4xl font-bold text-white">
-                    {(nftPortfolio?.totalEstimatedValue || 0).toFixed(4)} ETH
-                  </p>
-                  <p className="text-sm text-zinc-400">
-                    {nftPortfolio?.totalNfts || 0} NFTs • {nftPortfolio?.totalListings || 0} Active Listings
-                  </p>
+                
+                {/* Separator */}
+                <div className="hidden lg:block w-px h-16 bg-zinc-700" />
+                
+                {/* Withdrawable Funds */}
+                <div className="flex items-center gap-4">
+                  <div className="p-4 bg-green-500/20 rounded-xl">
+                    <DollarSign className="w-10 h-10 text-green-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-green-400 font-medium flex items-center gap-2">
+                      Withdrawable Funds
+                      <span className="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded">REAL</span>
+                    </p>
+                    <p className="text-3xl font-bold text-green-400">
+                      {confirmedSalesEarnings.toFixed(4)} ETH
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      From {nftPortfolio?.totalSales || 0} confirmed sales
+                    </p>
+                  </div>
                 </div>
               </div>
               
@@ -199,18 +231,23 @@ export default function Dashboard() {
                 <div className="flex gap-2">
                   <Button 
                     onClick={handleWithdraw}
-                    disabled={withdrawETH.isPending || (nftPortfolio?.totalEstimatedValue || 0) <= 0}
-                    className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                    disabled={withdrawETH.isPending || confirmedSalesEarnings <= 0}
+                    className={`${hasRealFunds ? 'bg-green-600 hover:bg-green-700' : 'bg-zinc-700'} text-white disabled:opacity-50`}
                   >
                     {withdrawETH.isPending ? (
                       <>
                         <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         Processing...
                       </>
+                    ) : hasRealFunds ? (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Withdraw {confirmedSalesEarnings.toFixed(4)} ETH
+                      </>
                     ) : (
                       <>
                         <Send className="w-4 h-4 mr-2" />
-                        Withdraw {(nftPortfolio?.totalEstimatedValue || 0).toFixed(4)} ETH
+                        No Sales Yet
                       </>
                     )}
                   </Button>

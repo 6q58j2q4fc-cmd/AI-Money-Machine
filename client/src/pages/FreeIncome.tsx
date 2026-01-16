@@ -262,51 +262,95 @@ export default function FreeIncome() {
           </CardContent>
         </Card>
 
-        {/* Earnings Summary */}
+        {/* IMPORTANT: Real vs Simulated Warning */}
+        <Card className="border-2 border-yellow-500/50 bg-yellow-500/10">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-yellow-400">⚠️ Faucet Connection Required</p>
+                <p className="text-sm text-zinc-300 mt-1">
+                  The earnings shown below are <span className="text-red-400 font-bold">SIMULATED</span> until you connect real faucet accounts.
+                  To earn real crypto, you must:
+                </p>
+                <ol className="text-sm text-zinc-400 mt-2 list-decimal list-inside space-y-1">
+                  <li>Create accounts on faucet platforms (FreeBitco.in, Cointiply, etc.)</li>
+                  <li>Add your API keys in <span className="text-blue-400">Settings → Faucet Connections</span></li>
+                  <li>Only verified blockchain transactions will show as real earnings</li>
+                </ol>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-3 border-yellow-500 text-yellow-400 hover:bg-yellow-500/20"
+                  onClick={() => window.location.href = '/settings'}
+                >
+                  Connect Faucets Now
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Earnings Summary - SIMULATED WARNING */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-green-500/20 to-green-600/10 border-green-500/30">
+          <Card className="bg-gradient-to-br from-red-500/20 to-red-600/10 border-red-500/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-green-400">Total Earned</p>
-                  <p className="text-2xl font-bold text-white">${(earnings?.totalUSD || 0).toFixed(2)}</p>
-                  <p className="text-xs text-zinc-400">{(earnings?.totalETH || 0).toFixed(6)} ETH</p>
+                  <p className="text-sm text-red-400 flex items-center gap-1">
+                    Total Earned
+                    <span className="text-xs bg-red-500/30 text-red-300 px-1 rounded">SIMULATED</span>
+                  </p>
+                  <p className="text-2xl font-bold text-zinc-500">${(earnings?.totalUSD || 0).toFixed(2)}</p>
+                  <p className="text-xs text-zinc-500">{(earnings?.totalETH || 0).toFixed(6)} ETH</p>
+                  <p className="text-xs text-red-400 mt-1">Not real - connect faucets</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-green-500" />
+                <DollarSign className="w-8 h-8 text-red-500/50" />
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 border-amber-500/30">
+          <Card className="bg-gradient-to-br from-red-500/20 to-red-600/10 border-red-500/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-amber-400">Today</p>
-                  <p className="text-2xl font-bold text-white">${(earnings?.todayUSD || 0).toFixed(2)}</p>
+                  <p className="text-sm text-red-400 flex items-center gap-1">
+                    Today
+                    <span className="text-xs bg-red-500/30 text-red-300 px-1 rounded">SIM</span>
+                  </p>
+                  <p className="text-2xl font-bold text-zinc-500">${(earnings?.todayUSD || 0).toFixed(2)}</p>
+                  <p className="text-xs text-red-400">Not real</p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-amber-500" />
+                <TrendingUp className="w-8 h-8 text-red-500/50" />
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 border-blue-500/30">
+          <Card className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border-yellow-500/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-blue-400">NFT Portfolio</p>
-                  <p className="text-2xl font-bold text-white">{(nftPortfolio?.totalValue || 0).toFixed(4)} ETH</p>
-                  <p className="text-xs text-zinc-400">{nftPortfolio?.totalNFTs || 0} NFTs</p>
+                  <p className="text-sm text-yellow-400 flex items-center gap-1">
+                    NFT Portfolio
+                    <span className="text-xs bg-yellow-500/30 text-yellow-300 px-1 rounded">EST</span>
+                  </p>
+                  <p className="text-2xl font-bold text-yellow-400">{(nftPortfolio?.totalValue || 0).toFixed(4)} ETH</p>
+                  <p className="text-xs text-zinc-400">{nftPortfolio?.totalNFTs || 0} NFTs (estimated value)</p>
                 </div>
-                <Sparkles className="w-8 h-8 text-blue-500" />
+                <Sparkles className="w-8 h-8 text-yellow-500" />
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border-purple-500/30">
+          <Card className="bg-gradient-to-br from-red-500/20 to-red-600/10 border-red-500/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-purple-400">Active Sources</p>
-                  <p className="text-2xl font-bold text-white">{claimStatus?.activeSources || 0}</p>
+                  <p className="text-sm text-red-400 flex items-center gap-1">
+                    Connected Faucets
+                    <span className="text-xs bg-red-500/30 text-red-300 px-1 rounded">0</span>
+                  </p>
+                  <p className="text-2xl font-bold text-red-400">0 / 8</p>
+                  <p className="text-xs text-red-400">No faucets connected</p>
                 </div>
-                <Activity className="w-8 h-8 text-purple-500" />
+                <Activity className="w-8 h-8 text-red-500/50" />
               </div>
             </CardContent>
           </Card>

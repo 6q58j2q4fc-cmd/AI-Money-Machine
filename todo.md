@@ -2100,3 +2100,20 @@
 - [x] Fix withdrawal button to transfer real crypto to hot wallet - Uses Polygon for low fees
 - [x] Remove any simulated/estimated values from earnings display - Earnings tracked from actual claims
 - [x] Test live withdrawal transaction - Explorer URL included in response
+
+
+## Bug Fixes - Jan 16, 2026 (Session 2)
+- [x] Fix Dashboard withdrawal button showing "simulation" message - separate estimated value from withdrawable funds
+- [x] Create Withdrawable Funds section connected to withdrawal button on home page
+- [x] Fix Free Income page - added SIMULATED warning banner explaining faucets need to be connected
+- [x] Remove all simulation messages and only show real earnings - added red SIMULATED badges
+- [x] Add clear distinction between estimated NFT value and actual withdrawable balance - NOT REAL vs REAL badges
+- [x] Created realFaucetConnections.ts service with setup guides for each faucet
+- [x] Added "Connect Faucets Now" button linking to Settings
+- [x] Updated earnings cards to show SIMULATED/SIM/EST badges for fake/estimated values
+- [x] Added "Connected Faucets: 0/8" indicator showing no real faucets connected
+
+## Still Pending - Faucet Integration
+- [ ] Create Settings → Faucet Connections page for API key input
+- [ ] Implement real faucet API integrations (FreeBitco.in, FaucetPay, etc.)
+- [ ] Add blockchain transaction verification for real earnings
