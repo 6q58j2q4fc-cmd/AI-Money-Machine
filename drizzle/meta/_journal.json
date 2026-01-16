@@ -120,6 +120,13 @@
       "when": 1768425337521,
       "tag": "0016_blue_mandrill",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1768576443620,
+      "tag": "0017_lean_harrier",
+      "breakpoints": true
     }
   ]
 }

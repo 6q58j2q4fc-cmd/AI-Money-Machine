@@ -2117,3 +2117,58 @@
 - [ ] Create Settings → Faucet Connections page for API key input
 - [ ] Implement real faucet API integrations (FreeBitco.in, FaucetPay, etc.)
 - [ ] Add blockchain transaction verification for real earnings
+
+
+## Full-Stack NFT Marketplace with Public/Admin Separation (Jan 16, 2026)
+
+### Authentication System Design
+- [x] Create public user role separate from admin
+- [x] Public users can: browse, search, buy NFTs, view profiles
+- [x] Admin (owner) only: NFT generation, automation, content pipeline, wallet management, all dashboard features
+- [x] Implement role-based route protection (AdminOnly component)
+
+### Public User System
+- [x] Public user registration page (wallet connect)
+- [x] Public user login page (wallet-based auth)
+- [x] User profile page with purchase history (/profile)
+- [x] User favorites/watchlist
+- [x] User wallet connection for purchases
+
+### Public NFT Marketplace Pages
+- [x] Homepage with featured NFTs and collections (/market)
+- [x] Browse all NFTs with filters (category, price, blockchain)
+- [x] Search functionality
+- [x] Individual NFT detail pages (/nft/:id)
+- [x] Collection pages
+- [x] Artist/creator profiles
+
+### Purchase Flow
+- [x] Connect wallet button (MetaMask, WalletConnect)
+- [x] Buy Now functionality with real blockchain transactions
+- [x] Purchase confirmation and receipt
+- [x] Transaction history for users
+- [x] Royalty payments to creator
+
+### Admin-Only Features (Restricted to Owner)
+- [x] Dashboard and analytics - Protected by AdminOnly
+- [x] NFT generation/minting - Protected by AdminOnly
+- [x] Automation settings - Protected by AdminOnly
+- [x] Content pipeline - Protected by AdminOnly
+- [x] Bot intelligence - Protected by AdminOnly
+- [x] Wallet management - Protected by AdminOnly
+- [x] All other admin features - All routes wrapped with AdminOnly component
+
+### Database Tables Added
+- [x] marketplaceUsers - wallet-based user accounts
+- [x] marketplacePurchases - purchase records
+- [x] marketplaceFavorites - user favorites
+- [x] nftCollections - NFT collections
+
+### Public Routes (No Login Required)
+- /market - Public NFT marketplace
+- /nft/:id - NFT detail page
+- /profile - User profile (wallet required)
+- /blog - Public blog
+
+### Admin Routes (Owner Only)
+- /dashboard, /automation, /bot, /nft-empire, /content-pipeline, etc.

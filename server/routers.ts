@@ -5973,6 +5973,133 @@ const masterTodoRouter = router({
     }),
 });
 
+// Import public marketplace service
+import * as publicMarketplace from './_core/publicMarketplace';
+
+// Public Marketplace Router - No auth required for browsing
+const publicMarketplaceRouter = router({
+  // Get NFTs for marketplace (public)
+  getNFTs: publicProcedure
+    .input(z.object({
+      limit: z.number().optional().default(20),
+      offset: z.number().optional().default(0),
+      category: z.string().optional(),
+      minPrice: z.number().optional(),
+      maxPrice: z.number().optional(),
+      chain: z.string().optional(),
+      search: z.string().optional(),
+      sortBy: z.enum(['price_asc', 'price_desc', 'newest', 'popular']).optional(),
+    }).optional())
+    .query(async ({ input }) => {
+      return publicMarketplace.getPublicNFTs(input || {});
+    }),
+  
+  // Get single NFT details (public)
+  getNFTDetails: publicProcedure
+    .input(z.object({ nftId: z.number() }))
+    .query(async ({ input }) => {
+      return publicMarketplace.getNFTDetails(input.nftId);
+    }),
+  
+  // Get marketplace stats (public)
+  getStats: publicProcedure.query(async () => {
+    return publicMarketplace.getMarketplaceStats();
+  }),
+  
+  // Get featured NFTs (public)
+  getFeatured: publicProcedure
+    .input(z.object({ limit: z.number().optional() }).optional())
+    .query(async ({ input }) => {
+      return publicMarketplace.getFeaturedNFTs(input?.limit || 8);
+    }),
+  
+  // Get categories (public)
+  getCategories: publicProcedure.query(async () => {
+    return publicMarketplace.getCategories();
+  }),
+  
+  // Wallet authentication - get or create user
+  walletAuth: publicProcedure
+    .input(z.object({ walletAddress: z.string() }))
+    .mutation(async ({ input }) => {
+      return publicMarketplace.getOrCreateMarketplaceUser(input.walletAddress);
+    }),
+  
+  // Get user by wallet
+  getUser: publicProcedure
+    .input(z.object({ walletAddress: z.string() }))
+    .query(async ({ input }) => {
+      return publicMarketplace.getMarketplaceUser(input.walletAddress);
+    }),
+  
+  // Update user profile (requires wallet connection)
+  updateProfile: publicProcedure
+    .input(z.object({
+      userId: z.number(),
+      username: z.string().optional(),
+      displayName: z.string().optional(),
+      email: z.string().optional(),
+      avatarUrl: z.string().optional(),
+      bio: z.string().optional(),
+      twitterHandle: z.string().optional(),
+      discordHandle: z.string().optional(),
+      websiteUrl: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { userId, ...data } = input;
+      return publicMarketplace.updateUserProfile(userId, data);
+    }),
+  
+  // Add to favorites
+  addFavorite: publicProcedure
+    .input(z.object({ userId: z.number(), nftAssetId: z.number() }))
+    .mutation(async ({ input }) => {
+      return publicMarketplace.addToFavorites(input.userId, input.nftAssetId);
+    }),
+  
+  // Remove from favorites
+  removeFavorite: publicProcedure
+    .input(z.object({ userId: z.number(), nftAssetId: z.number() }))
+    .mutation(async ({ input }) => {
+      return publicMarketplace.removeFromFavorites(input.userId, input.nftAssetId);
+    }),
+  
+  // Get user favorites
+  getFavorites: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => {
+      return publicMarketplace.getUserFavorites(input.userId);
+    }),
+  
+  // Record purchase
+  recordPurchase: publicProcedure
+    .input(z.object({
+      buyerId: z.number(),
+      buyerWallet: z.string(),
+      nftAssetId: z.number(),
+      purchasePrice: z.string(),
+      currency: z.string().default('ETH'),
+      chain: z.string().default('ethereum'),
+      txHash: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      return publicMarketplace.recordPurchase(input);
+    }),
+  
+  // Get user purchases
+  getPurchases: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => {
+      return publicMarketplace.getUserPurchases(input.userId);
+    }),
+  
+  // Get user collection
+  getCollection: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => {
+      return publicMarketplace.getUserCollection(input.userId);
+    }),
+});
 export const appRouter = router({
   system: systemRouter,
   selfDebugger: selfDebuggerRouter,
@@ -6017,6 +6144,8 @@ export const appRouter = router({
   masterTodo: masterTodoRouter,
   faucetAccounts: faucetAccountsRouter,
   captcha: captchaRouter,
+  publicMarketplace: publicMarketplaceRouter,
 });
 
 export type AppRouter = typeof appRouter;
+

@@ -47,12 +47,24 @@ import NFTWatchlist from './pages/NFTWatchlist';
 import NFTPortfolio from './pages/NFTPortfolio';
 import NftBlog from './pages/NftBlog';
 import RealEarnings from './pages/RealEarnings';
+import PublicMarketplace from './pages/PublicMarketplace';
+import PublicNFTDetail from './pages/PublicNFTDetail';
+import MarketplaceProfile from './pages/MarketplaceProfile';
+import AdminOnly from './components/AdminOnly';
+
+// Admin-protected page wrapper
+const AdminPage = ({ component: Component }: { component: React.ComponentType }) => (
+  <AdminOnly><Component /></AdminOnly>
+);
 
 function Router() {
   return (
     <Switch>
       {/* Public routes */}
       <Route path="/" component={Home} />
+      <Route path="/market" component={PublicMarketplace} />
+      <Route path="/nft/:id" component={PublicNFTDetail} />
+      <Route path="/profile" component={MarketplaceProfile} />
       <Route path="/marketplace" component={NFTMarketplace} />
       <Route path="/marketplace/nft/:id" component={NFTMarketplace} />
       <Route path="/transactions" component={TransactionHistory} />
@@ -61,45 +73,45 @@ function Router() {
       <Route path="/blog/:slug" component={PublicArticle} />
       <Route path="/article/:slug" component={PublicArticle} />
       
-      {/* Dashboard routes */}
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/topics" component={TrendingTopics} />
-      <Route path="/articles" component={Articles} />
-      <Route path="/articles/new" component={ArticleEditor} />
-      <Route path="/articles/:id" component={ArticleEditor} />
-      <Route path="/affiliate-links" component={AffiliateLinks} />
-      <Route path="/analytics" component={Analytics} />
-      <Route path="/monetization-guide" component={MonetizationGuide} />
-      <Route path="/cj-integration" component={CJIntegration} />
-      <Route path="/auto-publish" component={AutoPublish} />
-      <Route path="/automation" component={AutomationCenter} />
-      <Route path="/distribution" component={DistributionCenter} />
-      <Route path="/system-optimizer" component={SystemOptimizer} />
-      <Route path="/bot" component={BotIntelligence} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/free-publishing" component={FreePublishingBot} />
-      <Route path="/data-accuracy" component={DataAccuracy} />
-      <Route path="/audit-log" component={AuditLog} />
-      <Route path="/ai-command" component={AICommandCenter} />
-      <Route path="/llm-settings" component={LLMSettings} />
-      <Route path="/content-pipeline" component={ContentPipeline} />
-      <Route path="/product-pages" component={ProductPages} />
-      <Route path="/hive-mind" component={HiveMindCenter} />
-      <Route path="/network-connections" component={NetworkConnections} />
-      <Route path="/free-income" component={FreeIncome} />
-      <Route path="/nft-gallery" component={NFTGallery} />
-      <Route path="/awin-integration" component={AwinIntegration} />
-      <Route path="/nft-empire" component={NFTEmpire} />
-      <Route path="/always-awake" component={AlwaysAwake} />
-      <Route path="/wallet-settings" component={WalletSettings} />
-      <Route path="/hot-wallet" component={HotWallet} />
-      <Route path="/system-health" component={SystemHealth} />
-      <Route path="/debug-admin" component={DebugAdmin} />
-      <Route path="/master-todo" component={MasterTodo} />
-      <Route path="/faucet-accounts" component={FaucetAccounts} />
-      <Route path="/nft-portfolio" component={NFTPortfolio} />
-      <Route path="/nft-blog" component={NftBlog} />
-      <Route path="/real-earnings" component={RealEarnings} />
+      {/* Admin-only Dashboard routes */}
+      <Route path="/dashboard">{() => <AdminPage component={Dashboard} />}</Route>
+      <Route path="/topics">{() => <AdminPage component={TrendingTopics} />}</Route>
+      <Route path="/articles">{() => <AdminPage component={Articles} />}</Route>
+      <Route path="/articles/new">{() => <AdminPage component={ArticleEditor} />}</Route>
+      <Route path="/articles/:id">{() => <AdminPage component={ArticleEditor} />}</Route>
+      <Route path="/affiliate-links">{() => <AdminPage component={AffiliateLinks} />}</Route>
+      <Route path="/analytics">{() => <AdminPage component={Analytics} />}</Route>
+      <Route path="/monetization-guide">{() => <AdminPage component={MonetizationGuide} />}</Route>
+      <Route path="/cj-integration">{() => <AdminPage component={CJIntegration} />}</Route>
+      <Route path="/auto-publish">{() => <AdminPage component={AutoPublish} />}</Route>
+      <Route path="/automation">{() => <AdminPage component={AutomationCenter} />}</Route>
+      <Route path="/distribution">{() => <AdminPage component={DistributionCenter} />}</Route>
+      <Route path="/system-optimizer">{() => <AdminPage component={SystemOptimizer} />}</Route>
+      <Route path="/bot">{() => <AdminPage component={BotIntelligence} />}</Route>
+      <Route path="/settings">{() => <AdminPage component={Settings} />}</Route>
+      <Route path="/free-publishing">{() => <AdminPage component={FreePublishingBot} />}</Route>
+      <Route path="/data-accuracy">{() => <AdminPage component={DataAccuracy} />}</Route>
+      <Route path="/audit-log">{() => <AdminPage component={AuditLog} />}</Route>
+      <Route path="/ai-command">{() => <AdminPage component={AICommandCenter} />}</Route>
+      <Route path="/llm-settings">{() => <AdminPage component={LLMSettings} />}</Route>
+      <Route path="/content-pipeline">{() => <AdminPage component={ContentPipeline} />}</Route>
+      <Route path="/product-pages">{() => <AdminPage component={ProductPages} />}</Route>
+      <Route path="/hive-mind">{() => <AdminPage component={HiveMindCenter} />}</Route>
+      <Route path="/network-connections">{() => <AdminPage component={NetworkConnections} />}</Route>
+      <Route path="/free-income">{() => <AdminPage component={FreeIncome} />}</Route>
+      <Route path="/nft-gallery">{() => <AdminPage component={NFTGallery} />}</Route>
+      <Route path="/awin-integration">{() => <AdminPage component={AwinIntegration} />}</Route>
+      <Route path="/nft-empire">{() => <AdminPage component={NFTEmpire} />}</Route>
+      <Route path="/always-awake">{() => <AdminPage component={AlwaysAwake} />}</Route>
+      <Route path="/wallet-settings">{() => <AdminPage component={WalletSettings} />}</Route>
+      <Route path="/hot-wallet">{() => <AdminPage component={HotWallet} />}</Route>
+      <Route path="/system-health">{() => <AdminPage component={SystemHealth} />}</Route>
+      <Route path="/debug-admin">{() => <AdminPage component={DebugAdmin} />}</Route>
+      <Route path="/master-todo">{() => <AdminPage component={MasterTodo} />}</Route>
+      <Route path="/faucet-accounts">{() => <AdminPage component={FaucetAccounts} />}</Route>
+      <Route path="/nft-portfolio">{() => <AdminPage component={NFTPortfolio} />}</Route>
+      <Route path="/nft-blog">{() => <AdminPage component={NftBlog} />}</Route>
+      <Route path="/real-earnings">{() => <AdminPage component={RealEarnings} />}</Route>
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

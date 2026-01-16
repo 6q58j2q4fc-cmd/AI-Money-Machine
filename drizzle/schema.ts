@@ -1191,3 +1191,123 @@ export const marketplaceApiSettings = mysqlTable("marketplace_api_settings", {
 });
 export type MarketplaceApiSettings = typeof marketplaceApiSettings.$inferSelect;
 export type InsertMarketplaceApiSettings = typeof marketplaceApiSettings.$inferInsert;
+
+
+/**
+ * Marketplace Users - Public users who can browse and buy NFTs
+ * Separate from admin users who manage the platform
+ */
+export const marketplaceUsers = mysqlTable("marketplace_users", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Wallet-based authentication
+  walletAddress: varchar("walletAddress", { length: 42 }).notNull().unique(),
+  
+  // Optional profile info
+  username: varchar("username", { length: 50 }),
+  displayName: varchar("displayName", { length: 100 }),
+  email: varchar("email", { length: 320 }),
+  avatarUrl: text("avatarUrl"),
+  bio: text("bio"),
+  
+  // Social links
+  twitterHandle: varchar("twitterHandle", { length: 50 }),
+  discordHandle: varchar("discordHandle", { length: 50 }),
+  websiteUrl: text("websiteUrl"),
+  
+  // Verification
+  isVerified: boolean("isVerified").default(false),
+  verifiedAt: timestamp("verifiedAt"),
+  
+  // Stats
+  totalPurchases: int("totalPurchases").default(0),
+  totalSpent: decimal("totalSpent", { precision: 18, scale: 8 }).default("0"),
+  
+  // Session
+  nonce: varchar("nonce", { length: 64 }), // For wallet signature verification
+  lastLoginAt: timestamp("lastLoginAt"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type MarketplaceUser = typeof marketplaceUsers.$inferSelect;
+export type InsertMarketplaceUser = typeof marketplaceUsers.$inferInsert;
+
+/**
+ * NFT Purchases - Track all purchases made by marketplace users
+ */
+export const nftPurchases = mysqlTable("nft_purchases", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Buyer info
+  buyerId: int("buyerId").notNull(), // References marketplaceUsers.id
+  buyerWallet: varchar("buyerWallet", { length: 42 }).notNull(),
+  
+  // NFT info
+  nftAssetId: int("nftAssetId").notNull(),
+  tokenId: varchar("tokenId", { length: 100 }),
+  contractAddress: varchar("contractAddress", { length: 42 }),
+  
+  // Purchase details
+  purchasePrice: decimal("purchasePrice", { precision: 18, scale: 8 }).notNull(),
+  currency: varchar("currency", { length: 10 }).default("ETH"),
+  chain: varchar("chain", { length: 50 }).default("ethereum"),
+  
+  // Transaction
+  txHash: varchar("txHash", { length: 66 }),
+  blockNumber: int("blockNumber"),
+  gasUsed: varchar("gasUsed", { length: 50 }),
+  gasCost: varchar("gasCost", { length: 50 }),
+  
+  // Status
+  status: mysqlEnum("status", ["pending", "confirming", "completed", "failed", "refunded"]).default("pending").notNull(),
+  confirmations: int("confirmations").default(0),
+  
+  // Timestamps
+  purchasedAt: timestamp("purchasedAt").defaultNow().notNull(),
+  confirmedAt: timestamp("confirmedAt"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NftPurchase = typeof nftPurchases.$inferSelect;
+export type InsertNftPurchase = typeof nftPurchases.$inferInsert;
+
+/**
+ * User NFT Collection - Track NFTs owned by marketplace users
+ */
+export const userNftCollection = mysqlTable("user_nft_collection", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull(), // References marketplaceUsers.id
+  nftAssetId: int("nftAssetId").notNull(),
+  
+  // Acquisition info
+  acquiredAt: timestamp("acquiredAt").defaultNow().notNull(),
+  acquiredPrice: decimal("acquiredPrice", { precision: 18, scale: 8 }),
+  acquiredFrom: varchar("acquiredFrom", { length: 42 }), // Previous owner wallet
+  purchaseId: int("purchaseId"), // References nftPurchases.id
+  
+  // Current status
+  isListed: boolean("isListed").default(false),
+  listPrice: decimal("listPrice", { precision: 18, scale: 8 }),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type UserNftCollection = typeof userNftCollection.$inferSelect;
+export type InsertUserNftCollection = typeof userNftCollection.$inferInsert;
+
+/**
+ * User Favorites - NFTs saved by marketplace users
+ */
+export const userFavorites = mysqlTable("user_favorites", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull(), // References marketplaceUsers.id
+  nftAssetId: int("nftAssetId").notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type UserFavorite = typeof userFavorites.$inferSelect;
+export type InsertUserFavorite = typeof userFavorites.$inferInsert;
