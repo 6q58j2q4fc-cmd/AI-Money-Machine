@@ -1,0 +1,40 @@
+{
+  "query": "SELECT keywords FROM articles WHERE status = 'published' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT keywords FROM articles WHERE status = 'published' LIMIT 10;",
+  "rows": [
+    {
+      "keywords": "[\"sustainable gardening tips\", \"urban farming kits\", \"eco-friendly garden supplies\", \"vertical garden systems\", \"organic seed starter\"]"
+    },
+    {
+      "keywords": "[\"AI business automation\", \"small business AI tools\", \"AI productivity software\", \"AI marketing solutions\", \"AI content generation for business\"]"
+    },
+    {
+      "keywords": "[\"gut health supplements\", \"personalized gut microbiome testing\", \"probiotic foods for gut health\", \"gut health diet plan\", \"digestive wellness products\"]"
+    },
+    {
+      "keywords": "[\"vertical garden kits\", \"composting solutions home\", \"hydroponic systems for beginners\", \"organic pest control garden\", \"rainwater harvesting systems\"]"
+    },
+    {
+      "keywords": "[\"AI writing assistant small business\", \"AI project management software\", \"AI CRM solutions\", \"AI tools for content creation\", \"automate tasks with AI\"]"
+    },
+    {
+      "keywords": "[\"gut microbiome testing kits\", \"probiotic supplements for IBS\", \"personalized diet plans\", \"prebiotic foods list\", \"digestive health coaching\"]"
+    },
+    {
+      "keywords": "[\"urban gardening kits\", \"best raised garden beds\", \"composting for beginners\", \"indoor herb garden setup\", \"organic pest control solutions\"]"
+    },
+    {
+      "keywords": "[\"best AI writing assistant\", \"AI task management software\", \"AI note taking app\", \"AI productivity apps comparison\", \"automate workflow with AI\"]"
+    },
+    {
+      "keywords": "[\"budgeting apps for beginners\", \"investing for young adults\", \"debt consolidation strategies\", \"side hustles for extra income\", \"financial literacy for millennials\"]"
+    },
+    {
+      "keywords": "[\"balcony garden ideas\", \"vertical gardening systems\", \"indoor herb garden kit\", \"composting for beginners\", \"eco-friendly plant pots\"]"
+    }
+  ],
+  "messages": [],
+  "stdout": "keywords\n[\"sustainable gardening tips\", \"urban farming kits\", \"eco-friendly garden supplies\", \"vertical garden systems\", \"organic seed starter\"]\n[\"AI business automation\", \"small business AI tools\", \"AI productivity software\", \"AI marketing solutions\", \"AI content generation for business\"]\n[\"gut health supplements\", \"personalized gut microbiome testing\", \"probiotic foods for gut health\", \"gut health diet plan\", \"digestive wellness products\"]\n[\"vertical garden kits\", \"composting solutions home\", \"hydroponic systems for beginners\", \"organic pest control garden\", \"rainwater harvesting systems\"]\n[\"AI writing assistant small business\", \"AI project management software\", \"AI CRM solutions\", \"AI tools for content creation\", \"automate tasks with AI\"]\n[\"gut microbiome testing kits\", \"probiotic supplements for IBS\", \"personalized diet plans\", \"prebiotic foods list\", \"digestive health coaching\"]\n[\"urban gardening kits\", \"best raised garden beds\", \"composting for beginners\", \"indoor herb garden setup\", \"organic pest control solutions\"]\n[\"best AI writing assistant\", \"AI task management software\", \"AI note taking app\", \"AI productivity apps comparison\", \"automate workflow with AI\"]\n[\"budgeting apps for beginners\", \"investing for young adults\", \"debt consolidation strategies\", \"side hustles for extra income\", \"financial literacy for millennials\"]\n[\"balcony garden ideas\", \"vertical gardening systems\", \"indoor herb garden kit\", \"composting for beginners\", \"eco-friendly plant pots\"]\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

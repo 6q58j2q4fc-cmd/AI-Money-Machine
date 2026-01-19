@@ -2481,3 +2481,11 @@
 
 - [x] Add View Article Blog quick action card on dashboard homepage
 - [x] Add sidebar dropdown menu for articles section
+
+
+## Category Landing Pages (January 19, 2026)
+
+- [x] Create dedicated category landing page component
+- [x] Add routes for /blog/category/:slug
+- [x] Add category navigation to blog page and sidebar
+- [x] Implement SEO meta tags for category pages

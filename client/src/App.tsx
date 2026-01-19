@@ -16,7 +16,8 @@ import CJIntegration from "./pages/CJIntegration";
 import AutoPublish from "./pages/AutoPublish";
 import AutomationCenter from "./pages/AutomationCenter";
 import Blog from "./pages/Blog";
-import PublicArticle from "./pages/PublicArticle";
+import PublicArticle from './pages/PublicArticle';
+import CategoryPage from './pages/CategoryPage';
 import DistributionCenter from "./pages/DistributionCenter";
 import BotIntelligence from "./pages/BotIntelligence";
 import Settings from "./pages/Settings";
@@ -80,6 +81,7 @@ function Router() {
       <Route path="/security" component={SecurityDashboard} />
       <Route path="/watchlist" component={NFTWatchlist} />
       <Route path="/blog" component={Blog} />
+      <Route path="/blog/category/:slug" component={CategoryPage} />
       <Route path="/blog/:slug" component={PublicArticle} />
       <Route path="/article/:slug" component={PublicArticle} />
       

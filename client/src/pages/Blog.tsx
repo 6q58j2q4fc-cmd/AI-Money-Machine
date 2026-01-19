@@ -434,6 +434,48 @@ export default function Blog() {
         </section>
       )}
 
+      {/* Browse by Category */}
+      <section className="container py-8 border-b border-border">
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Tag className="w-5 h-5" />
+          Browse by Category
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+          {CATEGORIES.filter(c => c.value !== "all").map(category => {
+            const categoryColors: Record<string, string> = {
+              technology: "from-blue-500/20 to-cyan-500/20 border-blue-500/30 hover:border-blue-500/50",
+              finance: "from-green-500/20 to-emerald-500/20 border-green-500/30 hover:border-green-500/50",
+              productivity: "from-yellow-500/20 to-orange-500/20 border-yellow-500/30 hover:border-yellow-500/50",
+              health: "from-red-500/20 to-pink-500/20 border-red-500/30 hover:border-red-500/50",
+              lifestyle: "from-purple-500/20 to-violet-500/20 border-purple-500/30 hover:border-purple-500/50",
+              business: "from-indigo-500/20 to-blue-500/20 border-indigo-500/30 hover:border-indigo-500/50",
+              crypto: "from-amber-500/20 to-yellow-500/20 border-amber-500/30 hover:border-amber-500/50",
+              ai: "from-cyan-500/20 to-teal-500/20 border-cyan-500/30 hover:border-cyan-500/50",
+            };
+            const categoryIcons: Record<string, string> = {
+              technology: "💻",
+              finance: "💰",
+              productivity: "⚡",
+              health: "🏃",
+              lifestyle: "🌟",
+              business: "📈",
+              crypto: "🪙",
+              ai: "🤖",
+            };
+            return (
+              <Link key={category.value} href={`/blog/category/${category.value}`}>
+                <Card className={`bg-gradient-to-br ${categoryColors[category.value] || ''} border transition-all hover:scale-105 cursor-pointer h-full`}>
+                  <CardContent className="p-3 text-center">
+                    <span className="text-2xl block mb-1">{categoryIcons[category.value] || '📁'}</span>
+                    <span className="text-xs font-medium">{category.label}</span>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Main Content with Sidebar */}
       <div className="container py-8">
         <div className="flex flex-col lg:flex-row gap-8">

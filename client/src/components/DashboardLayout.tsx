@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package, Crown, Network, Gift, Palette, Coins, ExternalLink, Wallet, HeartPulse, Bug, ClipboardCheck, Key, Clock, Store, Heart, Newspaper, ChevronDown, ChevronRight, Rss, Archive, PenTool } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package, Crown, Network, Gift, Palette, Coins, ExternalLink, Wallet, HeartPulse, Bug, ClipboardCheck, Key, Clock, Store, Heart, Newspaper, ChevronDown, ChevronRight, Rss, Archive, PenTool, FolderOpen } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -46,6 +46,7 @@ const menuItems: MenuItem[] = [
       { icon: Newspaper, label: "View All Articles", path: "/blog", external: true },
       { icon: FileText, label: "Manage Articles", path: "/articles" },
       { icon: PenTool, label: "Create New Article", path: "/articles/new" },
+      { icon: FolderOpen, label: "Browse Categories", path: "/blog", external: true },
       { icon: Archive, label: "Article Archive", path: "/blog", external: true },
       { icon: Rss, label: "RSS Feed", path: "/rss.xml", external: true },
     ]
