@@ -293,11 +293,10 @@ export default function PublicArticle() {
           {/* Main Content */}
           <div className="lg:col-span-2">
             <div 
-              className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-foreground/90 prose-blockquote:border-primary prose-blockquote:text-foreground/80"
+              className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-foreground/90 prose-blockquote:border-primary prose-blockquote:text-foreground/80 article-content"
               onClick={handleLinkClick}
-            >
-              <Streamdown>{article.content || ""}</Streamdown>
-            </div>
+              dangerouslySetInnerHTML={{ __html: article.content || "" }}
+            />
 
             {/* Inline Product Cards */}
             {affiliateLinks.length > 0 && (

@@ -2381,3 +2381,22 @@
 - [x] Add price alert and new listing email templates
 - [x] Add unsubscribe links to all emails
 - [x] Add isEmailConfigured() helper function
+
+
+## January 19, 2026 - Smart Contract Deployment & Security Fixes
+
+### Smart Contract Deployment on Polygon Testnet
+- [ ] Set up Hardhat development environment
+- [ ] Create ERC-721 smart contract with minting functionality
+- [ ] Configure Polygon Amoy testnet network (Mumbai deprecated)
+- [ ] Deploy contract to Polygon Amoy testnet
+- [ ] Verify contract on PolygonScan
+- [ ] Integrate deployed contract with website minting functionality
+- [ ] Test minting NFTs on testnet
+
+### Security Fixes for 100% Score
+- [ ] Fix Content Security Policy (CSP) header - make it stricter
+- [ ] Fix Referrer-Policy header - use strict-origin-when-cross-origin
+- [ ] Update dependencies to fix vulnerabilities
+- [ ] Update Security Dashboard to reflect fixes
+- [ ] Verify all security checks pass

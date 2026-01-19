@@ -5,6 +5,7 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import { WagmiProvider } from 'wagmi';
+import { HelmetProvider } from 'react-helmet-async';
 import { config } from './lib/wagmi';
 import App from "./App";
 import { getLoginUrl } from "./const";
@@ -55,11 +56,13 @@ const trpcClient = trpc.createClient({
 });
 
 createRoot(document.getElementById("root")!).render(
-  <WagmiProvider config={config}>
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </trpc.Provider>
-  </WagmiProvider>
+  <HelmetProvider>
+    <WagmiProvider config={config}>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </trpc.Provider>
+    </WagmiProvider>
+  </HelmetProvider>
 );
