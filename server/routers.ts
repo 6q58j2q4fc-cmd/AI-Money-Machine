@@ -1225,7 +1225,7 @@ const publicArticlesRouter = router({
   list: publicProcedure
     .input(z.object({ limit: z.number().optional() }).optional())
     .query(async ({ input }) => {
-      return await db.getPublishedArticles(input?.limit || 20);
+      return await db.getPublishedArticles(input?.limit);
     }),
 
   get: publicProcedure

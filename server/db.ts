@@ -586,16 +586,20 @@ export async function removeFromContentQueue(id: number, userId: number) {
 }
 
 // ============ PUBLISHED ARTICLES (PUBLIC) ============
-export async function getPublishedArticles(limit: number = 20) {
+export async function getPublishedArticles(limit?: number) {
   const db = await getDb();
   if (!db) return [];
   
-  return await db
+  const query = db
     .select()
     .from(articles)
     .where(eq(articles.status, 'published'))
-    .orderBy(desc(articles.publishedAt))
-    .limit(limit);
+    .orderBy(desc(articles.publishedAt));
+  
+  if (limit) {
+    return await query.limit(limit);
+  }
+  return await query;
 }
 
 export async function getPublishedArticlesForSitemap() {

@@ -219,7 +219,10 @@ export default function PublicArticle() {
               
               {article.excerpt && (
                 <p className="text-xl text-muted-foreground leading-relaxed">
-                  {article.excerpt}
+                  {article.excerpt
+                    .replace(/( - Top Picks & Reviews)+/g, '')
+                    .replace(/Top Picks & Reviews/g, '')
+                    .trim()}
                 </p>
               )}
 

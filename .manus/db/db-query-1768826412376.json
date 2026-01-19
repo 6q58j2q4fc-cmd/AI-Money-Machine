@@ -1,0 +1,44 @@
+{
+  "query": "SELECT id, title, LEFT(content, 300) as content_preview \nFROM articles \nWHERE content LIKE '%Top Picks & Reviews - Top Picks%' \nLIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, LEFT(content, 300) as content_preview \nFROM articles \nWHERE content LIKE '%Top Picks & Reviews - Top Picks%' \nLIMIT 3;",
+  "rows": [
+    {
+      "id": "270001",
+      "title": "Best AI-Powered Productivity Tools for Small Businesses",
+      "content_preview": "<!DOCTYPE html>"
+    },
+    {
+      "id": "270002",
+      "title": "Best Sustainable Home Gardening & Urban Farming",
+      "content_preview": "<!DOCTYPE html>"
+    },
+    {
+      "id": "270003",
+      "title": "Best AI-Powered Productivity Tools for Small Business",
+      "content_preview": "<!DOCTYPE html>"
+    }
+  ],
+  "messages": [
+    "<html lang=\"en\">",
+    "<head>",
+    "  <meta charset=\"UTF-8\">",
+    "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">",
+    "  <title>Best Best AI-Powered Productivity Tools for Small Businesses - Top Picks & Reviews - Top Picks & Reviews | MoneyMachine</title>",
+    "  <meta name=\"description",
+    "<html lang=\"en\">",
+    "<head>",
+    "  <meta charset=\"UTF-8\">",
+    "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">",
+    "  <title>Best Best Sustainable Home Gardening & Urban Farming - Top Picks & Reviews - Top Picks & Reviews | MoneyMachine</title>",
+    "  <meta name=\"description\" conten",
+    "<html lang=\"en\">",
+    "<head>",
+    "  <meta charset=\"UTF-8\">",
+    "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">",
+    "  <title>Best Best AI-Powered Productivity Tools for Small Business - Top Picks & Reviews - Top Picks & Reviews | MoneyMachine</title>",
+    "  <meta name=\"description\" "
+  ],
+  "stdout": "id\ttitle\tcontent_preview\n270001\tBest AI-Powered Productivity Tools for Small Businesses\t<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Best Best AI-Powered Productivity Tools for Small Businesses - Top Picks & Reviews - Top Picks & Reviews | MoneyMachine</title>\n  <meta name=\"description\n270002\tBest Sustainable Home Gardening & Urban Farming\t<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Best Best Sustainable Home Gardening & Urban Farming - Top Picks & Reviews - Top Picks & Reviews | MoneyMachine</title>\n  <meta name=\"description\" conten\n270003\tBest AI-Powered Productivity Tools for Small Business\t<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Best Best AI-Powered Productivity Tools for Small Business - Top Picks & Reviews - Top Picks & Reviews | MoneyMachine</title>\n  <meta name=\"description\" \n",
+  "stderr": "",
+  "execution_time_ms": 179
+}

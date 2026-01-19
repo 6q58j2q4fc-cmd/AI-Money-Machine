@@ -1,14 +1,15 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { Loader2, ArrowRight, Calendar, Eye, Home, Search, Filter, Tag, TrendingUp, Clock, ExternalLink } from "lucide-react";
+import { Loader2, ArrowRight, Calendar, Eye, Home, Search, Filter, Tag, TrendingUp, Clock, ExternalLink, Archive, ChevronDown, ChevronRight, List, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
+import { format, parseISO, getYear, getMonth } from "date-fns";
 import { Helmet } from "react-helmet-async";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Categories for filtering
 const CATEGORIES = [
@@ -29,20 +30,83 @@ const SORT_OPTIONS = [
   { value: "oldest", label: "Oldest First" },
   { value: "popular", label: "Most Popular" },
   { value: "trending", label: "Trending" },
+  { value: "alphabetical", label: "A-Z" },
+];
+
+// Month names
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
 ];
 
 export default function Blog() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
+  const [selectedArchive, setSelectedArchive] = useState<{ year: number; month: number } | null>(null);
   
+  // Fetch ALL published articles (no limit)
   const { data: articles, isLoading } = trpc.publicArticles.list.useQuery({});
+
+  // Clean up article excerpt/description for display
+  const cleanExcerpt = (text: string | null | undefined): string => {
+    if (!text) return "";
+    // Remove repetitive "Top Picks & Reviews" patterns
+    return text
+      .replace(/( - Top Picks & Reviews)+/g, "")
+      .replace(/Top Picks & Reviews/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  // Define article type for archive
+  type ArticleType = NonNullable<typeof articles>[number];
+  
+  // Build archive structure (year -> month -> articles)
+  const archiveStructure = useMemo(() => {
+    if (!articles) return new Map<number, Map<number, ArticleType[]>>();
+    
+    const archive = new Map<number, Map<number, ArticleType[]>>();
+    
+    articles.forEach(article => {
+      const date = article.publishedAt ? new Date(article.publishedAt) : new Date();
+      const year = getYear(date);
+      const month = getMonth(date);
+      
+      if (!archive.has(year)) {
+        archive.set(year, new Map());
+      }
+      const yearMap = archive.get(year)!;
+      
+      if (!yearMap.has(month)) {
+        yearMap.set(month, []);
+      }
+      yearMap.get(month)!.push(article);
+    });
+    
+    return archive;
+  }, [articles]);
+
+  // Get sorted years for archive
+  const sortedYears = useMemo(() => {
+    return Array.from(archiveStructure.keys()).sort((a, b) => b - a);
+  }, [archiveStructure]);
 
   // Filter and sort articles
   const filteredArticles = useMemo(() => {
     if (!articles) return [];
     
     let filtered = [...articles];
+    
+    // Archive filter
+    if (selectedArchive) {
+      filtered = filtered.filter(article => {
+        const date = article.publishedAt ? new Date(article.publishedAt) : new Date();
+        return getYear(date) === selectedArchive.year && getMonth(date) === selectedArchive.month;
+      });
+    }
     
     // Search filter
     if (searchQuery.trim()) {
@@ -64,8 +128,8 @@ export default function Blog() {
           technology: ["tech", "software", "app", "device", "gadget", "computer"],
           finance: ["finance", "money", "invest", "stock", "bank", "budget", "savings"],
           productivity: ["productivity", "efficient", "organize", "time", "workflow", "tool"],
-          health: ["health", "fitness", "wellness", "diet", "exercise", "medical"],
-          lifestyle: ["lifestyle", "home", "travel", "fashion", "food", "living"],
+          health: ["health", "fitness", "wellness", "diet", "exercise", "medical", "nutrition", "gut"],
+          lifestyle: ["lifestyle", "home", "travel", "fashion", "food", "living", "gardening", "pet"],
           business: ["business", "entrepreneur", "startup", "marketing", "sales"],
           crypto: ["crypto", "bitcoin", "ethereum", "nft", "blockchain", "defi"],
           ai: ["ai", "artificial intelligence", "machine learning", "chatgpt", "automation"],
@@ -88,12 +152,14 @@ export default function Blog() {
         filtered.sort((a, b) => (b.views || 0) - (a.views || 0));
         break;
       case "trending":
-        // Trending = recent + popular (weighted)
         filtered.sort((a, b) => {
           const aScore = (a.views || 0) + (new Date(a.publishedAt || 0).getTime() / 1000000000);
           const bScore = (b.views || 0) + (new Date(b.publishedAt || 0).getTime() / 1000000000);
           return bScore - aScore;
         });
+        break;
+      case "alphabetical":
+        filtered.sort((a, b) => a.title.localeCompare(b.title));
         break;
       case "newest":
       default:
@@ -101,7 +167,7 @@ export default function Blog() {
     }
     
     return filtered;
-  }, [articles, searchQuery, selectedCategory, sortBy]);
+  }, [articles, searchQuery, selectedCategory, sortBy, selectedArchive]);
 
   // Get all unique keywords for tag cloud
   const allKeywords = useMemo(() => {
@@ -123,6 +189,30 @@ export default function Blog() {
   const totalArticles = articles?.length || 0;
   const totalViews = articles?.reduce((sum, a) => sum + (a.views || 0), 0) || 0;
 
+  const toggleYear = (year: number) => {
+    const newExpanded = new Set(expandedYears);
+    if (newExpanded.has(year)) {
+      newExpanded.delete(year);
+    } else {
+      newExpanded.add(year);
+    }
+    setExpandedYears(newExpanded);
+  };
+
+  const handleArchiveSelect = (year: number, month: number) => {
+    if (selectedArchive?.year === year && selectedArchive?.month === month) {
+      setSelectedArchive(null);
+    } else {
+      setSelectedArchive({ year, month });
+    }
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSelectedArchive(null);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* SEO Meta Tags */}
@@ -136,6 +226,7 @@ export default function Blog() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="/blog" />
+        <link rel="alternate" type="application/rss+xml" title="MoneyMachine Blog RSS" href="/rss.xml" />
       </Helmet>
 
       {/* Header */}
@@ -145,6 +236,12 @@ export default function Blog() {
             <span className="text-xl font-bold gradient-text cursor-pointer">MoneyMachine</span>
           </Link>
           <nav className="flex items-center gap-4">
+            <a href="/rss.xml" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+              <Badge variant="outline" className="gap-1">
+                <ExternalLink className="w-3 h-3" />
+                RSS
+              </Badge>
+            </a>
             <Link href="/market">
               <Button variant="ghost" size="sm">NFT Market</Button>
             </Link>
@@ -227,7 +324,7 @@ export default function Blog() {
             </div>
             
             {/* Active Filters */}
-            {(searchQuery || selectedCategory !== "all") && (
+            {(searchQuery || selectedCategory !== "all" || selectedArchive) && (
               <div className="flex items-center gap-2 mt-4 flex-wrap">
                 <span className="text-sm text-muted-foreground">Active filters:</span>
                 {searchQuery && (
@@ -240,7 +337,12 @@ export default function Blog() {
                     {CATEGORIES.find(c => c.value === selectedCategory)?.label} ×
                   </Badge>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => { setSearchQuery(""); setSelectedCategory("all"); }}>
+                {selectedArchive && (
+                  <Badge variant="secondary" className="cursor-pointer" onClick={() => setSelectedArchive(null)}>
+                    {MONTH_NAMES[selectedArchive.month]} {selectedArchive.year} ×
+                  </Badge>
+                )}
+                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
                   Clear all
                 </Button>
               </div>
@@ -269,102 +371,257 @@ export default function Blog() {
         </section>
       )}
 
-      {/* Results Count */}
-      <section className="container pt-6">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredArticles.length} of {totalArticles} articles
-          </p>
-          {filteredArticles.length > 0 && (
-            <p className="text-sm text-muted-foreground">
-              Sorted by: {SORT_OPTIONS.find(o => o.value === sortBy)?.label}
-            </p>
-          )}
-        </div>
-      </section>
+      {/* Main Content with Sidebar */}
+      <div className="container py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar - Archive */}
+          <aside className="lg:w-64 shrink-0">
+            <Card className="sticky top-24">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Archive className="w-5 h-5" />
+                  Article Archive
+                </CardTitle>
+                <CardDescription>
+                  Browse articles by date
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-1">
+                  {sortedYears.map(year => {
+                    const yearData = archiveStructure.get(year)!;
+                    const yearTotal = Array.from(yearData.values()).reduce((sum, arr) => sum + arr.length, 0);
+                    const isExpanded = expandedYears.has(year);
+                    
+                    return (
+                      <Collapsible key={year} open={isExpanded} onOpenChange={() => toggleYear(year)}>
+                        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-md hover:bg-muted/50 transition-colors">
+                          <span className="font-medium flex items-center gap-2">
+                            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                            {year}
+                          </span>
+                          <Badge variant="secondary" className="text-xs">
+                            {yearTotal}
+                          </Badge>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="ml-6 space-y-1 py-1">
+                            {Array.from(yearData.entries())
+                              .sort((a, b) => b[0] - a[0])
+                              .map(([month, monthArticles]) => (
+                                <button
+                                  key={month}
+                                  onClick={() => handleArchiveSelect(year, month)}
+                                  className={`flex items-center justify-between w-full p-2 rounded-md text-sm transition-colors ${
+                                    selectedArchive?.year === year && selectedArchive?.month === month
+                                      ? "bg-primary/20 text-primary"
+                                      : "hover:bg-muted/50"
+                                  }`}
+                                >
+                                  <span>{MONTH_NAMES[month]}</span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {monthArticles.length}
+                                  </Badge>
+                                </button>
+                              ))}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  })}
+                </div>
+                
+                {/* View All Button */}
+                {selectedArchive && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full mt-4"
+                    onClick={() => setSelectedArchive(null)}
+                  >
+                    View All Articles
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </aside>
 
-      {/* Articles Grid */}
-      <section className="container py-8">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : filteredArticles.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredArticles.map((article, index) => (
-              <Link key={article.id} href={`/blog/${article.slug}`}>
-                <Card className="h-full hover:border-primary/50 transition-all cursor-pointer group hover:shadow-lg">
-                  {/* Featured badge for first 3 articles */}
-                  {index < 3 && sortBy === "popular" && (
-                    <div className="absolute top-2 right-2 z-10">
-                      <Badge className="bg-primary text-primary-foreground">
-                        <TrendingUp className="w-3 h-3 mr-1" />
-                        Top {index + 1}
-                      </Badge>
-                    </div>
-                  )}
-                  <CardHeader>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                      {article.publishedAt && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {format(new Date(article.publishedAt), "MMM d, yyyy")}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        {(article.views || 0).toLocaleString()}
-                      </span>
-                    </div>
-                    <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors text-lg">
-                      {article.title}
-                    </CardTitle>
-                    {article.excerpt && (
-                      <CardDescription className="line-clamp-3 mt-2">
-                        {article.excerpt}
-                      </CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {article.keywords && (article.keywords as string[]).length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-4">
-                        {(article.keywords as string[]).slice(0, 3).map((keyword, i) => (
-                          <Badge key={i} variant="secondary" className="text-xs">
-                            {keyword}
-                          </Badge>
-                        ))}
-                        {(article.keywords as string[]).length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{(article.keywords as string[]).length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                    <span className="text-sm text-primary flex items-center gap-1 group-hover:gap-2 transition-all font-medium">
-                      Read Full Article <ArrowRight className="w-4 h-4" />
+          {/* Main Content */}
+          <main className="flex-1">
+            {/* Results Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Showing {filteredArticles.length} of {totalArticles} articles
+                  {selectedArchive && (
+                    <span className="ml-1">
+                      from {MONTH_NAMES[selectedArchive.month]} {selectedArchive.year}
                     </span>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <Search className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-            <h2 className="text-2xl font-bold mb-4">No Articles Found</h2>
-            <p className="text-muted-foreground mb-6">
-              {searchQuery || selectedCategory !== "all" 
-                ? "Try adjusting your search or filters to find what you're looking for."
-                : "Check back soon for new content!"}
-            </p>
-            {(searchQuery || selectedCategory !== "all") && (
-              <Button onClick={() => { setSearchQuery(""); setSelectedCategory("all"); }}>
-                Clear Filters
-              </Button>
+                  )}
+                </p>
+                {filteredArticles.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Sorted by: {SORT_OPTIONS.find(o => o.value === sortBy)?.label}
+                  </p>
+                )}
+              </div>
+              
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={viewMode === "grid" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("list")}
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Articles */}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : filteredArticles.length > 0 ? (
+              viewMode === "grid" ? (
+                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredArticles.map((article, index) => (
+                    <Link key={article.id} href={`/blog/${article.slug}`}>
+                      <Card className="h-full hover:border-primary/50 transition-all cursor-pointer group hover:shadow-lg">
+                        {index < 3 && sortBy === "popular" && (
+                          <div className="absolute top-2 right-2 z-10">
+                            <Badge className="bg-primary text-primary-foreground">
+                              <TrendingUp className="w-3 h-3 mr-1" />
+                              Top {index + 1}
+                            </Badge>
+                          </div>
+                        )}
+                        <CardHeader>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                            {article.publishedAt && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {format(new Date(article.publishedAt), "MMM d, yyyy")}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <Eye className="w-3 h-3" />
+                              {(article.views || 0).toLocaleString()}
+                            </span>
+                          </div>
+                          <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors text-lg">
+                            {article.title}
+                          </CardTitle>
+                          {article.excerpt && (
+                            <CardDescription className="line-clamp-3 mt-2">
+                              {cleanExcerpt(article.excerpt)}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          {article.keywords && (article.keywords as string[]).length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-4">
+                              {(article.keywords as string[]).slice(0, 3).map((keyword, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs">
+                                  {keyword}
+                                </Badge>
+                              ))}
+                              {(article.keywords as string[]).length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{(article.keywords as string[]).length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                          <span className="text-sm text-primary flex items-center gap-1 group-hover:gap-2 transition-all font-medium">
+                            Read Full Article <ArrowRight className="w-4 h-4" />
+                          </span>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredArticles.map((article, index) => (
+                    <Link key={article.id} href={`/blog/${article.slug}`}>
+                      <Card className="hover:border-primary/50 transition-all cursor-pointer group hover:shadow-lg">
+                        <div className="flex flex-col md:flex-row md:items-center p-4 gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                              {index < 3 && sortBy === "popular" && (
+                                <Badge className="bg-primary text-primary-foreground mr-2">
+                                  <TrendingUp className="w-3 h-3 mr-1" />
+                                  Top {index + 1}
+                                </Badge>
+                              )}
+                              {article.publishedAt && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {format(new Date(article.publishedAt), "MMM d, yyyy")}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <Eye className="w-3 h-3" />
+                                {(article.views || 0).toLocaleString()} views
+                              </span>
+                            </div>
+                            <h3 className="text-lg font-semibold group-hover:text-primary transition-colors mb-2">
+                              {article.title}
+                            </h3>
+                            {article.excerpt && (
+                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                {cleanExcerpt(article.excerpt)}
+                              </p>
+                            )}
+                            {article.keywords && (article.keywords as string[]).length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-3">
+                                {(article.keywords as string[]).slice(0, 5).map((keyword, i) => (
+                                  <Badge key={i} variant="secondary" className="text-xs">
+                                    {keyword}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="shrink-0">
+                            <Button variant="outline" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                              Read <ArrowRight className="w-4 h-4 ml-1" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              )
+            ) : (
+              <div className="text-center py-16">
+                <Search className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+                <h2 className="text-2xl font-bold mb-4">No Articles Found</h2>
+                <p className="text-muted-foreground mb-6">
+                  {searchQuery || selectedCategory !== "all" || selectedArchive
+                    ? "Try adjusting your search or filters to find what you're looking for."
+                    : "Check back soon for new content!"}
+                </p>
+                {(searchQuery || selectedCategory !== "all" || selectedArchive) && (
+                  <Button onClick={clearAllFilters}>
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
             )}
-          </div>
-        )}
-      </section>
+          </main>
+        </div>
+      </div>
 
       {/* Newsletter CTA */}
       <section className="container py-12">
@@ -427,6 +684,7 @@ export default function Blog() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/"><span className="hover:text-primary transition-colors cursor-pointer">Home</span></Link></li>
                 <li><Link href="/market"><span className="hover:text-primary transition-colors cursor-pointer">NFT Marketplace</span></Link></li>
+                <li><a href="/rss.xml" target="_blank" className="hover:text-primary transition-colors flex items-center gap-1">RSS Feed <ExternalLink className="w-3 h-3" /></a></li>
                 <li><a href="/sitemap.xml" target="_blank" className="hover:text-primary transition-colors flex items-center gap-1">Sitemap <ExternalLink className="w-3 h-3" /></a></li>
               </ul>
             </div>

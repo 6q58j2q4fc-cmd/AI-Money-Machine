@@ -1,0 +1,44 @@
+{
+  "query": "SELECT id, title, SUBSTR(content, 1, 300) as content_start FROM articles WHERE status = 'published' AND content LIKE '%Top Picks & Reviews%' LIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, SUBSTR(content, 1, 300) as content_start FROM articles WHERE status = 'published' AND content LIKE '%Top Picks & Reviews%' LIMIT 3;",
+  "rows": [
+    {
+      "id": "240006",
+      "title": "Best Best Health Insurance Plans - ",
+      "content_start": "<!DOCTYPE html>"
+    },
+    {
+      "id": "240007",
+      "title": "Best Best Laptops for Video Editing - ",
+      "content_start": "<!DOCTYPE html>"
+    },
+    {
+      "id": "240008",
+      "title": "Best Best Budgeting Tools for Small Business - ",
+      "content_start": "<!DOCTYPE html>"
+    }
+  ],
+  "messages": [
+    "<html lang=\"en\">",
+    "<head>",
+    "  <meta charset=\"UTF-8\">",
+    "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">",
+    "  <title>Best Best Health Insurance Plans - Top Picks & Reviews | MoneyMachine</title>",
+    "  <meta name=\"description\" content=\"Discover top-rated products for Best He",
+    "<html lang=\"en\">",
+    "<head>",
+    "  <meta charset=\"UTF-8\">",
+    "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">",
+    "  <title>Best Best Laptops for Video Editing - Top Picks & Reviews | MoneyMachine</title>",
+    "  <meta name=\"description\" content=\"Discover top-rated products for Best",
+    "<html lang=\"en\">",
+    "<head>",
+    "  <meta charset=\"UTF-8\">",
+    "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">",
+    "  <title>Best Best Budgeting Tools for Small Business - Top Picks & Reviews | MoneyMachine</title>",
+    "  <meta name=\"description\" content=\"Discover top-rated products"
+  ],
+  "stdout": "id\ttitle\tcontent_start\n240006\tBest Best Health Insurance Plans - \t<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Best Best Health Insurance Plans - Top Picks & Reviews | MoneyMachine</title>\n  <meta name=\"description\" content=\"Discover top-rated products for Best He\n240007\tBest Best Laptops for Video Editing - \t<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Best Best Laptops for Video Editing - Top Picks & Reviews | MoneyMachine</title>\n  <meta name=\"description\" content=\"Discover top-rated products for Best\n240008\tBest Best Budgeting Tools for Small Business - \t<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Best Best Budgeting Tools for Small Business - Top Picks & Reviews | MoneyMachine</title>\n  <meta name=\"description\" content=\"Discover top-rated products\n",
+  "stderr": "",
+  "execution_time_ms": 289
+}
