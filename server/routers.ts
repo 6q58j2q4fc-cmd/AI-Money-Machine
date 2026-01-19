@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -1273,6 +1273,106 @@ const publicArticlesRouter = router({
       }
       return { success: true };
     }),
+
+  // Blog stats for dashboard - real-time metrics
+  blogStats: publicProcedure.query(async () => {
+    const database = await db.getDb();
+    if (!database) {
+      return {
+        totalArticles: 0,
+        totalViews: 0,
+        totalClicks: 0,
+        averageSeoScore: 0,
+        verifiedAffiliateLinks: 0,
+        articlesWithLinks: 0,
+        topCategories: [],
+        recentArticles: [],
+      };
+    }
+
+    // Get published articles stats
+    const articlesResult = await database.execute(
+      sql`SELECT 
+        COUNT(*) as total,
+        SUM(views) as totalViews,
+        SUM(clicks) as totalClicks,
+        AVG(seoScore) as avgSeoScore
+      FROM articles WHERE status = 'published'`
+    );
+    const articlesStats = (articlesResult as any)[0]?.[0] || {};
+
+    // Count verified CJ affiliate links (links with CJ tracking domains)
+    const linksResult = await database.execute(
+      sql`SELECT COUNT(*) as total FROM affiliate_links 
+        WHERE url LIKE '%anrdoezrs.net%' 
+        OR url LIKE '%dpbolvw.net%' 
+        OR url LIKE '%jdoqocy.com%' 
+        OR url LIKE '%kqzyfj.com%' 
+        OR url LIKE '%tkqlhce.com%'`
+    );
+    const verifiedLinks = (linksResult as any)[0]?.[0]?.total || 0;
+
+    // Count articles that have CJ links embedded in content
+    const articlesWithLinksResult = await database.execute(
+      sql`SELECT COUNT(*) as total FROM articles 
+        WHERE status = 'published' 
+        AND (content LIKE '%anrdoezrs.net%' 
+        OR content LIKE '%dpbolvw.net%' 
+        OR content LIKE '%jdoqocy.com%' 
+        OR content LIKE '%kqzyfj.com%' 
+        OR content LIKE '%tkqlhce.com%')`
+    );
+    const articlesWithLinks = (articlesWithLinksResult as any)[0]?.[0]?.total || 0;
+
+    // Get top categories by article count
+    const categoriesResult = await database.execute(
+      sql`SELECT 
+        CASE 
+          WHEN LOWER(title) LIKE '%tech%' OR LOWER(title) LIKE '%ai%' OR LOWER(title) LIKE '%software%' THEN 'Technology'
+          WHEN LOWER(title) LIKE '%finance%' OR LOWER(title) LIKE '%money%' OR LOWER(title) LIKE '%invest%' THEN 'Finance'
+          WHEN LOWER(title) LIKE '%health%' OR LOWER(title) LIKE '%fitness%' OR LOWER(title) LIKE '%nutrition%' THEN 'Health'
+          WHEN LOWER(title) LIKE '%business%' OR LOWER(title) LIKE '%entrepreneur%' THEN 'Business'
+          WHEN LOWER(title) LIKE '%crypto%' OR LOWER(title) LIKE '%blockchain%' OR LOWER(title) LIKE '%nft%' THEN 'Crypto'
+          ELSE 'Lifestyle'
+        END as category,
+        COUNT(*) as count
+      FROM articles WHERE status = 'published'
+      GROUP BY category
+      ORDER BY count DESC
+      LIMIT 5`
+    );
+    const topCategories = ((categoriesResult as any)[0] || []).map((row: any) => ({
+      name: row.category,
+      count: Number(row.count)
+    }));
+
+    // Get recent articles
+    const recentResult = await database.execute(
+      sql`SELECT id, title, slug, views, clicks, seoScore, publishedAt 
+        FROM articles WHERE status = 'published' 
+        ORDER BY publishedAt DESC LIMIT 5`
+    );
+    const recentArticles = ((recentResult as any)[0] || []).map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      slug: row.slug,
+      views: Number(row.views) || 0,
+      clicks: Number(row.clicks) || 0,
+      seoScore: Number(row.seoScore) || 0,
+      publishedAt: row.publishedAt
+    }));
+
+    return {
+      totalArticles: Number(articlesStats.total) || 0,
+      totalViews: Number(articlesStats.totalViews) || 0,
+      totalClicks: Number(articlesStats.totalClicks) || 0,
+      averageSeoScore: Math.round(Number(articlesStats.avgSeoScore) || 0),
+      verifiedAffiliateLinks: Number(verifiedLinks),
+      articlesWithLinks: Number(articlesWithLinks),
+      topCategories,
+      recentArticles,
+    };
+  }),
 });
 
 // Full automation router - auto-discovers, generates, and publishes content

@@ -20,7 +20,11 @@ import {
   ExternalLink,
   CheckCircle,
   BarChart3,
-  Newspaper
+  Newspaper,
+  Globe,
+  Search,
+  LinkIcon,
+  Activity
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,6 +37,7 @@ export default function Dashboard() {
   const { data: topLinks } = trpc.analytics.topLinks.useQuery({ limit: 5 });
   const { data: nftPortfolio } = trpc.nftEmpire.getPortfolioSummary.useQuery();
   const { data: withdrawalHistory } = trpc.wallet.getWithdrawalHistory.useQuery();
+  const { data: blogStats, isLoading: blogStatsLoading } = trpc.publicArticles.blogStats.useQuery();
   
   // Trust Wallet address
   const TRUST_WALLET_ADDRESS = "0x75812e1c4246A880f6576db8292405247e6a8775";
@@ -436,6 +441,161 @@ export default function Dashboard() {
                 onClick={() => setLocation('/system-health')}
               >
                 View Details
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Benjamin Franklin's Blog Stats */}
+        <Card className="bg-gradient-to-r from-emerald-500/10 via-green-500/10 to-teal-500/10 border-emerald-500/30">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Globe className="w-5 h-5 text-emerald-400" />
+                  Benjamin Franklin's Recommendations Blog
+                </CardTitle>
+                <CardDescription>Real-time stats from your public article blog</CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+                onClick={() => window.open('/blog', '_blank')}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Blog
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Main Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+              {/* Total Published Articles */}
+              <div className="bg-zinc-800/50 rounded-lg p-4 border border-emerald-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs text-zinc-400">Published Articles</span>
+                </div>
+                <p className="text-2xl font-bold text-emerald-400">
+                  {blogStatsLoading ? "..." : blogStats?.totalArticles || 0}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">Total on blog</p>
+              </div>
+              
+              {/* Verified Affiliate Links */}
+              <div className="bg-zinc-800/50 rounded-lg p-4 border border-blue-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <LinkIcon className="w-4 h-4 text-blue-400" />
+                  <span className="text-xs text-zinc-400">CJ Affiliate Links</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-400">
+                  {blogStatsLoading ? "..." : blogStats?.verifiedAffiliateLinks || 0}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">Verified & active</p>
+              </div>
+              
+              {/* Article Views */}
+              <div className="bg-zinc-800/50 rounded-lg p-4 border border-purple-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Eye className="w-4 h-4 text-purple-400" />
+                  <span className="text-xs text-zinc-400">Total Views</span>
+                </div>
+                <p className="text-2xl font-bold text-purple-400">
+                  {blogStatsLoading ? "..." : blogStats?.totalViews?.toLocaleString() || 0}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">All-time pageviews</p>
+              </div>
+              
+              {/* Average SEO Score */}
+              <div className="bg-zinc-800/50 rounded-lg p-4 border border-yellow-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Search className="w-4 h-4 text-yellow-400" />
+                  <span className="text-xs text-zinc-400">Avg SEO Score</span>
+                </div>
+                <p className="text-2xl font-bold text-yellow-400">
+                  {blogStatsLoading ? "..." : `${blogStats?.averageSeoScore || 0}%`}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">Search optimization</p>
+              </div>
+              
+              {/* Affiliate Link Clicks */}
+              <div className="bg-zinc-800/50 rounded-lg p-4 border border-pink-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <MousePointer className="w-4 h-4 text-pink-400" />
+                  <span className="text-xs text-zinc-400">Link Clicks</span>
+                </div>
+                <p className="text-2xl font-bold text-pink-400">
+                  {blogStatsLoading ? "..." : blogStats?.totalClicks?.toLocaleString() || 0}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">Affiliate clicks</p>
+              </div>
+            </div>
+            
+            {/* Secondary Stats Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Top Categories */}
+              <div className="bg-zinc-800/30 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-emerald-400" />
+                  Top Categories
+                </h4>
+                <div className="space-y-2">
+                  {blogStats?.topCategories && blogStats.topCategories.length > 0 ? (
+                    blogStats.topCategories.map((cat: { name: string; count: number }, i: number) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <span className="text-sm text-zinc-400">{cat.name}</span>
+                        <span className="text-sm font-medium text-emerald-400">{cat.count} articles</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-zinc-500">No categories yet</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Recent Articles */}
+              <div className="bg-zinc-800/30 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-blue-400" />
+                  Recent Articles
+                </h4>
+                <div className="space-y-2">
+                  {blogStats?.recentArticles && blogStats.recentArticles.length > 0 ? (
+                    blogStats.recentArticles.slice(0, 3).map((article: { id: number; title: string; slug: string; views: number; clicks: number }, i: number) => (
+                      <div 
+                        key={i} 
+                        className="flex items-center justify-between cursor-pointer hover:bg-zinc-700/30 rounded p-1 -mx-1"
+                        onClick={() => window.open(`/blog/${article.slug}`, '_blank')}
+                      >
+                        <span className="text-sm text-zinc-400 truncate max-w-[200px]">{article.title}</span>
+                        <span className="text-xs text-zinc-500">{article.views} views</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-zinc-500">No articles yet</p>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Articles with CJ Links Indicator */}
+            <div className="mt-4 flex items-center justify-between p-3 bg-zinc-800/30 rounded-lg">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-xs text-zinc-400">
+                    <span className="text-green-400 font-medium">{blogStats?.articlesWithLinks || 0}</span> articles have verified CJ affiliate links
+                  </span>
+                </div>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs text-emerald-400 hover:text-emerald-300"
+                onClick={() => window.open('/blog', '_blank')}
+              >
+                Browse All Articles
               </Button>
             </div>
           </CardContent>
