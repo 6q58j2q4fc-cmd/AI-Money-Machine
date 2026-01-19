@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { Loader2, ArrowRight, Calendar, Eye, Home, Search, Filter, Tag, TrendingUp, Clock, ExternalLink, Archive, ChevronDown, ChevronRight, List, Grid3X3 } from "lucide-react";
+import { Loader2, ArrowRight, Calendar, Eye, Home, Search, Filter, Tag, TrendingUp, Clock, ExternalLink, Archive, ChevronDown, ChevronRight, ChevronLeft, List, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,9 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December"
 ];
 
+// Articles per page
+const ARTICLES_PER_PAGE = 24;
+
 export default function Blog() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -46,6 +49,7 @@ export default function Blog() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
   const [selectedArchive, setSelectedArchive] = useState<{ year: number; month: number } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Fetch ALL published articles (no limit)
   const { data: articles, isLoading } = trpc.publicArticles.list.useQuery({});
@@ -169,6 +173,18 @@ export default function Blog() {
     return filtered;
   }, [articles, searchQuery, selectedCategory, sortBy, selectedArchive]);
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredArticles.length / ARTICLES_PER_PAGE);
+  const paginatedArticles = useMemo(() => {
+    const startIndex = (currentPage - 1) * ARTICLES_PER_PAGE;
+    return filteredArticles.slice(startIndex, startIndex + ARTICLES_PER_PAGE);
+  }, [filteredArticles, currentPage]);
+
+  // Reset to page 1 when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, sortBy, selectedArchive]);
+
   // Get all unique keywords for tag cloud
   const allKeywords = useMemo(() => {
     if (!articles) return [];
@@ -205,12 +221,60 @@ export default function Blog() {
     } else {
       setSelectedArchive({ year, month });
     }
+    setCurrentPage(1);
   };
 
   const clearAllFilters = () => {
     setSearchQuery("");
     setSelectedCategory("all");
     setSelectedArchive(null);
+    setCurrentPage(1);
+  };
+
+  // Pagination controls
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisiblePages = 7;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      if (currentPage > 3) {
+        pages.push('...');
+      }
+      
+      // Show pages around current page
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) {
+          pages.push(i);
+        }
+      }
+      
+      if (currentPage < totalPages - 2) {
+        pages.push('...');
+      }
+      
+      // Always show last page
+      if (!pages.includes(totalPages)) {
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
   };
 
   return (
@@ -256,98 +320,97 @@ export default function Blog() {
       </header>
 
       {/* Hero with Search */}
-      <section className="py-12 bg-gradient-to-b from-primary/5 to-transparent">
-        <div className="container">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Expert Reviews & Recommendations
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-2">
-              Discover insights, tips, and curated recommendations to help you make smarter decisions
-            </p>
-            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground mt-4">
-              <span className="flex items-center gap-1">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                {totalArticles} Articles
-              </span>
-              <span className="flex items-center gap-1">
-                <Eye className="w-4 h-4 text-primary" />
-                {totalViews.toLocaleString()} Total Views
-              </span>
+      <section className="container py-12 text-center">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          Expert Reviews & Recommendations
+        </h1>
+        <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
+          Discover insights, tips, and curated recommendations to help you make smarter decisions
+        </p>
+        
+        {/* Stats */}
+        <div className="flex items-center justify-center gap-6 mb-8 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <TrendingUp className="w-4 h-4" />
+            {totalArticles.toLocaleString()} Articles
+          </span>
+          <span className="flex items-center gap-1">
+            <Eye className="w-4 h-4" />
+            {totalViews.toLocaleString()} Total Views
+          </span>
+        </div>
+        
+        {/* Search and Filters */}
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search articles by title, keyword, or topic..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-10 h-12"
+              />
             </div>
+            <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-full md:w-48 h-12">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map(cat => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-full md:w-44 h-12">
+                <Clock className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
-          {/* Search and Filters */}
-          <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Search Bar */}
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search articles by title, keyword, or topic..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-12 text-base"
-                />
-              </div>
-              
-              {/* Category Filter */}
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full md:w-[200px] h-12">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map(cat => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              {/* Sort */}
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full md:w-[180px] h-12">
-                  <Clock className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SORT_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Active Filters */}
+          {(searchQuery || selectedCategory !== "all" || selectedArchive) && (
+            <div className="flex items-center gap-2 mt-4 flex-wrap justify-center">
+              <span className="text-sm text-muted-foreground">Active filters:</span>
+              {searchQuery && (
+                <Badge variant="secondary" className="gap-1">
+                  Search: "{searchQuery}"
+                  <button onClick={() => { setSearchQuery(""); setCurrentPage(1); }} className="ml-1 hover:text-destructive">×</button>
+                </Badge>
+              )}
+              {selectedCategory !== "all" && (
+                <Badge variant="secondary" className="gap-1">
+                  {CATEGORIES.find(c => c.value === selectedCategory)?.label}
+                  <button onClick={() => { setSelectedCategory("all"); setCurrentPage(1); }} className="ml-1 hover:text-destructive">×</button>
+                </Badge>
+              )}
+              {selectedArchive && (
+                <Badge variant="secondary" className="gap-1">
+                  {MONTH_NAMES[selectedArchive.month]} {selectedArchive.year}
+                  <button onClick={() => { setSelectedArchive(null); setCurrentPage(1); }} className="ml-1 hover:text-destructive">×</button>
+                </Badge>
+              )}
+              <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                Clear all
+              </Button>
             </div>
-            
-            {/* Active Filters */}
-            {(searchQuery || selectedCategory !== "all" || selectedArchive) && (
-              <div className="flex items-center gap-2 mt-4 flex-wrap">
-                <span className="text-sm text-muted-foreground">Active filters:</span>
-                {searchQuery && (
-                  <Badge variant="secondary" className="cursor-pointer" onClick={() => setSearchQuery("")}>
-                    Search: "{searchQuery}" ×
-                  </Badge>
-                )}
-                {selectedCategory !== "all" && (
-                  <Badge variant="secondary" className="cursor-pointer" onClick={() => setSelectedCategory("all")}>
-                    {CATEGORIES.find(c => c.value === selectedCategory)?.label} ×
-                  </Badge>
-                )}
-                {selectedArchive && (
-                  <Badge variant="secondary" className="cursor-pointer" onClick={() => setSelectedArchive(null)}>
-                    {MONTH_NAMES[selectedArchive.month]} {selectedArchive.year} ×
-                  </Badge>
-                )}
-                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-                  Clear all
-                </Button>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </section>
 
@@ -362,7 +425,7 @@ export default function Blog() {
                 key={keyword} 
                 variant="outline" 
                 className="cursor-pointer hover:bg-primary/10 transition-colors"
-                onClick={() => setSearchQuery(keyword)}
+                onClick={() => { setSearchQuery(keyword); setCurrentPage(1); }}
               >
                 {keyword}
               </Badge>
@@ -437,7 +500,7 @@ export default function Blog() {
                     variant="ghost" 
                     size="sm" 
                     className="w-full mt-4"
-                    onClick={() => setSelectedArchive(null)}
+                    onClick={() => { setSelectedArchive(null); setCurrentPage(1); }}
                   >
                     View All Articles
                   </Button>
@@ -452,7 +515,7 @@ export default function Blog() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Showing {filteredArticles.length} of {totalArticles} articles
+                  Showing {paginatedArticles.length > 0 ? ((currentPage - 1) * ARTICLES_PER_PAGE + 1) : 0}-{Math.min(currentPage * ARTICLES_PER_PAGE, filteredArticles.length)} of {filteredArticles.length} articles
                   {selectedArchive && (
                     <span className="ml-1">
                       from {MONTH_NAMES[selectedArchive.month]} {selectedArchive.year}
@@ -461,7 +524,7 @@ export default function Blog() {
                 </p>
                 {filteredArticles.length > 0 && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Sorted by: {SORT_OPTIONS.find(o => o.value === sortBy)?.label}
+                    Sorted by: {SORT_OPTIONS.find(o => o.value === sortBy)?.label} • Page {currentPage} of {totalPages}
                   </p>
                 )}
               </div>
@@ -490,79 +553,23 @@ export default function Blog() {
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : filteredArticles.length > 0 ? (
-              viewMode === "grid" ? (
-                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredArticles.map((article, index) => (
-                    <Link key={article.id} href={`/blog/${article.slug}`}>
-                      <Card className="h-full hover:border-primary/50 transition-all cursor-pointer group hover:shadow-lg">
-                        {index < 3 && sortBy === "popular" && (
-                          <div className="absolute top-2 right-2 z-10">
-                            <Badge className="bg-primary text-primary-foreground">
-                              <TrendingUp className="w-3 h-3 mr-1" />
-                              Top {index + 1}
-                            </Badge>
-                          </div>
-                        )}
-                        <CardHeader>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                            {article.publishedAt && (
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {format(new Date(article.publishedAt), "MMM d, yyyy")}
-                              </span>
-                            )}
-                            <span className="flex items-center gap-1">
-                              <Eye className="w-3 h-3" />
-                              {(article.views || 0).toLocaleString()}
-                            </span>
-                          </div>
-                          <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors text-lg">
-                            {article.title}
-                          </CardTitle>
-                          {article.excerpt && (
-                            <CardDescription className="line-clamp-3 mt-2">
-                              {cleanExcerpt(article.excerpt)}
-                            </CardDescription>
-                          )}
-                        </CardHeader>
-                        <CardContent>
-                          {article.keywords && (article.keywords as string[]).length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-4">
-                              {(article.keywords as string[]).slice(0, 3).map((keyword, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {keyword}
-                                </Badge>
-                              ))}
-                              {(article.keywords as string[]).length > 3 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{(article.keywords as string[]).length - 3}
-                                </Badge>
-                              )}
+            ) : paginatedArticles.length > 0 ? (
+              <>
+                {viewMode === "grid" ? (
+                  <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {paginatedArticles.map((article, index) => (
+                      <Link key={article.id} href={`/blog/${article.slug}`}>
+                        <Card className="h-full hover:border-primary/50 transition-all cursor-pointer group hover:shadow-lg">
+                          {index < 3 && sortBy === "popular" && currentPage === 1 && (
+                            <div className="absolute top-2 right-2 z-10">
+                              <Badge className="bg-primary text-primary-foreground">
+                                <TrendingUp className="w-3 h-3 mr-1" />
+                                Top {index + 1}
+                              </Badge>
                             </div>
                           )}
-                          <span className="text-sm text-primary flex items-center gap-1 group-hover:gap-2 transition-all font-medium">
-                            Read Full Article <ArrowRight className="w-4 h-4" />
-                          </span>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredArticles.map((article, index) => (
-                    <Link key={article.id} href={`/blog/${article.slug}`}>
-                      <Card className="hover:border-primary/50 transition-all cursor-pointer group hover:shadow-lg">
-                        <div className="flex flex-col md:flex-row md:items-center p-4 gap-4">
-                          <div className="flex-1">
+                          <CardHeader>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                              {index < 3 && sortBy === "popular" && (
-                                <Badge className="bg-primary text-primary-foreground mr-2">
-                                  <TrendingUp className="w-3 h-3 mr-1" />
-                                  Top {index + 1}
-                                </Badge>
-                              )}
                               {article.publishedAt && (
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
@@ -571,38 +578,141 @@ export default function Blog() {
                               )}
                               <span className="flex items-center gap-1">
                                 <Eye className="w-3 h-3" />
-                                {(article.views || 0).toLocaleString()} views
+                                {(article.views || 0).toLocaleString()}
                               </span>
                             </div>
-                            <h3 className="text-lg font-semibold group-hover:text-primary transition-colors mb-2">
+                            <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors text-lg">
                               {article.title}
-                            </h3>
+                            </CardTitle>
                             {article.excerpt && (
-                              <p className="text-sm text-muted-foreground line-clamp-2">
+                              <CardDescription className="line-clamp-3 mt-2">
                                 {cleanExcerpt(article.excerpt)}
-                              </p>
+                              </CardDescription>
                             )}
+                          </CardHeader>
+                          <CardContent>
                             {article.keywords && (article.keywords as string[]).length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-3">
-                                {(article.keywords as string[]).slice(0, 5).map((keyword, i) => (
+                              <div className="flex flex-wrap gap-1 mb-4">
+                                {(article.keywords as string[]).slice(0, 3).map((keyword, i) => (
                                   <Badge key={i} variant="secondary" className="text-xs">
                                     {keyword}
                                   </Badge>
                                 ))}
+                                {(article.keywords as string[]).length > 3 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{(article.keywords as string[]).length - 3}
+                                  </Badge>
+                                )}
                               </div>
                             )}
+                            <span className="text-sm text-primary flex items-center gap-1 group-hover:gap-2 transition-all font-medium">
+                              Read Full Article <ArrowRight className="w-4 h-4" />
+                            </span>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {paginatedArticles.map((article, index) => (
+                      <Link key={article.id} href={`/blog/${article.slug}`}>
+                        <Card className="hover:border-primary/50 transition-all cursor-pointer group hover:shadow-lg">
+                          <div className="flex flex-col md:flex-row md:items-center p-4 gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                                {index < 3 && sortBy === "popular" && currentPage === 1 && (
+                                  <Badge className="bg-primary text-primary-foreground mr-2">
+                                    <TrendingUp className="w-3 h-3 mr-1" />
+                                    Top {index + 1}
+                                  </Badge>
+                                )}
+                                {article.publishedAt && (
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" />
+                                    {format(new Date(article.publishedAt), "MMM d, yyyy")}
+                                  </span>
+                                )}
+                                <span className="flex items-center gap-1">
+                                  <Eye className="w-3 h-3" />
+                                  {(article.views || 0).toLocaleString()} views
+                                </span>
+                              </div>
+                              <h3 className="text-lg font-semibold group-hover:text-primary transition-colors mb-2">
+                                {article.title}
+                              </h3>
+                              {article.excerpt && (
+                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                  {cleanExcerpt(article.excerpt)}
+                                </p>
+                              )}
+                              {article.keywords && (article.keywords as string[]).length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-3">
+                                  {(article.keywords as string[]).slice(0, 5).map((keyword, i) => (
+                                    <Badge key={i} variant="secondary" className="text-xs">
+                                      {keyword}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="shrink-0">
+                              <Button variant="outline" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                Read <ArrowRight className="w-4 h-4 ml-1" />
+                              </Button>
+                            </div>
                           </div>
-                          <div className="shrink-0">
-                            <Button variant="outline" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                              Read <ArrowRight className="w-4 h-4 ml-1" />
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              )
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-8">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-1" />
+                      Previous
+                    </Button>
+                    
+                    <div className="flex items-center gap-1">
+                      {getPageNumbers().map((page, index) => (
+                        typeof page === 'number' ? (
+                          <Button
+                            key={index}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => goToPage(page)}
+                            className="w-10"
+                          >
+                            {page}
+                          </Button>
+                        ) : (
+                          <span key={index} className="px-2 text-muted-foreground">
+                            {page}
+                          </span>
+                        )
+                      ))}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-16">
                 <Search className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
@@ -655,7 +765,7 @@ export default function Blog() {
                 {CATEGORIES.slice(1, 5).map(cat => (
                   <li key={cat.value}>
                     <button 
-                      onClick={() => setSelectedCategory(cat.value)}
+                      onClick={() => { setSelectedCategory(cat.value); setCurrentPage(1); }}
                       className="hover:text-primary transition-colors"
                     >
                       {cat.label}
@@ -670,7 +780,7 @@ export default function Blog() {
                 {CATEGORIES.slice(5).map(cat => (
                   <li key={cat.value}>
                     <button 
-                      onClick={() => setSelectedCategory(cat.value)}
+                      onClick={() => { setSelectedCategory(cat.value); setCurrentPage(1); }}
                       className="hover:text-primary transition-colors"
                     >
                       {cat.label}
