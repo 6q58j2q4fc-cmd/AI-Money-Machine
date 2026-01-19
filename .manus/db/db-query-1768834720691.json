@@ -1,0 +1,106 @@
+{
+  "query": "SELECT id, title, slug, keywords FROM articles WHERE status = 'published' AND content NOT LIKE '%anrdoezrs.net%' LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, slug, keywords FROM articles WHERE status = 'published' AND content NOT LIKE '%anrdoezrs.net%' LIMIT 20;",
+  "rows": [
+    {
+      "id": "12",
+      "title": "Sustainable Home Gardening for Small Spaces",
+      "slug": "sustainable-home-gardening-for-small-spaces-mk9tsy02",
+      "keywords": "[\"balcony garden ideas\", \"vertical gardening systems\", \"indoor herb garden kit\", \"composting for beginners\", \"eco-friendly plant pots\"]"
+    },
+    {
+      "id": "24",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "slug": "sustainable-home-gardening-urban-farming-mk9u2bz5",
+      "keywords": "[\"vertical garden kits\", \"composting solutions\", \"hydroponic systems for beginners\", \"organic pest control\", \"rainwater harvesting for garden\"]"
+    },
+    {
+      "id": "26",
+      "title": "Personalized Nutrition & Gut Health Supplements",
+      "slug": "personalized-nutrition-gut-health-supplements-mk9u3os7",
+      "keywords": "[\"personalized gut health supplements\", \"probiotic strains for IBS\", \"prebiotic fiber foods\", \"gut microbiome testing kits\", \"digestive enzyme supplements reviews\"]"
+    },
+    {
+      "id": "90002",
+      "title": "AI-Powered Productivity Tools for Small Businesses",
+      "slug": "ai-powered-productivity-tools-for-small-businesses-mkb9asfa",
+      "keywords": "[\"AI business automation\", \"small business AI tools\", \"AI productivity software\", \"CRM with AI features\", \"AI marketing automation\"]"
+    },
+    {
+      "id": "90005",
+      "title": "Budget-Friendly Smart Home Devices",
+      "slug": "budget-friendly-smart-home-devices-mkb9ddaf",
+      "keywords": "[\"affordable smart home gadgets\", \"smart home automation budget\", \"DIY smart home setup\", \"smart plugs deals\", \"home security cameras cheap\"]"
+    },
+    {
+      "id": "90006",
+      "title": "Financial Literacy for Young Adults",
+      "slug": "financial-literacy-for-young-adults-mkb9ecuz",
+      "keywords": "[\"beginner investing guide\", \"personal finance tips young adults\", \"student loan repayment strategies\", \"budgeting apps for millennials\", \"first-time home buyer advice\"]"
+    },
+    {
+      "id": "120005",
+      "title": "Budget-Friendly Home Fitness Equipment",
+      "slug": "budget-friendly-home-fitness-equipment-mkbj5x22",
+      "keywords": "[\"affordable home gym\", \"cheap exercise equipment\", \"home workout essentials budget\", \"resistance bands set\", \"compact fitness gear\"]"
+    },
+    {
+      "id": "120008",
+      "title": "Specialty Coffee Brewing at Home",
+      "slug": "specialty-coffee-brewing-at-home-mkbj881t",
+      "keywords": "[\"home coffee brewing\", \"best pour over coffee maker\", \"espresso machine for beginners\", \"coffee bean subscription\", \"grind size for pour over\"]"
+    },
+    {
+      "id": "240001",
+      "title": "Best VPN for Online Security",
+      "slug": "best-vpn-for-online-security-mkczw6be",
+      "keywords": "[\"best vpn for online security\", \"vpn for secure transactions\", \"top vpn services\", \"secure online browsing\", \"vpn for business use\"]"
+    },
+    {
+      "id": "240002",
+      "title": "Meal Planning for Weight Loss",
+      "slug": "meal-planning-for-weight-loss-mkczwdr5",
+      "keywords": "[\"meal planning for weight loss\", \"grocery delivery services\", \"healthy meal kits\", \"weight loss meal plans\", \"meal planning apps\"]"
+    },
+    {
+      "id": "240003",
+      "title": "Best Budgeting Tools for Small Business",
+      "slug": "best-budgeting-tools-for-small-business-mkczwlh6",
+      "keywords": "[\"best budgeting tools for small business\", \"expense tracking software\", \"small business accounting\", \"financial management tools\", \"budgeting apps for entrepreneurs\"]"
+    },
+    {
+      "id": "240004",
+      "title": "Best Laptops for Video Editing",
+      "slug": "best-laptops-for-video-editing-mkczwsq5",
+      "keywords": "[\"best laptops for video editing\", \"laptops for graphics design\", \"high-performance laptops\", \"video editing software\", \"graphics design laptops\"]"
+    },
+    {
+      "id": "240005",
+      "title": "Best Health Insurance Plans",
+      "slug": "best-health-insurance-plans-mkczwzqi",
+      "keywords": "[\"best health insurance plans\", \"individual health insurance\", \"family health insurance\", \"health insurance comparison\", \"affordable health insurance\"]"
+    },
+    {
+      "id": "270185",
+      "title": "Personalized Nutrition for Gut Health",
+      "slug": "personalized-nutrition-for-gut-health-mkd6asye",
+      "keywords": "[\"gut microbiome testing\", \"probiotic supplements for IBS\", \"personalized diet plan gut health\", \"prebiotic foods list\", \"digestive health coaches\"]"
+    },
+    {
+      "id": "300056",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "slug": "sustainable-home-gardening-urban-farming-mkdthubw",
+      "keywords": "[\"vertical garden kits\", \"hydroponics for beginners\", \"composting at home\", \"organic pest control\", \"indoor herb garden\"]"
+    },
+    {
+      "id": "300075",
+      "title": "Personalized Nutrition & Gut Health",
+      "slug": "personalized-nutrition-gut-health-mkdtjjor",
+      "keywords": "[\"gut microbiome testing\", \"probiotics for IBS\", \"personalized diet plans\", \"digestive health supplements\", \"anti-inflammatory foods\"]"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tslug\tkeywords\n12\tSustainable Home Gardening for Small Spaces\tsustainable-home-gardening-for-small-spaces-mk9tsy02\t[\"balcony garden ideas\", \"vertical gardening systems\", \"indoor herb garden kit\", \"composting for beginners\", \"eco-friendly plant pots\"]\n24\tSustainable Home Gardening & Urban Farming\tsustainable-home-gardening-urban-farming-mk9u2bz5\t[\"vertical garden kits\", \"composting solutions\", \"hydroponic systems for beginners\", \"organic pest control\", \"rainwater harvesting for garden\"]\n26\tPersonalized Nutrition & Gut Health Supplements\tpersonalized-nutrition-gut-health-supplements-mk9u3os7\t[\"personalized gut health supplements\", \"probiotic strains for IBS\", \"prebiotic fiber foods\", \"gut microbiome testing kits\", \"digestive enzyme supplements reviews\"]\n90002\tAI-Powered Productivity Tools for Small Businesses\tai-powered-productivity-tools-for-small-businesses-mkb9asfa\t[\"AI business automation\", \"small business AI tools\", \"AI productivity software\", \"CRM with AI features\", \"AI marketing automation\"]\n90005\tBudget-Friendly Smart Home Devices\tbudget-friendly-smart-home-devices-mkb9ddaf\t[\"affordable smart home gadgets\", \"smart home automation budget\", \"DIY smart home setup\", \"smart plugs deals\", \"home security cameras cheap\"]\n90006\tFinancial Literacy for Young Adults\tfinancial-literacy-for-young-adults-mkb9ecuz\t[\"beginner investing guide\", \"personal finance tips young adults\", \"student loan repayment strategies\", \"budgeting apps for millennials\", \"first-time home buyer advice\"]\n120005\tBudget-Friendly Home Fitness Equipment\tbudget-friendly-home-fitness-equipment-mkbj5x22\t[\"affordable home gym\", \"cheap exercise equipment\", \"home workout essentials budget\", \"resistance bands set\", \"compact fitness gear\"]\n120008\tSpecialty Coffee Brewing at Home\tspecialty-coffee-brewing-at-home-mkbj881t\t[\"home coffee brewing\", \"best pour over coffee maker\", \"espresso machine for beginners\", \"coffee bean subscription\", \"grind size for pour over\"]\n240001\tBest VPN for Online Security\tbest-vpn-for-online-security-mkczw6be\t[\"best vpn for online security\", \"vpn for secure transactions\", \"top vpn services\", \"secure online browsing\", \"vpn for business use\"]\n240002\tMeal Planning for Weight Loss\tmeal-planning-for-weight-loss-mkczwdr5\t[\"meal planning for weight loss\", \"grocery delivery services\", \"healthy meal kits\", \"weight loss meal plans\", \"meal planning apps\"]\n240003\tBest Budgeting Tools for Small Business\tbest-budgeting-tools-for-small-business-mkczwlh6\t[\"best budgeting tools for small business\", \"expense tracking software\", \"small business accounting\", \"financial management tools\", \"budgeting apps for entrepreneurs\"]\n240004\tBest Laptops for Video Editing\tbest-laptops-for-video-editing-mkczwsq5\t[\"best laptops for video editing\", \"laptops for graphics design\", \"high-performance laptops\", \"video editing software\", \"graphics design laptops\"]\n240005\tBest Health Insurance Plans\tbest-health-insurance-plans-mkczwzqi\t[\"best health insurance plans\", \"individual health insurance\", \"family health insurance\", \"health insurance comparison\", \"affordable health insurance\"]\n270185\tPersonalized Nutrition for Gut Health\tpersonalized-nutrition-for-gut-health-mkd6asye\t[\"gut microbiome testing\", \"probiotic supplements for IBS\", \"personalized diet plan gut health\", \"prebiotic foods list\", \"digestive health coaches\"]\n300056\tSustainable Home Gardening & Urban Farming\tsustainable-home-gardening-urban-farming-mkdthubw\t[\"vertical garden kits\", \"hydroponics for beginners\", \"composting at home\", \"organic pest control\", \"indoor herb garden\"]\n300075\tPersonalized Nutrition & Gut Health\tpersonalized-nutrition-gut-health-mkdtjjor\t[\"gut microbiome testing\", \"probiotics for IBS\", \"personalized diet plans\", \"digestive health supplements\", \"anti-inflammatory foods\"]\n",
+  "stderr": "",
+  "execution_time_ms": 598
+}

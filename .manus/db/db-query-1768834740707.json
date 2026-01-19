@@ -1,0 +1,100 @@
+{
+  "query": "SELECT id, name, url, category FROM affiliate_links WHERE url LIKE '%anrdoezrs.net%' LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, name, url, category FROM affiliate_links WHERE url LIKE '%anrdoezrs.net%' LIMIT 30;",
+  "rows": [
+    {
+      "id": "30035",
+      "name": "Easter Sale &gt; EN &gt; 1080x1080",
+      "url": "https://www.anrdoezrs.net/click-101630462-17060421-1743500772000",
+      "category": "technology"
+    },
+    {
+      "id": "30042",
+      "name": "HackCheck &gt; 120x600 &gt; DE",
+      "url": "https://www.anrdoezrs.net/click-101630462-15777927-1711378591000",
+      "category": "technology"
+    },
+    {
+      "id": "30043",
+      "name": "YouTube Song Downloader &gt; 300x250 &gt; DE",
+      "url": "https://www.anrdoezrs.net/click-101630462-15774694-1711009491000",
+      "category": "technology"
+    },
+    {
+      "id": "30046",
+      "name": "Abelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; WashandGo",
+      "url": "https://www.anrdoezrs.net/click-101630462-15638638-1696947090000",
+      "category": "technology"
+    },
+    {
+      "id": "30058",
+      "name": "Abelssoft &gt; DE &gt; 120x600 &gt; Spring Sale",
+      "url": "https://www.anrdoezrs.net/click-101630462-15780513-1711615175000",
+      "category": "technology"
+    },
+    {
+      "id": "30060",
+      "name": "Abelssoft &gt; EN &gt; 468x60",
+      "url": "https://www.anrdoezrs.net/click-101630462-15402688-1684488656000",
+      "category": "technology"
+    },
+    {
+      "id": "30061",
+      "name": "Abelssoft feiert 30 Jahre &gt; DE &gt; 1080x1080",
+      "url": "https://www.anrdoezrs.net/click-101630462-17009811-1736953352000",
+      "category": "technology"
+    },
+    {
+      "id": "30065",
+      "name": "PCFresh &gt;300x250 &gt; DE",
+      "url": "https://www.anrdoezrs.net/click-101630462-15777867-1711374423000",
+      "category": "technology"
+    },
+    {
+      "id": "30066",
+      "name": "YouTube Song Downloader &gt; 468x60 &gt; DE",
+      "url": "https://www.anrdoezrs.net/click-101630462-15779608-1711545980000",
+      "category": "technology"
+    },
+    {
+      "id": "30067",
+      "name": "AntiBrowserSpy &gt; EN &gt; 300x250",
+      "url": "https://www.anrdoezrs.net/click-101630462-15402321-1684488656000",
+      "category": "technology"
+    },
+    {
+      "id": "30076",
+      "name": "Easter-Sale &gt; EN &gt; 468x60",
+      "url": "https://www.anrdoezrs.net/click-101630462-17060415-1743500543000",
+      "category": "technology"
+    },
+    {
+      "id": "30078",
+      "name": "Oster-Sale  &gt; DE &gt; 1080x1080",
+      "url": "https://www.anrdoezrs.net/click-101630462-17060422-1743500838000",
+      "category": "technology"
+    },
+    {
+      "id": "30085",
+      "name": "AntiBrowserSpy &gt; EN &gt; 468x60",
+      "url": "https://www.anrdoezrs.net/click-101630462-15402319-1684488656000",
+      "category": "technology"
+    },
+    {
+      "id": "30095",
+      "name": "Abelssoft &gt; EN &gt; 120x600 &gt; 60% Black Week discount",
+      "url": "https://www.anrdoezrs.net/click-101630462-16970592-1732186223000",
+      "category": "technology"
+    },
+    {
+      "id": "30099",
+      "name": "YouTube Song Downloader &gt; 120x600 &gt; EN",
+      "url": "https://www.anrdoezrs.net/click-101630462-15777930-1711378830000",
+      "category": "technology"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\turl\tcategory\n30035\tEaster Sale &gt; EN &gt; 1080x1080\thttps://www.anrdoezrs.net/click-101630462-17060421-1743500772000\ttechnology\n30042\tHackCheck &gt; 120x600 &gt; DE\thttps://www.anrdoezrs.net/click-101630462-15777927-1711378591000\ttechnology\n30043\tYouTube Song Downloader &gt; 300x250 &gt; DE\thttps://www.anrdoezrs.net/click-101630462-15774694-1711009491000\ttechnology\n30046\tAbelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; WashandGo\thttps://www.anrdoezrs.net/click-101630462-15638638-1696947090000\ttechnology\n30058\tAbelssoft &gt; DE &gt; 120x600 &gt; Spring Sale\thttps://www.anrdoezrs.net/click-101630462-15780513-1711615175000\ttechnology\n30060\tAbelssoft &gt; EN &gt; 468x60\thttps://www.anrdoezrs.net/click-101630462-15402688-1684488656000\ttechnology\n30061\tAbelssoft feiert 30 Jahre &gt; DE &gt; 1080x1080\thttps://www.anrdoezrs.net/click-101630462-17009811-1736953352000\ttechnology\n30065\tPCFresh &gt;300x250 &gt; DE\thttps://www.anrdoezrs.net/click-101630462-15777867-1711374423000\ttechnology\n30066\tYouTube Song Downloader &gt; 468x60 &gt; DE\thttps://www.anrdoezrs.net/click-101630462-15779608-1711545980000\ttechnology\n30067\tAntiBrowserSpy &gt; EN &gt; 300x250\thttps://www.anrdoezrs.net/click-101630462-15402321-1684488656000\ttechnology\n30076\tEaster-Sale &gt; EN &gt; 468x60\thttps://www.anrdoezrs.net/click-101630462-17060415-1743500543000\ttechnology\n30078\tOster-Sale  &gt; DE &gt; 1080x1080\thttps://www.anrdoezrs.net/click-101630462-17060422-1743500838000\ttechnology\n30085\tAntiBrowserSpy &gt; EN &gt; 468x60\thttps://www.anrdoezrs.net/click-101630462-15402319-1684488656000\ttechnology\n30095\tAbelssoft &gt; EN &gt; 120x600 &gt; 60% Black Week discount\thttps://www.anrdoezrs.net/click-101630462-16970592-1732186223000\ttechnology\n30099\tYouTube Song Downloader &gt; 120x600 &gt; EN\thttps://www.anrdoezrs.net/click-101630462-15777930-1711378830000\ttechnology\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

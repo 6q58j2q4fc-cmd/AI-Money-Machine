@@ -97,6 +97,22 @@ export default function PublicArticle() {
     }
   };
 
+  // Helper function to add UTM parameters to affiliate links for tracking
+  const addUtmParams = (url: string, linkName: string, position: number) => {
+    try {
+      const urlObj = new URL(url);
+      // Add UTM parameters for analytics tracking
+      urlObj.searchParams.set('utm_source', 'benjaminfranklins');
+      urlObj.searchParams.set('utm_medium', 'affiliate');
+      urlObj.searchParams.set('utm_campaign', article?.slug || 'article');
+      urlObj.searchParams.set('utm_content', `pos${position}_${linkName.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30)}`);
+      urlObj.searchParams.set('utm_term', article?.keywords?.slice(0, 3).join(',') || 'general');
+      return urlObj.toString();
+    } catch {
+      return url;
+    }
+  };
+
   // Extract affiliate links from article content HTML if affiliateLinks array is empty
   const extractedLinks = useMemo(() => {
     if (!article?.content) return [];
@@ -114,12 +130,22 @@ export default function PublicArticle() {
     return links;
   }, [article?.content]);
 
-  // Use extracted links if affiliateLinks array is empty
+  // Use extracted links if affiliateLinks array is empty, and add UTM tracking
   const displayLinks = (article as any)?.affiliateLinks?.length > 0 
-    ? (article as any).affiliateLinks 
+    ? (article as any).affiliateLinks.map((linkData: any, i: number) => ({
+        ...linkData,
+        link: {
+          ...linkData.link,
+          url: addUtmParams(linkData.link.url, linkData.link.name || 'product', i + 1)
+        }
+      }))
     : extractedLinks.map((link, i) => ({
         affiliateLinkId: i,
-        link: { url: link.url, name: link.name, category: link.category }
+        link: { 
+          url: addUtmParams(link.url, link.name, i + 1), 
+          name: link.name, 
+          category: link.category 
+        }
       }));
 
   // Get category from first affiliate link or default

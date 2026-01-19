@@ -1393,6 +1393,83 @@ const publicArticlesRouter = router({
     };
   }),
 
+  // Click analytics - track which articles and categories drive most conversions
+  clickAnalytics: publicProcedure.query(async () => {
+    const database = await db.getDb();
+    if (!database) {
+      return {
+        totalClicks: 0,
+        clicksByCategory: [],
+        topArticlesByClicks: [],
+        clickTrend: [],
+        conversionRate: 0,
+      };
+    }
+
+    // Get total clicks
+    const totalResult = await database.execute(
+      sql`SELECT SUM(clicks) as total FROM articles WHERE status = 'published'`
+    );
+    const totalClicks = Number((totalResult as any)[0]?.[0]?.total) || 0;
+
+    // Get clicks by category (using keywords as proxy for category)
+    const categoryResult = await database.execute(
+      sql`SELECT 
+        CASE 
+          WHEN keywords LIKE '%technology%' OR keywords LIKE '%software%' OR keywords LIKE '%AI%' THEN 'Technology'
+          WHEN keywords LIKE '%finance%' OR keywords LIKE '%budget%' OR keywords LIKE '%money%' THEN 'Finance'
+          WHEN keywords LIKE '%health%' OR keywords LIKE '%fitness%' OR keywords LIKE '%nutrition%' THEN 'Health'
+          WHEN keywords LIKE '%lifestyle%' OR keywords LIKE '%home%' OR keywords LIKE '%garden%' THEN 'Lifestyle'
+          WHEN keywords LIKE '%business%' OR keywords LIKE '%productivity%' THEN 'Business'
+          ELSE 'Other'
+        END as category,
+        SUM(clicks) as clicks,
+        COUNT(*) as articles
+      FROM articles 
+      WHERE status = 'published'
+      GROUP BY category
+      ORDER BY clicks DESC`
+    );
+    const clicksByCategory = ((categoryResult as any)[0] || []).map((row: any) => ({
+      category: row.category,
+      clicks: Number(row.clicks) || 0,
+      articles: Number(row.articles) || 0,
+      ctr: 0 // Will calculate below
+    }));
+
+    // Get top articles by clicks
+    const topArticlesResult = await database.execute(
+      sql`SELECT id, title, slug, clicks, views,
+        CASE WHEN views > 0 THEN ROUND((clicks / views) * 100, 2) ELSE 0 END as ctr
+      FROM articles 
+      WHERE status = 'published' AND clicks > 0
+      ORDER BY clicks DESC
+      LIMIT 10`
+    );
+    const topArticlesByClicks = ((topArticlesResult as any)[0] || []).map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      slug: row.slug,
+      clicks: Number(row.clicks) || 0,
+      views: Number(row.views) || 0,
+      ctr: Number(row.ctr) || 0
+    }));
+
+    // Get total views for conversion rate
+    const viewsResult = await database.execute(
+      sql`SELECT SUM(views) as total FROM articles WHERE status = 'published'`
+    );
+    const totalViews = Number((viewsResult as any)[0]?.[0]?.total) || 0;
+    const conversionRate = totalViews > 0 ? Math.round((totalClicks / totalViews) * 10000) / 100 : 0;
+
+    return {
+      totalClicks,
+      clicksByCategory,
+      topArticlesByClicks,
+      conversionRate,
+    };
+  }),
+
   // Blog stats for dashboard - real-time metrics
   blogStats: publicProcedure.query(async () => {
     const database = await db.getDb();

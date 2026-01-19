@@ -2550,3 +2550,13 @@
 - [x] Fix articles with broken links using real CJ affiliate URLs
 - [x] Update dashboard to show verified vs unverified link counts
 - [x] Display total articles count and verified working links count
+
+
+## Article Fix & UTM Tracking (January 19, 2026)
+
+- [x] Identify and fix 16 articles without affiliate links
+- [x] Add CJ affiliate links to articles missing them
+- [x] Implement UTM parameter tracking on all affiliate links
+- [x] Track source article, category, and position in UTM parameters
+- [x] Add click tracking analytics to dashboard
+- [x] Show which articles and categories drive most conversions

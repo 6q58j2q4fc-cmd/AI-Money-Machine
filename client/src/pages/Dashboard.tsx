@@ -39,6 +39,7 @@ export default function Dashboard() {
   const { data: withdrawalHistory } = trpc.wallet.getWithdrawalHistory.useQuery();
   const { data: blogStats, isLoading: blogStatsLoading } = trpc.publicArticles.blogStats.useQuery();
   const { data: linkStats, isLoading: linkStatsLoading } = trpc.publicArticles.linkVerificationStats.useQuery();
+  const { data: clickAnalytics, isLoading: clickAnalyticsLoading } = trpc.publicArticles.clickAnalytics.useQuery();
   
   // Trust Wallet address
   const TRUST_WALLET_ADDRESS = "0x75812e1c4246A880f6576db8292405247e6a8775";
@@ -624,6 +625,81 @@ export default function Dashboard() {
                 >
                   Browse All Articles
                 </Button>
+              </div>
+            </div>
+            
+            {/* Click Analytics Section */}
+            <div className="mt-4 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+              <h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+                <MousePointer className="w-4 h-4 text-purple-500" />
+                Click Analytics & Conversion Tracking
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-400">
+                    {clickAnalyticsLoading ? "..." : clickAnalytics?.totalClicks?.toLocaleString() || 0}
+                  </p>
+                  <p className="text-xs text-zinc-400">Total Clicks</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-pink-400">
+                    {clickAnalyticsLoading ? "..." : `${clickAnalytics?.conversionRate || 0}%`}
+                  </p>
+                  <p className="text-xs text-zinc-400">Click-Through Rate</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-cyan-400">
+                    {clickAnalyticsLoading ? "..." : clickAnalytics?.topArticlesByClicks?.length || 0}
+                  </p>
+                  <p className="text-xs text-zinc-400">Converting Articles</p>
+                </div>
+              </div>
+              
+              {/* Top Converting Articles */}
+              {clickAnalytics?.topArticlesByClicks && clickAnalytics.topArticlesByClicks.length > 0 && (
+                <div className="mt-4">
+                  <h5 className="text-xs font-medium text-zinc-400 mb-2">Top Converting Articles</h5>
+                  <div className="space-y-2">
+                    {clickAnalytics.topArticlesByClicks.slice(0, 5).map((article: { id: number; title: string; slug: string; clicks: number; views: number; ctr: number }, i: number) => (
+                      <div 
+                        key={i} 
+                        className="flex items-center justify-between cursor-pointer hover:bg-zinc-700/30 rounded p-2 -mx-2"
+                        onClick={() => window.open(`/blog/${article.slug}`, '_blank')}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-purple-400">#{i + 1}</span>
+                          <span className="text-sm text-zinc-300 truncate max-w-[180px]">{article.title}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="text-pink-400">{article.clicks} clicks</span>
+                          <span className="text-cyan-400">{article.ctr}% CTR</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Clicks by Category */}
+              {clickAnalytics?.clicksByCategory && clickAnalytics.clicksByCategory.length > 0 && (
+                <div className="mt-4">
+                  <h5 className="text-xs font-medium text-zinc-400 mb-2">Clicks by Category</h5>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {clickAnalytics.clicksByCategory.slice(0, 6).map((cat: { category: string; clicks: number; articles: number }, i: number) => (
+                      <div key={i} className="bg-zinc-800/50 rounded p-2 text-center">
+                        <p className="text-xs text-zinc-400">{cat.category}</p>
+                        <p className="text-sm font-bold text-purple-400">{cat.clicks} clicks</p>
+                        <p className="text-xs text-zinc-500">{cat.articles} articles</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-3 pt-3 border-t border-zinc-700/50">
+                <p className="text-xs text-zinc-500">
+                  UTM tracking enabled: All affiliate links include source, campaign, and position tracking
+                </p>
               </div>
             </div>
           </CardContent>
