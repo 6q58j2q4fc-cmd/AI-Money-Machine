@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_articles,\n  SUM(CASE WHEN content LIKE '%anrdoezrs.net%' OR content LIKE '%awin1.com%' OR content LIKE '%shareasale.com%' THEN 1 ELSE 0 END) as articles_with_affiliate_links,\n  SUM(CASE WHEN content NOT LIKE '%anrdoezrs.net%' AND content NOT LIKE '%awin1.com%' AND content NOT LIKE '%shareasale.com%' THEN 1 ELSE 0 END) as articles_without_affiliate_links,\n  SUM(CASE WHEN content LIKE '%24-7pressrelease%' THEN 1 ELSE 0 END) as articles_with_broken_links\nFROM articles \nWHERE status = 'published';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT \n  COUNT(*) as total_articles,\n  SUM(CASE WHEN content LIKE '%anrdoezrs.net%' OR content LIKE '%awin1.com%' OR content LIKE '%shareasale.com%' THEN 1 ELSE 0 END) as articles_with_affiliate_links,\n  SUM(CASE WHEN content NOT LIKE '%anrdoezrs.net%' AND content NOT LIKE '%awin1.com%' AND content NOT LIKE '%shareasale.com%' THEN 1 ELSE 0 END) as articles_without_affiliate_links,\n  SUM(CASE WHEN content LIKE '%24-7pressrelease%' THEN 1 ELSE 0 END) as articles_with_broken_links\nFROM articles \nWHERE status = 'published';",
+  "rows": [
+    {
+      "total_articles": "1656",
+      "articles_with_affiliate_links": "1656",
+      "articles_without_affiliate_links": "0",
+      "articles_with_broken_links": "1420"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_articles\tarticles_with_affiliate_links\tarticles_without_affiliate_links\tarticles_with_broken_links\n1656\t1656\t0\t1420\n",
+  "stderr": "",
+  "execution_time_ms": 8441
+}

@@ -1346,36 +1346,53 @@ const publicArticlesRouter = router({
     );
     const totalArticles = Number((totalResult as any)[0]?.[0]?.total) || 0;
 
-    // Count articles with CJ affiliate links
+    // Count articles with CJ affiliate links (checking all CJ domains)
     const withLinksResult = await database.execute(
       sql`SELECT COUNT(*) as total FROM articles 
         WHERE status = 'published' 
-        AND content LIKE '%anrdoezrs.net%'`
+        AND (content LIKE '%anrdoezrs.net%' 
+          OR content LIKE '%tkqlhce.com%'
+          OR content LIKE '%dpbolvw.net%'
+          OR content LIKE '%kqzyfj.com%'
+          OR content LIKE '%jdoqocy.com%')`
     );
     const articlesWithVerifiedLinks = Number((withLinksResult as any)[0]?.[0]?.total) || 0;
 
-    // Count articles without any affiliate links
+    // Count articles without any CJ affiliate links
     const withoutLinksResult = await database.execute(
       sql`SELECT COUNT(*) as total FROM articles 
         WHERE status = 'published' 
         AND content NOT LIKE '%anrdoezrs.net%'
-        AND content NOT LIKE '%awin1.com%'
-        AND content NOT LIKE '%shareasale.com%'`
+        AND content NOT LIKE '%tkqlhce.com%'
+        AND content NOT LIKE '%dpbolvw.net%'
+        AND content NOT LIKE '%kqzyfj.com%'
+        AND content NOT LIKE '%jdoqocy.com%'`
     );
     const articlesWithoutLinks = Number((withoutLinksResult as any)[0]?.[0]?.total) || 0;
 
-    // Estimate total CJ links (sample-based)
+    // Estimate total CJ links (sample-based, checking all CJ domains)
     const sampleResult = await database.execute(
       sql`SELECT content FROM articles 
         WHERE status = 'published' 
-        AND content LIKE '%anrdoezrs.net%'
+        AND (content LIKE '%anrdoezrs.net%' OR content LIKE '%tkqlhce.com%')
         LIMIT 50`
     );
     const sampleArticles = (sampleResult as any)[0] || [];
     let sampleLinkCount = 0;
+    const cjDomainPatterns = [
+      /https?:\/\/www\.anrdoezrs\.net\/click-[0-9]+-[0-9]+[^"']*/g,
+      /https?:\/\/www\.tkqlhce\.com\/click-[0-9]+-[0-9]+[^"']*/g,
+      /https?:\/\/www\.dpbolvw\.net\/click-[0-9]+-[0-9]+[^"']*/g,
+      /https?:\/\/www\.kqzyfj\.com\/click-[0-9]+-[0-9]+[^"']*/g,
+      /https?:\/\/www\.jdoqocy\.com\/click-[0-9]+-[0-9]+[^"']*/g,
+    ];
     for (const article of sampleArticles) {
-      const matches = article.content.match(/https?:\/\/www\.anrdoezrs\.net\/click-[0-9]+-[0-9]+/g) || [];
-      sampleLinkCount += new Set(matches).size;
+      const allMatches = new Set<string>();
+      for (const pattern of cjDomainPatterns) {
+        const matches = article.content.match(pattern) || [];
+        matches.forEach((m: string) => allMatches.add(m));
+      }
+      sampleLinkCount += allMatches.size;
     }
     const avgLinksPerArticle = sampleArticles.length > 0 ? sampleLinkCount / sampleArticles.length : 0;
     const totalCJLinksFound = Math.round(avgLinksPerArticle * articlesWithVerifiedLinks);
