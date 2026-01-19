@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as total_links FROM affiliate_links;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT COUNT(*) as total_links FROM affiliate_links;",
+  "rows": [
+    {
+      "total_links": "70"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_links\n70\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

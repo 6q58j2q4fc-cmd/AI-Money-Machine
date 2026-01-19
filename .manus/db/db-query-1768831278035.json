@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, title FROM articles WHERE content LIKE '%](http%' AND status = 'published' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title FROM articles WHERE content LIKE '%](http%' AND status = 'published' LIMIT 10;",
+  "rows": [
+    {
+      "id": "2",
+      "title": "Sustainable Home Gardening & Urban Farming"
+    },
+    {
+      "id": "3",
+      "title": "AI-Powered Productivity Tools for Small Businesses"
+    },
+    {
+      "id": "4",
+      "title": "Personalized Nutrition for Gut Health"
+    },
+    {
+      "id": "6",
+      "title": "Sustainable Home Gardening & Urban Farming"
+    },
+    {
+      "id": "7",
+      "title": "AI-Powered Productivity Tools for Small Business"
+    },
+    {
+      "id": "8",
+      "title": "Personalized Nutrition & Gut Health Optimization"
+    },
+    {
+      "id": "10",
+      "title": "AI-Powered Personal Productivity Tools"
+    },
+    {
+      "id": "11",
+      "title": "Budget-Friendly Financial Planning for Gen Z/Millennials"
+    },
+    {
+      "id": "13",
+      "title": "AI-Powered Productivity Tools for Solopreneurs"
+    },
+    {
+      "id": "14",
+      "title": "Personalized Nutrition for Gut Health"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\n2\tSustainable Home Gardening & Urban Farming\n3\tAI-Powered Productivity Tools for Small Businesses\n4\tPersonalized Nutrition for Gut Health\n6\tSustainable Home Gardening & Urban Farming\n7\tAI-Powered Productivity Tools for Small Business\n8\tPersonalized Nutrition & Gut Health Optimization\n10\tAI-Powered Personal Productivity Tools\n11\tBudget-Friendly Financial Planning for Gen Z/Millennials\n13\tAI-Powered Productivity Tools for Solopreneurs\n14\tPersonalized Nutrition for Gut Health\n",
+  "stderr": "",
+  "execution_time_ms": 289
+}

@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as articles_with_cj_links FROM articles WHERE content LIKE '%anrdoezrs.net%' AND status = 'published';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT COUNT(*) as articles_with_cj_links FROM articles WHERE content LIKE '%anrdoezrs.net%' AND status = 'published';",
+  "rows": [
+    {
+      "articles_with_cj_links": "1458"
+    }
+  ],
+  "messages": [],
+  "stdout": "articles_with_cj_links\n1458\n",
+  "stderr": "",
+  "execution_time_ms": 1038
+}

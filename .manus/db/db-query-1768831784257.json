@@ -1,0 +1,35 @@
+{
+  "query": "SELECT id, slug, title FROM articles WHERE slug LIKE '%ai-powered-productivity%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, slug, title FROM articles WHERE slug LIKE '%ai-powered-productivity%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "3",
+      "slug": "ai-powered-productivity-tools-for-small-businesses-mk9sxkmo",
+      "title": "AI-Powered Productivity Tools for Small Businesses"
+    },
+    {
+      "id": "7",
+      "slug": "ai-powered-productivity-tools-for-small-business-mk9tlu1d",
+      "title": "AI-Powered Productivity Tools for Small Business"
+    },
+    {
+      "id": "13",
+      "slug": "ai-powered-productivity-tools-for-solopreneurs-mk9ttktj",
+      "title": "AI-Powered Productivity Tools for Solopreneurs"
+    },
+    {
+      "id": "19",
+      "slug": "ai-powered-productivity-tools-for-small-businesses-solopreneurs-mk9tygc2",
+      "title": "AI-Powered Productivity Tools for Small Businesses & Solopreneurs"
+    },
+    {
+      "id": "25",
+      "slug": "ai-powered-productivity-tools-for-small-businesses-mk9u32x3",
+      "title": "AI-Powered Productivity Tools for Small Businesses"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tslug\ttitle\n3\tai-powered-productivity-tools-for-small-businesses-mk9sxkmo\tAI-Powered Productivity Tools for Small Businesses\n7\tai-powered-productivity-tools-for-small-business-mk9tlu1d\tAI-Powered Productivity Tools for Small Business\n13\tai-powered-productivity-tools-for-solopreneurs-mk9ttktj\tAI-Powered Productivity Tools for Solopreneurs\n19\tai-powered-productivity-tools-for-small-businesses-solopreneurs-mk9tygc2\tAI-Powered Productivity Tools for Small Businesses & Solopreneurs\n25\tai-powered-productivity-tools-for-small-businesses-mk9u32x3\tAI-Powered Productivity Tools for Small Businesses\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

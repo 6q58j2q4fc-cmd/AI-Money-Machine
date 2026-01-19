@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, title, LEFT(content, 2000) as content_preview FROM articles WHERE status = 'published' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, LEFT(content, 2000) as content_preview FROM articles WHERE status = 'published' LIMIT 1;",
+  "rows": [
+    {
+      "id": "2",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "content_preview": "# Cultivate Your Oasis: The Ultimate Guide to Sustainable Home Gardening & Urban Farming"
+    }
+  ],
+  "messages": [
+    "**Are you tired of bland, mass-produced produce? Do you dream of fresh, organic vegetables, herbs, and fruits, bursting with flavor, grown right in your own backyard – or even on your balcony?**",
+    "Imagine stepping out your door, plucking a ripe tomato, a handful of fragrant basil, or crisp lettuce, knowing exactly where it came from and that it's free from harmful chemicals. This isn't a fantasy; it's the beautiful reality of **sustainable home gardening** and **urban farming**.",
+    "In a world increasingly focused on environmental impact and healthy living, growing your own food has become more than just a hobby – it's a powerful statement, a path to self-sufficiency, and a delightful way to reconnect with nature. Whether you have a sprawling yard, a tiny balcony, or just a sunny windowsill, this comprehensive guide will unlock the secrets to creating your own thriving, eco-friendly edible paradise.",
+    "Get ready to transform your space, nourish your body, and join a vibrant movement towards a greener, more sustainable future. Let's dig in!",
+    "## Why Embrace Sustainable Gardening & Urban Farming?",
+    "The benefits of cultivating your own food are truly immense, extending far beyond just fresh produce.",
+    "### 1. Healthier Eating, Happier You",
+    "When you grow your own, you control everything. No mysterious pesticides, no questionable fertilizers, just pure, wholesome goodness. This means more nutrient-dense food for you and your family, leading to better health and vitality.",
+    "### 2. Environmental Stewardship",
+    "Sustainable practices reduce your carbon footprint significantly. By eliminating long-distance transportation, chemical runoff, and excessive packaging, you become a powerful advocate for a healthier planet. This is the essence of **eco-friendly garden supplies** and practices.",
+    "### 3. Financial Savings",
+    "While there's an initial investment, growing your own food can dramatically cut down on you"
+  ],
+  "stdout": "id\ttitle\tcontent_preview\n2\tSustainable Home Gardening & Urban Farming\t# Cultivate Your Oasis: The Ultimate Guide to Sustainable Home Gardening & Urban Farming\n\n**Are you tired of bland, mass-produced produce? Do you dream of fresh, organic vegetables, herbs, and fruits, bursting with flavor, grown right in your own backyard – or even on your balcony?**\n\nImagine stepping out your door, plucking a ripe tomato, a handful of fragrant basil, or crisp lettuce, knowing exactly where it came from and that it's free from harmful chemicals. This isn't a fantasy; it's the beautiful reality of **sustainable home gardening** and **urban farming**.\n\nIn a world increasingly focused on environmental impact and healthy living, growing your own food has become more than just a hobby – it's a powerful statement, a path to self-sufficiency, and a delightful way to reconnect with nature. Whether you have a sprawling yard, a tiny balcony, or just a sunny windowsill, this comprehensive guide will unlock the secrets to creating your own thriving, eco-friendly edible paradise.\n\nGet ready to transform your space, nourish your body, and join a vibrant movement towards a greener, more sustainable future. Let's dig in!\n\n## Why Embrace Sustainable Gardening & Urban Farming?\n\nThe benefits of cultivating your own food are truly immense, extending far beyond just fresh produce.\n\n### 1. Healthier Eating, Happier You\nWhen you grow your own, you control everything. No mysterious pesticides, no questionable fertilizers, just pure, wholesome goodness. This means more nutrient-dense food for you and your family, leading to better health and vitality.\n\n### 2. Environmental Stewardship\nSustainable practices reduce your carbon footprint significantly. By eliminating long-distance transportation, chemical runoff, and excessive packaging, you become a powerful advocate for a healthier planet. This is the essence of **eco-friendly garden supplies** and practices.\n\n### 3. Financial Savings\nWhile there's an initial investment, growing your own food can dramatically cut down on you\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

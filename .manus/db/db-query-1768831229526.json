@@ -1,0 +1,130 @@
+{
+  "query": "SELECT id, name, url, category FROM affiliate_links LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, name, url, category FROM affiliate_links LIMIT 20;",
+  "rows": [
+    {
+      "id": "30001",
+      "name": "Have a Big Announcement? Get the Word Out! | 24-7PressRelease.com",
+      "url": "https://www.tkqlhce.com/click-101630462-10754746-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30002",
+      "name": "24-7PressRelease.com – Your ticket to publicity and visibility",
+      "url": "https://www.tkqlhce.com/click-101630462-10754734-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30003",
+      "name": "Instant online visibility. News direct to consumers, journalist, &amp; bloggers. | 24-7PressRelease.com",
+      "url": "https://www.dpbolvw.net/click-101630462-10754888-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30004",
+      "name": "Press Release Service 24-7PressRelease.com",
+      "url": "https://www.dpbolvw.net/click-101630462-10754877-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30005",
+      "name": "Press Release Distribution Service 24-7PressRelease.com",
+      "url": "https://www.dpbolvw.net/click-101630462-10754875-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30006",
+      "name": "Instant online visibility. News direct to consumers, journalist, &amp; bloggers. | 24-7PressRelease.com",
+      "url": "https://www.anrdoezrs.net/click-101630462-10754741-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30007",
+      "name": "24-7PressRelease.com – Your ticket to publicity and visibility.",
+      "url": "https://www.anrdoezrs.net/click-101630462-10754743-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30008",
+      "name": "Evergreen Link for 24-7PressRelease",
+      "url": "https://www.kqzyfj.com/click-101630462-15734478",
+      "category": "general"
+    },
+    {
+      "id": "30009",
+      "name": "24-7Pressrelease – Effective press release distribution with results",
+      "url": "https://www.anrdoezrs.net/click-101630462-10754889-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30010",
+      "name": "24-7PressRelease.com – Share Your News with Journalists, Consumers, &amp; Bloggers",
+      "url": "https://www.jdoqocy.com/click-101630462-10754738-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30011",
+      "name": "Press Release Distribution 24-7PressRelease.com",
+      "url": "https://www.kqzyfj.com/click-101630462-10754880-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30012",
+      "name": "Press Release service",
+      "url": "https://www.kqzyfj.com/click-101630462-10750177-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30013",
+      "name": "Press Release Distribution 24-7PressRelease.com",
+      "url": "https://www.dpbolvw.net/click-101630462-10754735-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30014",
+      "name": "Press Release Distribution - 24-7PressRelease.com",
+      "url": "https://www.jdoqocy.com/click-101630462-10754736-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30015",
+      "name": "24-7PressRelease.com – Press release service with results.",
+      "url": "https://www.jdoqocy.com/click-101630462-10754744-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30016",
+      "name": "Press Release Service 24-7PressRelease.com",
+      "url": "https://www.kqzyfj.com/click-101630462-10754882-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30017",
+      "name": "Spread Your News To The World - 24-7PressRelease.com",
+      "url": "https://www.dpbolvw.net/click-101630462-10751165-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30018",
+      "name": "Press Release Distribution 24-7PressRelease.com",
+      "url": "https://www.tkqlhce.com/click-101630462-10754884-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30019",
+      "name": "Generate Instant Publicity - 24-7PressRelease.com",
+      "url": "https://www.tkqlhce.com/click-101630462-10754739-1534879214000",
+      "category": "general"
+    },
+    {
+      "id": "30020",
+      "name": "Spread your news across the net. | 24-7PressRelease.com",
+      "url": "https://www.dpbolvw.net/click-101630462-10754740-1534879214000",
+      "category": "general"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\turl\tcategory\n30001\tHave a Big Announcement? Get the Word Out! | 24-7PressRelease.com\thttps://www.tkqlhce.com/click-101630462-10754746-1534879214000\tgeneral\n30002\t24-7PressRelease.com – Your ticket to publicity and visibility\thttps://www.tkqlhce.com/click-101630462-10754734-1534879214000\tgeneral\n30003\tInstant online visibility. News direct to consumers, journalist, &amp; bloggers. | 24-7PressRelease.com\thttps://www.dpbolvw.net/click-101630462-10754888-1534879214000\tgeneral\n30004\tPress Release Service 24-7PressRelease.com\thttps://www.dpbolvw.net/click-101630462-10754877-1534879214000\tgeneral\n30005\tPress Release Distribution Service 24-7PressRelease.com\thttps://www.dpbolvw.net/click-101630462-10754875-1534879214000\tgeneral\n30006\tInstant online visibility. News direct to consumers, journalist, &amp; bloggers. | 24-7PressRelease.com\thttps://www.anrdoezrs.net/click-101630462-10754741-1534879214000\tgeneral\n30007\t24-7PressRelease.com – Your ticket to publicity and visibility.\thttps://www.anrdoezrs.net/click-101630462-10754743-1534879214000\tgeneral\n30008\tEvergreen Link for 24-7PressRelease\thttps://www.kqzyfj.com/click-101630462-15734478\tgeneral\n30009\t24-7Pressrelease – Effective press release distribution with results\thttps://www.anrdoezrs.net/click-101630462-10754889-1534879214000\tgeneral\n30010\t24-7PressRelease.com – Share Your News with Journalists, Consumers, &amp; Bloggers\thttps://www.jdoqocy.com/click-101630462-10754738-1534879214000\tgeneral\n30011\tPress Release Distribution 24-7PressRelease.com\thttps://www.kqzyfj.com/click-101630462-10754880-1534879214000\tgeneral\n30012\tPress Release service\thttps://www.kqzyfj.com/click-101630462-10750177-1534879214000\tgeneral\n30013\tPress Release Distribution 24-7PressRelease.com\thttps://www.dpbolvw.net/click-101630462-10754735-1534879214000\tgeneral\n30014\tPress Release Distribution - 24-7PressRelease.com\thttps://www.jdoqocy.com/click-101630462-10754736-1534879214000\tgeneral\n30015\t24-7PressRelease.com – Press release service with results.\thttps://www.jdoqocy.com/click-101630462-10754744-1534879214000\tgeneral\n30016\tPress Release Service 24-7PressRelease.com\thttps://www.kqzyfj.com/click-101630462-10754882-1534879214000\tgeneral\n30017\tSpread Your News To The World - 24-7PressRelease.com\thttps://www.dpbolvw.net/click-101630462-10751165-1534879214000\tgeneral\n30018\tPress Release Distribution 24-7PressRelease.com\thttps://www.tkqlhce.com/click-101630462-10754884-1534879214000\tgeneral\n30019\tGenerate Instant Publicity - 24-7PressRelease.com\thttps://www.tkqlhce.com/click-101630462-10754739-1534879214000\tgeneral\n30020\tSpread your news across the net. | 24-7PressRelease.com\thttps://www.dpbolvw.net/click-101630462-10754740-1534879214000\tgeneral\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

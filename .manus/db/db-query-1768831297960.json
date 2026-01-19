@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  (SELECT COUNT(*) FROM articles WHERE status = 'published') as total_published,\n  (SELECT COUNT(*) FROM articles WHERE content LIKE '%anrdoezrs.net%' AND status = 'published') as with_cj_links,\n  (SELECT COUNT(*) FROM articles WHERE content LIKE '%24-7pressrelease%' AND status = 'published') as with_press_release_links,\n  (SELECT COUNT(*) FROM articles WHERE content LIKE '%amazon.com%' AND status = 'published') as with_amazon_links;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT \n  (SELECT COUNT(*) FROM articles WHERE status = 'published') as total_published,\n  (SELECT COUNT(*) FROM articles WHERE content LIKE '%anrdoezrs.net%' AND status = 'published') as with_cj_links,\n  (SELECT COUNT(*) FROM articles WHERE content LIKE '%24-7pressrelease%' AND status = 'published') as with_press_release_links,\n  (SELECT COUNT(*) FROM articles WHERE content LIKE '%amazon.com%' AND status = 'published') as with_amazon_links;",
+  "rows": [
+    {
+      "total_published": "1474",
+      "with_cj_links": "1458",
+      "with_press_release_links": "1375",
+      "with_amazon_links": "8"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_published\twith_cj_links\twith_press_release_links\twith_amazon_links\n1474\t1458\t1375\t8\n",
+  "stderr": "",
+  "execution_time_ms": 3335
+}

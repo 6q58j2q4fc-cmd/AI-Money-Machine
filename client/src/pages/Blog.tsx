@@ -312,6 +312,9 @@ export default function Blog() {
                 RSS
               </Badge>
             </a>
+            <Link href="/about">
+              <Button variant="ghost" size="sm">About Us</Button>
+            </Link>
             <Link href="/market">
               <Button variant="ghost" size="sm">NFT Market</Button>
             </Link>
@@ -847,6 +850,7 @@ export default function Blog() {
               <h4 className="font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/"><span className="hover:text-primary transition-colors cursor-pointer">Home</span></Link></li>
+                <li><Link href="/about"><span className="hover:text-primary transition-colors cursor-pointer">About Us</span></Link></li>
                 <li><Link href="/market"><span className="hover:text-primary transition-colors cursor-pointer">NFT Marketplace</span></Link></li>
                 <li><a href="/rss.xml" target="_blank" className="hover:text-primary transition-colors flex items-center gap-1">RSS Feed <ExternalLink className="w-3 h-3" /></a></li>
                 <li><a href="/sitemap.xml" target="_blank" className="hover:text-primary transition-colors flex items-center gap-1">Sitemap <ExternalLink className="w-3 h-3" /></a></li>

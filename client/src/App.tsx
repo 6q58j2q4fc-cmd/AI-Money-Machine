@@ -18,6 +18,7 @@ import AutomationCenter from "./pages/AutomationCenter";
 import Blog from "./pages/Blog";
 import PublicArticle from './pages/PublicArticle';
 import CategoryPage from './pages/CategoryPage';
+import AboutUs from './pages/AboutUs';
 import DistributionCenter from "./pages/DistributionCenter";
 import BotIntelligence from "./pages/BotIntelligence";
 import Settings from "./pages/Settings";
@@ -83,6 +84,7 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/category/:slug" component={CategoryPage} />
       <Route path="/blog/:slug" component={PublicArticle} />
+      <Route path="/about" component={AboutUs} />
       <Route path="/article/:slug" component={PublicArticle} />
       
       {/* Admin-only Dashboard routes */}

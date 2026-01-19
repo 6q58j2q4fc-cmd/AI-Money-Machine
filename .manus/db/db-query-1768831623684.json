@@ -1,0 +1,50 @@
+{
+  "query": "SELECT * FROM article_affiliate_links LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT * FROM article_affiliate_links LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "articleId": "2",
+      "affiliateLinkId": "3",
+      "anchorText": "ExpressVPN Premium",
+      "position": "1",
+      "createdAt": "2026-01-11 14:00:18"
+    },
+    {
+      "id": "2",
+      "articleId": "2",
+      "affiliateLinkId": "4",
+      "anchorText": "Grammarly Premium",
+      "position": "1",
+      "createdAt": "2026-01-11 14:00:18"
+    },
+    {
+      "id": "3",
+      "articleId": "2",
+      "affiliateLinkId": "6",
+      "anchorText": "TurboTax Online",
+      "position": "1",
+      "createdAt": "2026-01-11 14:00:18"
+    },
+    {
+      "id": "4",
+      "articleId": "2",
+      "affiliateLinkId": "7",
+      "anchorText": "Credit Karma Free Scores",
+      "position": "1",
+      "createdAt": "2026-01-11 14:00:18"
+    },
+    {
+      "id": "5",
+      "articleId": "2",
+      "affiliateLinkId": "10",
+      "anchorText": "Skillshare Learning",
+      "position": "1",
+      "createdAt": "2026-01-11 14:00:18"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tarticleId\taffiliateLinkId\tanchorText\tposition\tcreatedAt\n1\t2\t3\tExpressVPN Premium\t1\t2026-01-11 14:00:18\n2\t2\t4\tGrammarly Premium\t1\t2026-01-11 14:00:18\n3\t2\t6\tTurboTax Online\t1\t2026-01-11 14:00:18\n4\t2\t7\tCredit Karma Free Scores\t1\t2026-01-11 14:00:18\n5\t2\t10\tSkillshare Learning\t1\t2026-01-11 14:00:18\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

@@ -2511,3 +2511,23 @@
 - [x] Update RSS feed with new brand name
 - [x] Add professional affiliate disclosure statements
 - [x] Audit affiliate links in articles (found broken 24-7PressRelease links)
+
+
+## About Page & Affiliate Link Fixes (January 19, 2026)
+
+- [ ] Create "About Benjamin Franklin's" page with editorial team bios
+- [ ] Add author profiles with expertise areas
+- [ ] Include editorial guidelines and review methodology
+- [ ] Fix affiliate links to use real CJ affiliate product URLs
+- [ ] Update article generation to fetch actual CJ product links
+- [ ] Replace placeholder press release URLs with commission-ready links
+
+
+## About Page & Affiliate Link Fixes (January 19, 2026)
+
+- [x] Create About Benjamin Franklin's page with editorial team bios
+- [x] Add About page to navigation (header and footer)
+- [x] Fix affiliate links to extract CJ URLs from article content
+- [x] Verify affiliate links redirect to actual CJ advertiser pages (Abelssoft confirmed working)
+- [x] Sidebar Quick Links now show real CJ affiliate products
+- [x] Hero image and Featured Product CTA now link to real affiliates

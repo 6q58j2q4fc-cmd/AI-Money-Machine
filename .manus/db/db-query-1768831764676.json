@@ -1,0 +1,80 @@
+{
+  "query": "SELECT aal.articleId, aal.affiliateLinkId, aal.anchorText, al.name, LEFT(al.url, 80) as url_preview\nFROM article_affiliate_links aal\nJOIN affiliate_links al ON aal.affiliateLinkId = al.id\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT aal.articleId, aal.affiliateLinkId, aal.anchorText, al.name, LEFT(al.url, 80) as url_preview\nFROM article_affiliate_links aal\nJOIN affiliate_links al ON aal.affiliateLinkId = al.id\nLIMIT 10;",
+  "rows": [
+    {
+      "articleId": "270183",
+      "affiliateLinkId": "30083",
+      "anchorText": "AntiBrowserSpy &gt; 120x600 &gt; DE",
+      "name": "AntiBrowserSpy &gt; 120x600 &gt; DE",
+      "url_preview": "https://www.jdoqocy.com/click-101630462-15777925-1711378030000"
+    },
+    {
+      "articleId": "270183",
+      "affiliateLinkId": "30095",
+      "anchorText": "Abelssoft &gt; EN &gt; 120x600 &gt; 60% Black Week discount",
+      "name": "Abelssoft &gt; EN &gt; 120x600 &gt; 60% Black Week discount",
+      "url_preview": "https://www.anrdoezrs.net/click-101630462-16970592-1732186223000"
+    },
+    {
+      "articleId": "270183",
+      "affiliateLinkId": "30096",
+      "anchorText": "Abelssoft &gt; DE &gt; 468x60 &gt; Fall Sale &gt; YouTube Song Downloader",
+      "name": "Abelssoft &gt; DE &gt; 468x60 &gt; Fall Sale &gt; YouTube Song Downloader",
+      "url_preview": "https://www.jdoqocy.com/click-101630462-15639170-1697010660000"
+    },
+    {
+      "articleId": "270183",
+      "affiliateLinkId": "30097",
+      "anchorText": "YouTube Song Downloader &gt; DE &gt; 468x60",
+      "name": "YouTube Song Downloader &gt; DE &gt; 468x60",
+      "url_preview": "https://www.jdoqocy.com/click-101630462-15402292-1684488656000"
+    },
+    {
+      "articleId": "270183",
+      "affiliateLinkId": "30098",
+      "anchorText": "Abelssoft &gt; EN &gt; 120x600 &gt; Summer Sale",
+      "name": "Abelssoft &gt; EN &gt; 120x600 &gt; Summer Sale",
+      "url_preview": "https://www.kqzyfj.com/click-101630462-15906937-1726646074000"
+    },
+    {
+      "articleId": "270183",
+      "affiliateLinkId": "30099",
+      "anchorText": "YouTube Song Downloader &gt; 120x600 &gt; EN",
+      "name": "YouTube Song Downloader &gt; 120x600 &gt; EN",
+      "url_preview": "https://www.anrdoezrs.net/click-101630462-15777930-1711378830000"
+    },
+    {
+      "articleId": "270183",
+      "affiliateLinkId": "30100",
+      "anchorText": "WashAndGo &gt; 120x600 &gt; EN",
+      "name": "WashAndGo &gt; 120x600 &gt; EN",
+      "url_preview": "https://www.dpbolvw.net/click-101630462-15777931-1711379099000"
+    },
+    {
+      "articleId": "300105",
+      "affiliateLinkId": "30012",
+      "anchorText": "Press Release service",
+      "name": "Press Release service",
+      "url_preview": "https://www.kqzyfj.com/click-101630462-10750177-1534879214000"
+    },
+    {
+      "articleId": "300075",
+      "affiliateLinkId": "30012",
+      "anchorText": "Press Release service",
+      "name": "Press Release service",
+      "url_preview": "https://www.kqzyfj.com/click-101630462-10750177-1534879214000"
+    },
+    {
+      "articleId": "300067",
+      "affiliateLinkId": "30012",
+      "anchorText": "Press Release service",
+      "name": "Press Release service",
+      "url_preview": "https://www.kqzyfj.com/click-101630462-10750177-1534879214000"
+    }
+  ],
+  "messages": [],
+  "stdout": "articleId\taffiliateLinkId\tanchorText\tname\turl_preview\n270183\t30083\tAntiBrowserSpy &gt; 120x600 &gt; DE\tAntiBrowserSpy &gt; 120x600 &gt; DE\thttps://www.jdoqocy.com/click-101630462-15777925-1711378030000\n270183\t30095\tAbelssoft &gt; EN &gt; 120x600 &gt; 60% Black Week discount\tAbelssoft &gt; EN &gt; 120x600 &gt; 60% Black Week discount\thttps://www.anrdoezrs.net/click-101630462-16970592-1732186223000\n270183\t30096\tAbelssoft &gt; DE &gt; 468x60 &gt; Fall Sale &gt; YouTube Song Downloader\tAbelssoft &gt; DE &gt; 468x60 &gt; Fall Sale &gt; YouTube Song Downloader\thttps://www.jdoqocy.com/click-101630462-15639170-1697010660000\n270183\t30097\tYouTube Song Downloader &gt; DE &gt; 468x60\tYouTube Song Downloader &gt; DE &gt; 468x60\thttps://www.jdoqocy.com/click-101630462-15402292-1684488656000\n270183\t30098\tAbelssoft &gt; EN &gt; 120x600 &gt; Summer Sale\tAbelssoft &gt; EN &gt; 120x600 &gt; Summer Sale\thttps://www.kqzyfj.com/click-101630462-15906937-1726646074000\n270183\t30099\tYouTube Song Downloader &gt; 120x600 &gt; EN\tYouTube Song Downloader &gt; 120x600 &gt; EN\thttps://www.anrdoezrs.net/click-101630462-15777930-1711378830000\n270183\t30100\tWashAndGo &gt; 120x600 &gt; EN\tWashAndGo &gt; 120x600 &gt; EN\thttps://www.dpbolvw.net/click-101630462-15777931-1711379099000\n300105\t30012\tPress Release service\tPress Release service\thttps://www.kqzyfj.com/click-101630462-10750177-1534879214000\n300075\t30012\tPress Release service\tPress Release service\thttps://www.kqzyfj.com/click-101630462-10750177-1534879214000\n300067\t30012\tPress Release service\tPress Release service\thttps://www.kqzyfj.com/click-101630462-10750177-1534879214000\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

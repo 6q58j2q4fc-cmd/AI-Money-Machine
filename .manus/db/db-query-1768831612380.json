@@ -1,0 +1,9 @@
+{
+  "query": "SELECT aal.articleId, aal.affiliateLinkId, al.name, LEFT(al.url, 100) as url \nFROM article_affiliate_links aal \nJOIN affiliate_links al ON aal.affiliateLinkId = al.id \nWHERE aal.articleId = (SELECT id FROM articles WHERE slug LIKE '%ai-powered-productivity%' LIMIT 1)\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT aal.articleId, aal.affiliateLinkId, al.name, LEFT(al.url, 100) as url \nFROM article_affiliate_links aal \nJOIN affiliate_links al ON aal.affiliateLinkId = al.id \nWHERE aal.articleId = (SELECT id FROM articles WHERE slug LIKE '%ai-powered-productivity%' LIMIT 1)\nLIMIT 10;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 55
+}

@@ -1,0 +1,43 @@
+{
+  "query": "SELECT id, title, SUBSTRING(content, LOCATE('](http', content) - 50, 200) as link_context FROM articles WHERE content LIKE '%](http%' AND status = 'published' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, SUBSTRING(content, LOCATE('](http', content) - 50, 200) as link_context FROM articles WHERE content LIKE '%](http%' AND status = 'published' LIMIT 5;",
+  "rows": [
+    {
+      "id": "2",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "link_context": "space with an innovative Vertical Garden System!**](https://www.example.com/vertical-garden-kits-affiliate-link) (Replace with actual affiliate link if available, otherwise use a placeholder)"
+    },
+    {
+      "id": "3",
+      "title": "AI-Powered Productivity Tools for Small Businesses",
+      "link_context": "re to Enhance Your Writing with Grammarly Premium!](https://www.anrdoezrs.net/click-7841523-13943961)"
+    },
+    {
+      "id": "4",
+      "title": "Personalized Nutrition for Gut Health",
+      "link_context": " started on your delicious gut-friendly journey!**](https://www.anrdoezrs.net/click-7841523-10505965)"
+    },
+    {
+      "id": "6",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "link_context": "ld Your Online Garden Hub:** [Bluehost Web Hosting](https://www.anrdoezrs.net/click-7841523-11634969)"
+    },
+    {
+      "id": "7",
+      "title": "AI-Powered Productivity Tools for Small Business",
+      "link_context": "ry Grammarly Premium and transform your writing!**](https://www.anrdoezrs.net/click-7841523-13943961)"
+    }
+  ],
+  "messages": [
+    "### 3. ",
+    "### 2. AI for Customer Relationship Management (CRM) & Support",
+    "Exceptional customer service is t",
+    "### For Continuous Learning & Deepening Your Knowledge: Skillshare",
+    "The world of gut health is co",
+    "*   **Secure Your Digital Life:** [ExpressVPN Premium](https://www.anrdoezrs.net/click-7841523-130",
+    "*   **Other AI Content Generators (e.g., Jasper, Copy.ai):** These tools leverage advanced AI mod"
+  ],
+  "stdout": "id\ttitle\tlink_context\n2\tSustainable Home Gardening & Urban Farming\tspace with an innovative Vertical Garden System!**](https://www.example.com/vertical-garden-kits-affiliate-link) (Replace with actual affiliate link if available, otherwise use a placeholder)\n\n### 3. \n3\tAI-Powered Productivity Tools for Small Businesses\tre to Enhance Your Writing with Grammarly Premium!](https://www.anrdoezrs.net/click-7841523-13943961)\n\n### 2. AI for Customer Relationship Management (CRM) & Support\n\nExceptional customer service is t\n4\tPersonalized Nutrition for Gut Health\t started on your delicious gut-friendly journey!**](https://www.anrdoezrs.net/click-7841523-10505965)\n\n### For Continuous Learning & Deepening Your Knowledge: Skillshare\n\nThe world of gut health is co\n6\tSustainable Home Gardening & Urban Farming\tld Your Online Garden Hub:** [Bluehost Web Hosting](https://www.anrdoezrs.net/click-7841523-11634969)\n*   **Secure Your Digital Life:** [ExpressVPN Premium](https://www.anrdoezrs.net/click-7841523-130\n7\tAI-Powered Productivity Tools for Small Business\try Grammarly Premium and transform your writing!**](https://www.anrdoezrs.net/click-7841523-13943961)\n\n*   **Other AI Content Generators (e.g., Jasper, Copy.ai):** These tools leverage advanced AI mod\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

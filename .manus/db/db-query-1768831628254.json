@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, title, LEFT(content, 500) as content_preview FROM articles WHERE status = 'published' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, LEFT(content, 500) as content_preview FROM articles WHERE status = 'published' LIMIT 1;",
+  "rows": [
+    {
+      "id": "2",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "content_preview": "# Cultivate Your Oasis: The Ultimate Guide to Sustainable Home Gardening & Urban Farming"
+    }
+  ],
+  "messages": [
+    "**Are you tired of bland, mass-produced produce? Do you dream of fresh, organic vegetables, herbs, and fruits, bursting with flavor, grown right in your own backyard – or even on your balcony?**",
+    "Imagine stepping out your door, plucking a ripe tomato, a handful of fragrant basil, or crisp lettuce, knowing exactly where it came from and that it's free from harmful chemicals. This isn't a fantasy; it's the be"
+  ],
+  "stdout": "id\ttitle\tcontent_preview\n2\tSustainable Home Gardening & Urban Farming\t# Cultivate Your Oasis: The Ultimate Guide to Sustainable Home Gardening & Urban Farming\n\n**Are you tired of bland, mass-produced produce? Do you dream of fresh, organic vegetables, herbs, and fruits, bursting with flavor, grown right in your own backyard – or even on your balcony?**\n\nImagine stepping out your door, plucking a ripe tomato, a handful of fragrant basil, or crisp lettuce, knowing exactly where it came from and that it's free from harmful chemicals. This isn't a fantasy; it's the be\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

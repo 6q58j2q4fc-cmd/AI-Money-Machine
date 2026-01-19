@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useParams, Link } from "wouter";
+import { useMemo } from "react";
 import { Loader2, ArrowLeft, Calendar, Eye, MousePointer, Share2, Twitter, Facebook, Linkedin, Mail, Copy, Check, ExternalLink, ShoppingCart, Star, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -96,8 +97,33 @@ export default function PublicArticle() {
     }
   };
 
+  // Extract affiliate links from article content HTML if affiliateLinks array is empty
+  const extractedLinks = useMemo(() => {
+    if (!article?.content) return [];
+    const links: Array<{url: string; name: string; category: string}> = [];
+    // Match CJ affiliate links from the HTML content
+    const linkRegex = /<a[^>]*href="(https:\/\/www\.(jdoqocy|dpbolvw|anrdoezrs|kqzyfj|tkqlhce)\.(com|net)\/[^"]+)"[^>]*>([^<]+)<\/a>/gi;
+    let match;
+    while ((match = linkRegex.exec(article.content)) !== null && links.length < 10) {
+      links.push({
+        url: match[1],
+        name: match[4].replace(/&gt;/g, '>').replace(/&lt;/g, '<').trim(),
+        category: 'technology'
+      });
+    }
+    return links;
+  }, [article?.content]);
+
+  // Use extracted links if affiliateLinks array is empty
+  const displayLinks = (article as any)?.affiliateLinks?.length > 0 
+    ? (article as any).affiliateLinks 
+    : extractedLinks.map((link, i) => ({
+        affiliateLinkId: i,
+        link: { url: link.url, name: link.name, category: link.category }
+      }));
+
   // Get category from first affiliate link or default
-  const articleCategory = (article as any)?.affiliateLinks?.[0]?.link?.category?.toLowerCase() || "default";
+  const articleCategory = displayLinks?.[0]?.link?.category?.toLowerCase() || "default";
   const theme = categoryThemes[articleCategory] || categoryThemes.default;
   const heroImage = categoryImages[articleCategory] || categoryImages.default;
 
@@ -126,7 +152,7 @@ export default function PublicArticle() {
     );
   }
 
-  const affiliateLinks = (article as any).affiliateLinks || [];
+  const affiliateLinks = displayLinks;
 
   return (
     <div className="min-h-screen bg-background">
@@ -237,16 +263,16 @@ export default function PublicArticle() {
               )}
 
               {/* Featured Product CTA */}
-              {affiliateLinks.length > 0 && (
+              {displayLinks.length > 0 && (
                 <a
-                  href={affiliateLinks[0]?.link?.url || '#'}
+                  href={displayLinks[0]?.link?.url || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => handleAffiliateClick(affiliateLinks[0]?.affiliateLinkId)}
+                  onClick={() => handleAffiliateClick(displayLinks[0]?.affiliateLinkId)}
                   className="inline-flex items-center gap-3 px-6 py-4 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl"
                 >
                   <ShoppingCart className="w-5 h-5" />
-                  <span>Get {affiliateLinks[0]?.link?.name || 'Featured Product'}</span>
+                  <span>Get {displayLinks[0]?.link?.name || 'Featured Product'}</span>
                   <ExternalLink className="w-4 h-4" />
                 </a>
               )}
@@ -254,12 +280,12 @@ export default function PublicArticle() {
 
             {/* Hero Image with Clickable Affiliate Link */}
             <div className="relative">
-              {affiliateLinks.length > 0 ? (
+              {displayLinks.length > 0 ? (
                 <a
-                  href={affiliateLinks[0]?.link?.url || '#'}
+                  href={displayLinks[0]?.link?.url || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => handleAffiliateClick(affiliateLinks[0]?.affiliateLinkId)}
+                  onClick={() => handleAffiliateClick(displayLinks[0]?.affiliateLinkId)}
                   className="block relative group cursor-pointer"
                 >
                   <img
@@ -271,7 +297,7 @@ export default function PublicArticle() {
                   <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
                     <div className="text-white">
                       <p className="text-sm opacity-80">Featured Product</p>
-                      <p className="font-bold">{affiliateLinks[0]?.link?.name || 'Click to Learn More'}</p>
+                      <p className="font-bold">{displayLinks[0]?.link?.name || 'Click to Learn More'}</p>
                     </div>
                     <Button size="sm" className="bg-white text-black hover:bg-white/90">
                       Shop Now <ExternalLink className="w-3 h-3 ml-1" />
