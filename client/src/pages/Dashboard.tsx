@@ -19,7 +19,8 @@ import {
   Send,
   ExternalLink,
   CheckCircle,
-  BarChart3
+  BarChart3,
+  Newspaper
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -266,7 +267,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-4 gap-4">
           <Card 
             className="card-glow cursor-pointer hover:border-primary/50 transition-colors"
             onClick={() => setLocation("/topics")}
@@ -317,6 +318,24 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground">Organize affiliate links</p>
                 </div>
                 <ArrowUpRight className="w-5 h-5 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="card-glow cursor-pointer hover:border-green-500/50 transition-colors bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/30"
+            onClick={() => window.open('/blog', '_blank')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
+                  <Newspaper className="w-6 h-6 text-green-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-green-400">View Article Blog</h3>
+                  <p className="text-sm text-muted-foreground">Browse all published articles</p>
+                </div>
+                <ExternalLink className="w-5 h-5 text-green-400" />
               </div>
             </CardContent>
           </Card>

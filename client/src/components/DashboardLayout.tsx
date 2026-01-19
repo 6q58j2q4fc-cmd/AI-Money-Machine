@@ -21,16 +21,35 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package, Crown, Network, Gift, Palette, Coins, ExternalLink, Wallet, HeartPulse, Bug, ClipboardCheck, Key, Clock, Store, Heart, Newspaper } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package, Crown, Network, Gift, Palette, Coins, ExternalLink, Wallet, HeartPulse, Bug, ClipboardCheck, Key, Clock, Store, Heart, Newspaper, ChevronDown, ChevronRight, Rss, Archive, PenTool } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { NotificationBell } from "./NotificationBell";
 
-const menuItems = [
+type MenuItem = {
+  icon: any;
+  label: string;
+  path: string;
+  external?: boolean;
+  children?: MenuItem[];
+};
+
+const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: Newspaper, label: "Published Articles", path: "/blog", external: true },
+  { 
+    icon: Newspaper, 
+    label: "Article Blog", 
+    path: "/blog",
+    children: [
+      { icon: Newspaper, label: "View All Articles", path: "/blog", external: true },
+      { icon: FileText, label: "Manage Articles", path: "/articles" },
+      { icon: PenTool, label: "Create New Article", path: "/articles/new" },
+      { icon: Archive, label: "Article Archive", path: "/blog", external: true },
+      { icon: Rss, label: "RSS Feed", path: "/rss.xml", external: true },
+    ]
+  },
   { icon: Rocket, label: "Automation", path: "/automation" },
   { icon: Brain, label: "Bot Intelligence", path: "/bot" },
   { icon: Cpu, label: "AI Command Center", path: "/ai-command" },
@@ -38,7 +57,6 @@ const menuItems = [
   { icon: Zap, label: "Content Pipeline", path: "/content-pipeline" },
   { icon: Gauge, label: "System Optimizer", path: "/system-optimizer" },
   { icon: TrendingUp, label: "Trending Topics", path: "/topics" },
-  { icon: FileText, label: "Articles", path: "/articles" },
   { icon: Globe, label: "Distribution", path: "/distribution" },
   { icon: Bot, label: "Free Publishing Bot", path: "/free-publishing" },
   { icon: Shield, label: "Data Accuracy", path: "/data-accuracy" },
@@ -151,9 +169,18 @@ function DashboardLayoutContent({
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+
+  const toggleMenu = (label: string) => {
+    setExpandedMenus(prev => 
+      prev.includes(label) 
+        ? prev.filter(l => l !== label)
+        : [...prev, label]
+    );
+  };
 
   useEffect(() => {
     if (isCollapsed) {
@@ -221,31 +248,75 @@ function DashboardLayoutContent({
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {
-                const isActive = location === item.path;
+                const isActive = location === item.path || (item.children?.some(child => location === child.path));
                 const isExternal = 'external' in item && item.external;
+                const hasChildren = item.children && item.children.length > 0;
+                const isExpanded = expandedMenus.includes(item.label);
+                
                 return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => {
-                        if (isExternal) {
-                          window.open(item.path, '_blank');
-                        } else {
-                          setLocation(item.path);
-                        }
-                      }}
-                      tooltip={item.label}
-                      className={`h-10 transition-all font-normal`}
-                    >
-                      <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                      />
-                      <span className="flex items-center gap-2">
-                        {item.label}
-                        {isExternal && <ExternalLink className="h-3 w-3 opacity-50" />}
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <div key={item.path}>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        isActive={isActive && !hasChildren}
+                        onClick={() => {
+                          if (hasChildren) {
+                            toggleMenu(item.label);
+                          } else if (isExternal) {
+                            window.open(item.path, '_blank');
+                          } else {
+                            setLocation(item.path);
+                          }
+                        }}
+                        tooltip={item.label}
+                        className={`h-10 transition-all font-normal ${hasChildren && isActive ? 'text-primary' : ''}`}
+                      >
+                        <item.icon
+                          className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        />
+                        <span className="flex items-center gap-2 flex-1">
+                          {item.label}
+                          {isExternal && !hasChildren && <ExternalLink className="h-3 w-3 opacity-50" />}
+                        </span>
+                        {hasChildren && !isCollapsed && (
+                          <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    
+                    {/* Dropdown children */}
+                    {hasChildren && isExpanded && !isCollapsed && (
+                      <div className="ml-4 pl-2 border-l border-border/50 space-y-1 py-1">
+                        {item.children!.map(child => {
+                          const childIsActive = location === child.path;
+                          const childIsExternal = child.external;
+                          return (
+                            <SidebarMenuItem key={child.path + child.label}>
+                              <SidebarMenuButton
+                                isActive={childIsActive}
+                                onClick={() => {
+                                  if (childIsExternal) {
+                                    window.open(child.path, '_blank');
+                                  } else {
+                                    setLocation(child.path);
+                                  }
+                                }}
+                                tooltip={child.label}
+                                className="h-9 transition-all font-normal text-sm"
+                              >
+                                <child.icon
+                                  className={`h-3.5 w-3.5 ${childIsActive ? "text-primary" : ""}`}
+                                />
+                                <span className="flex items-center gap-2">
+                                  {child.label}
+                                  {childIsExternal && <ExternalLink className="h-3 w-3 opacity-50" />}
+                                </span>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </SidebarMenu>

@@ -2478,3 +2478,6 @@
 ## Dashboard Navigation (January 19, 2026)
 
 - [x] Add Published Articles button to dashboard sidebar menu
+
+- [x] Add View Article Blog quick action card on dashboard homepage
+- [x] Add sidebar dropdown menu for articles section
