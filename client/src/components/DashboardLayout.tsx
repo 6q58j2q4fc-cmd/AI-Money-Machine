@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package, Crown, Network, Gift, Palette, Coins, ExternalLink, Wallet, HeartPulse, Bug, ClipboardCheck, Key, Clock, Store, Heart } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package, Crown, Network, Gift, Palette, Coins, ExternalLink, Wallet, HeartPulse, Bug, ClipboardCheck, Key, Clock, Store, Heart, Newspaper } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -30,6 +30,7 @@ import { NotificationBell } from "./NotificationBell";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Newspaper, label: "Published Articles", path: "/blog", external: true },
   { icon: Rocket, label: "Automation", path: "/automation" },
   { icon: Brain, label: "Bot Intelligence", path: "/bot" },
   { icon: Cpu, label: "AI Command Center", path: "/ai-command" },
@@ -221,18 +222,28 @@ function DashboardLayoutContent({
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {
                 const isActive = location === item.path;
+                const isExternal = 'external' in item && item.external;
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => setLocation(item.path)}
+                      onClick={() => {
+                        if (isExternal) {
+                          window.open(item.path, '_blank');
+                        } else {
+                          setLocation(item.path);
+                        }
+                      }}
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal`}
                     >
                       <item.icon
                         className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
                       />
-                      <span>{item.label}</span>
+                      <span className="flex items-center gap-2">
+                        {item.label}
+                        {isExternal && <ExternalLink className="h-3 w-3 opacity-50" />}
+                      </span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
