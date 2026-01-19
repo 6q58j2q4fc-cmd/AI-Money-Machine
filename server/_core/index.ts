@@ -126,9 +126,66 @@ async function startServer() {
   // Robots.txt for SEO
   app.get('/robots.txt', (req, res) => {
     const baseUrl = req.protocol + '://' + req.get('host');
-    const robotsTxt = `User-agent: *\nAllow: /\nSitemap: ${baseUrl}/sitemap.xml\n`;
+    const robotsTxt = `User-agent: *\nAllow: /\nSitemap: ${baseUrl}/sitemap.xml\nRSS: ${baseUrl}/rss.xml\n`;
     res.set('Content-Type', 'text/plain');
     res.send(robotsTxt);
+  });
+  
+  // RSS Feed for blog articles
+  app.get('/rss.xml', async (req, res) => {
+    try {
+      const { getPublishedArticlesForSitemap } = await import('../db');
+      const articles = await getPublishedArticlesForSitemap();
+      const baseUrl = req.protocol + '://' + req.get('host');
+      const siteName = 'MoneyMachine';
+      const siteDescription = 'Your source for product reviews, buying guides, and money-saving tips';
+      
+      let rss = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      rss += `<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">\n`;
+      rss += `<channel>\n`;
+      rss += `  <title>${siteName}</title>\n`;
+      rss += `  <link>${baseUrl}</link>\n`;
+      rss += `  <description>${siteDescription}</description>\n`;
+      rss += `  <language>en-us</language>\n`;
+      rss += `  <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>\n`;
+      rss += `  <atom:link href="${baseUrl}/rss.xml" rel="self" type="application/rss+xml"/>\n`;
+      rss += `  <image>\n`;
+      rss += `    <url>${baseUrl}/logo.png</url>\n`;
+      rss += `    <title>${siteName}</title>\n`;
+      rss += `    <link>${baseUrl}</link>\n`;
+      rss += `  </image>\n`;
+      
+      // Add articles (limit to 50 most recent)
+      const recentArticles = articles.slice(0, 50);
+      for (const article of recentArticles) {
+        const pubDate = article.publishedAt ? new Date(article.publishedAt).toUTCString() : new Date().toUTCString();
+        const articleUrl = `${baseUrl}/blog/${article.slug}`;
+        const description = article.metaDescription || article.title;
+        
+        rss += `  <item>\n`;
+        rss += `    <title><![CDATA[${article.title}]]></title>\n`;
+        rss += `    <link>${articleUrl}</link>\n`;
+        rss += `    <guid isPermaLink="true">${articleUrl}</guid>\n`;
+        rss += `    <pubDate>${pubDate}</pubDate>\n`;
+        rss += `    <description><![CDATA[${description}]]></description>\n`;
+        if (article.keywords && Array.isArray(article.keywords)) {
+          const categories = article.keywords.slice(0, 5);
+          for (const cat of categories) {
+            rss += `    <category>${cat}</category>\n`;
+          }
+        }
+        rss += `  </item>\n`;
+      }
+      
+      rss += `</channel>\n`;
+      rss += `</rss>`;
+      
+      res.set('Content-Type', 'application/rss+xml');
+      res.send(rss);
+    } catch (error) {
+      console.error('RSS feed generation error:', error);
+      res.status(500).send('Error generating RSS feed');
+    }
   });
   
   // IndexNow API key file for Bing/Yandex instant indexing

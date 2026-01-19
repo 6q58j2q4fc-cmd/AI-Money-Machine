@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE articles SET \n  keywords = JSON_ARRAY('productivity', 'tools', 'reviews', 'buying guide', 'top picks')\nWHERE keywords LIKE '%top picks & reviews%' OR keywords LIKE '%best best%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute UPDATE articles SET \n  keywords = JSON_ARRAY('productivity', 'tools', 'reviews', 'buying guide', 'top picks')\nWHERE keywords LIKE '%top picks & reviews%' OR keywords LIKE '%best best%';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 956
+}

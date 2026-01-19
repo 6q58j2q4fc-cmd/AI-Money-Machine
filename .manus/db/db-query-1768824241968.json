@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, title, slug FROM articles WHERE status = 'published' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, slug FROM articles WHERE status = 'published' LIMIT 10;",
+  "rows": [
+    {
+      "id": "2",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "slug": "sustainable-home-gardening-urban-farming-mk9swxmt"
+    },
+    {
+      "id": "3",
+      "title": "AI-Powered Productivity Tools for Small Businesses",
+      "slug": "ai-powered-productivity-tools-for-small-businesses-mk9sxkmo"
+    },
+    {
+      "id": "4",
+      "title": "Personalized Nutrition for Gut Health",
+      "slug": "personalized-nutrition-for-gut-health-mk9sy1pi"
+    },
+    {
+      "id": "6",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "slug": "sustainable-home-gardening-urban-farming-mk9tl6ib"
+    },
+    {
+      "id": "7",
+      "title": "AI-Powered Productivity Tools for Small Business",
+      "slug": "ai-powered-productivity-tools-for-small-business-mk9tlu1d"
+    },
+    {
+      "id": "8",
+      "title": "Personalized Nutrition & Gut Health Optimization",
+      "slug": "personalized-nutrition-gut-health-optimization-mk9tmd5m"
+    },
+    {
+      "id": "9",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "slug": "sustainable-home-gardening-urban-farming-mk9tokc2"
+    },
+    {
+      "id": "10",
+      "title": "AI-Powered Personal Productivity Tools",
+      "slug": "ai-powered-personal-productivity-tools-mk9tpfff"
+    },
+    {
+      "id": "11",
+      "title": "Budget-Friendly Financial Planning for Gen Z/Millennials",
+      "slug": "budget-friendly-financial-planning-for-gen-z-millennials-mk9tq0by"
+    },
+    {
+      "id": "12",
+      "title": "Sustainable Home Gardening for Small Spaces",
+      "slug": "sustainable-home-gardening-for-small-spaces-mk9tsy02"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tslug\n2\tSustainable Home Gardening & Urban Farming\tsustainable-home-gardening-urban-farming-mk9swxmt\n3\tAI-Powered Productivity Tools for Small Businesses\tai-powered-productivity-tools-for-small-businesses-mk9sxkmo\n4\tPersonalized Nutrition for Gut Health\tpersonalized-nutrition-for-gut-health-mk9sy1pi\n6\tSustainable Home Gardening & Urban Farming\tsustainable-home-gardening-urban-farming-mk9tl6ib\n7\tAI-Powered Productivity Tools for Small Business\tai-powered-productivity-tools-for-small-business-mk9tlu1d\n8\tPersonalized Nutrition & Gut Health Optimization\tpersonalized-nutrition-gut-health-optimization-mk9tmd5m\n9\tSustainable Home Gardening & Urban Farming\tsustainable-home-gardening-urban-farming-mk9tokc2\n10\tAI-Powered Personal Productivity Tools\tai-powered-personal-productivity-tools-mk9tpfff\n11\tBudget-Friendly Financial Planning for Gen Z/Millennials\tbudget-friendly-financial-planning-for-gen-z-millennials-mk9tq0by\n12\tSustainable Home Gardening for Small Spaces\tsustainable-home-gardening-for-small-spaces-mk9tsy02\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

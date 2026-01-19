@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE articles SET \n  title = REGEXP_REPLACE(\n    REGEXP_REPLACE(\n      REGEXP_REPLACE(\n        REGEXP_REPLACE(title, 'Top Picks & Reviews', ''),\n        'Top Pi Products', ''\n      ),\n      'best best best best best ', 'Best '\n    ),\n    '  +', ' '\n  ),\n  slug = REGEXP_REPLACE(\n    REGEXP_REPLACE(\n      REGEXP_REPLACE(\n        REGEXP_REPLACE(slug, 'top-picks-reviews', ''),\n        'top-pi-products', ''\n      ),\n      'best-best-best-best-best-', 'best-'\n    ),\n    '--+', '-'\n  )\nWHERE title LIKE '%Top Picks%' OR title LIKE '%best best%' OR slug LIKE '%best-best%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute UPDATE articles SET \n  title = REGEXP_REPLACE(\n    REGEXP_REPLACE(\n      REGEXP_REPLACE(\n        REGEXP_REPLACE(title, 'Top Picks & Reviews', ''),\n        'Top Pi Products', ''\n      ),\n      'best best best best best ', 'Best '\n    ),\n    '  +', ' '\n  ),\n  slug = REGEXP_REPLACE(\n    REGEXP_REPLACE(\n      REGEXP_REPLACE(\n        REGEXP_REPLACE(slug, 'top-picks-reviews', ''),\n        'top-pi-products', ''\n      ),\n      'best-best-best-best-best-', 'best-'\n    ),\n    '--+', '-'\n  )\nWHERE title LIKE '%Top Picks%' OR title LIKE '%best best%' OR slug LIKE '%best-best%';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1526
+}

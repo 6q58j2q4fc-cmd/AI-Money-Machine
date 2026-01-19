@@ -605,6 +605,10 @@ export async function getPublishedArticlesForSitemap() {
   return await db
     .select({
       slug: articles.slug,
+      title: articles.title,
+      metaDescription: articles.metaDescription,
+      keywords: articles.keywords,
+      publishedAt: articles.publishedAt,
       updatedAt: articles.updatedAt,
     })
     .from(articles)

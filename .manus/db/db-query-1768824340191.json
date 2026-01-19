@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, title FROM articles WHERE status = 'published' ORDER BY publishedAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title FROM articles WHERE status = 'published' ORDER BY publishedAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "330505",
+      "title": "Best AI-Powered Productivity Tools for Small Business"
+    },
+    {
+      "id": "330504",
+      "title": "Best Budget-Friendly Financial Planning for Gen Z/Millennials - -"
+    },
+    {
+      "id": "330503",
+      "title": "Best AI-Powered Personal Productivity Tools"
+    },
+    {
+      "id": "330502",
+      "title": "Best Sustainable Home Gardening for Small Spaces - -"
+    },
+    {
+      "id": "330501",
+      "title": "Best AI-Powered Productivity Tools for Solopreneurs - -"
+    },
+    {
+      "id": "330500",
+      "title": "Best Personalized Nutrition for Gut Health - -"
+    },
+    {
+      "id": "330499",
+      "title": "Best AI-Powered Home Security Systems - -"
+    },
+    {
+      "id": "330498",
+      "title": "Best Personalized Nutrition for Gut Health - -"
+    },
+    {
+      "id": "330497",
+      "title": "Best Sustainable & Ethical Fashion for Everyday Wear - -"
+    },
+    {
+      "id": "330496",
+      "title": "Best Sustainable Home Gardening & Urban Farming Solutions - -"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\n330505\tBest AI-Powered Productivity Tools for Small Business\n330504\tBest Budget-Friendly Financial Planning for Gen Z/Millennials - -\n330503\tBest AI-Powered Personal Productivity Tools\n330502\tBest Sustainable Home Gardening for Small Spaces - -\n330501\tBest AI-Powered Productivity Tools for Solopreneurs - -\n330500\tBest Personalized Nutrition for Gut Health - -\n330499\tBest AI-Powered Home Security Systems - -\n330498\tBest Personalized Nutrition for Gut Health - -\n330497\tBest Sustainable & Ethical Fashion for Everyday Wear - -\n330496\tBest Sustainable Home Gardening & Urban Farming Solutions - -\n",
+  "stderr": "",
+  "execution_time_ms": 91
+}

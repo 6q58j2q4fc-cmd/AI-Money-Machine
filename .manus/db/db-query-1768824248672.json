@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, LEFT(title, 100) as title_preview FROM articles WHERE title LIKE '%Best Best%' OR title LIKE '% - %' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, LEFT(title, 100) as title_preview FROM articles WHERE title LIKE '%Best Best%' OR title LIKE '% - %' LIMIT 10;",
+  "rows": [
+    {
+      "id": "240006",
+      "title_preview": "Best Best Health Insurance Plans - "
+    },
+    {
+      "id": "240007",
+      "title_preview": "Best Best Laptops for Video Editing - "
+    },
+    {
+      "id": "240008",
+      "title_preview": "Best Best Budgeting Tools for Small Business - "
+    },
+    {
+      "id": "240009",
+      "title_preview": "Best Meal Planning for Weight Loss - "
+    },
+    {
+      "id": "240010",
+      "title_preview": "Best Best VPN for Online Security - "
+    },
+    {
+      "id": "240011",
+      "title_preview": "Best Best Fitness Trackers for Heart Rate Monitoring - "
+    },
+    {
+      "id": "240012",
+      "title_preview": "Best Best Robo-Advisors for Retirement Planning - "
+    },
+    {
+      "id": "240013",
+      "title_preview": "Best Best Air Purifiers for Allergies - "
+    },
+    {
+      "id": "240014",
+      "title_preview": "Best Best Cryptocurrency for Beginners - "
+    },
+    {
+      "id": "240015",
+      "title_preview": "Best Best Wireless Headphones for Online Learning - "
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle_preview\n240006\tBest Best Health Insurance Plans - \n240007\tBest Best Laptops for Video Editing - \n240008\tBest Best Budgeting Tools for Small Business - \n240009\tBest Meal Planning for Weight Loss - \n240010\tBest Best VPN for Online Security - \n240011\tBest Best Fitness Trackers for Heart Rate Monitoring - \n240012\tBest Best Robo-Advisors for Retirement Planning - \n240013\tBest Best Air Purifiers for Allergies - \n240014\tBest Best Cryptocurrency for Beginners - \n240015\tBest Best Wireless Headphones for Online Learning - \n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

@@ -2400,3 +2400,34 @@
 - [ ] Update dependencies to fix vulnerabilities
 - [ ] Update Security Dashboard to reflect fixes
 - [ ] Verify all security checks pass
+
+
+## January 19, 2026 - RSS Feed & Article Title Fixes
+
+### RSS Feed Implementation
+- [ ] Create RSS feed endpoint at /rss.xml
+- [ ] Include all published articles with title, description, link, pubDate
+- [ ] Add proper RSS 2.0 XML formatting
+- [ ] Add RSS link to robots.txt
+- [ ] Add RSS autodiscovery link to HTML head
+
+### Article Title Fixes
+- [ ] Remove repetitive "Top Picks & Reviews" from article titles
+- [ ] Remove repetitive "best" words from article titles
+- [ ] Update article slugs to match cleaned titles
+- [ ] Verify all articles have clean, SEO-friendly titles
+
+## January 19, 2026 - RSS Feed and Article Title Cleanup
+
+### RSS Feed
+- [x] Create RSS feed endpoint at /rss.xml
+- [x] Include all published articles with title, description, link, pubDate
+- [x] Add proper XML formatting and RSS 2.0 specification compliance
+- [x] Link RSS feed in blog page header
+
+### Article Title Cleanup
+- [x] Remove repetitive "Top Picks & Reviews" from titles
+- [x] Remove repetitive "best best" patterns
+- [x] Remove trailing " - -" patterns
+- [x] Clean up metaDescription fields
+- [x] Verify all titles are clean and readable
