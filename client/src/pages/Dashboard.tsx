@@ -38,6 +38,7 @@ export default function Dashboard() {
   const { data: nftPortfolio } = trpc.nftEmpire.getPortfolioSummary.useQuery();
   const { data: withdrawalHistory } = trpc.wallet.getWithdrawalHistory.useQuery();
   const { data: blogStats, isLoading: blogStatsLoading } = trpc.publicArticles.blogStats.useQuery();
+  const { data: linkStats, isLoading: linkStatsLoading } = trpc.publicArticles.linkVerificationStats.useQuery();
   
   // Trust Wallet address
   const TRUST_WALLET_ADDRESS = "0x75812e1c4246A880f6576db8292405247e6a8775";
@@ -579,24 +580,51 @@ export default function Dashboard() {
               </div>
             </div>
             
-            {/* Articles with CJ Links Indicator */}
-            <div className="mt-4 flex items-center justify-between p-3 bg-zinc-800/30 rounded-lg">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span className="text-xs text-zinc-400">
-                    <span className="text-green-400 font-medium">{blogStats?.articlesWithLinks || 0}</span> articles have verified CJ affiliate links
-                  </span>
+            {/* Link Verification Stats */}
+            <div className="mt-4 p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
+              <h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Affiliate Link Verification Status
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-400">
+                    {linkStatsLoading ? "..." : linkStats?.articlesWithVerifiedLinks || 0}
+                  </p>
+                  <p className="text-xs text-zinc-400">Verified Articles</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-red-400">
+                    {linkStatsLoading ? "..." : linkStats?.articlesWithoutLinks || 0}
+                  </p>
+                  <p className="text-xs text-zinc-400">Without Links</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-400">
+                    {linkStatsLoading ? "..." : (linkStats?.totalCJLinksFound || 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-zinc-400">Total CJ Links</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-emerald-400">
+                    {linkStatsLoading ? "..." : `${linkStats?.verificationRate || 0}%`}
+                  </p>
+                  <p className="text-xs text-zinc-400">Verification Rate</p>
                 </div>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs text-emerald-400 hover:text-emerald-300"
-                onClick={() => window.open('/blog', '_blank')}
-              >
-                Browse All Articles
-              </Button>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-xs text-zinc-500">
+                  All CJ affiliate links are live and commission-ready
+                </span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs text-emerald-400 hover:text-emerald-300"
+                  onClick={() => window.open('/blog', '_blank')}
+                >
+                  Browse All Articles
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

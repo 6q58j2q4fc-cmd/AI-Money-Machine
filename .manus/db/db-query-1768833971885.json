@@ -1,0 +1,60 @@
+{
+  "query": "\nSELECT id, title,\n  SUBSTRING_INDEX(SUBSTRING_INDEX(content, 'href=\"', -1), '\"', 1) as first_link\nFROM articles \nWHERE status = 'published' \nAND content LIKE '%href=\"http%'\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute \nSELECT id, title,\n  SUBSTRING_INDEX(SUBSTRING_INDEX(content, 'href=\"', -1), '\"', 1) as first_link\nFROM articles \nWHERE status = 'published' \nAND content LIKE '%href=\"http%'\nLIMIT 10;\n",
+  "rows": [
+    {
+      "id": "240006",
+      "title": "Best Health Insurance Plans - ",
+      "first_link": "https://www.jdoqocy.com/click-101630462-10754738-1534879214000"
+    },
+    {
+      "id": "240007",
+      "title": "Best Laptops for Video Editing - ",
+      "first_link": "https://www.jdoqocy.com/click-101630462-10754738-1534879214000"
+    },
+    {
+      "id": "240008",
+      "title": "Best Budgeting Tools for Small Business - ",
+      "first_link": "https://www.jdoqocy.com/click-101630462-10754738-1534879214000"
+    },
+    {
+      "id": "240009",
+      "title": "Best Meal Planning for Weight Loss - ",
+      "first_link": "https://www.jdoqocy.com/click-101630462-10754738-1534879214000"
+    },
+    {
+      "id": "240010",
+      "title": "Best VPN for Online Security - ",
+      "first_link": "https://www.jdoqocy.com/click-101630462-10754738-1534879214000"
+    },
+    {
+      "id": "240011",
+      "title": "Best Fitness Trackers for Heart Rate Monitoring - ",
+      "first_link": "https://www.jdoqocy.com/click-101630462-10754738-1534879214000"
+    },
+    {
+      "id": "240012",
+      "title": "Best Robo-Advisors for Retirement Planning - ",
+      "first_link": "https://www.jdoqocy.com/click-101630462-10754738-1534879214000"
+    },
+    {
+      "id": "240013",
+      "title": "Best Air Purifiers for Allergies - ",
+      "first_link": "https://www.jdoqocy.com/click-101630462-10754738-1534879214000"
+    },
+    {
+      "id": "240014",
+      "title": "Best Cryptocurrency for Beginners - ",
+      "first_link": "https://www.jdoqocy.com/click-101630462-10754738-1534879214000"
+    },
+    {
+      "id": "240015",
+      "title": "Best Wireless Headphones for Online Learning - ",
+      "first_link": "https://www.jdoqocy.com/click-101630462-10754738-1534879214000"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tfirst_link\n240006\tBest Health Insurance Plans - \thttps://www.jdoqocy.com/click-101630462-10754738-1534879214000\n240007\tBest Laptops for Video Editing - \thttps://www.jdoqocy.com/click-101630462-10754738-1534879214000\n240008\tBest Budgeting Tools for Small Business - \thttps://www.jdoqocy.com/click-101630462-10754738-1534879214000\n240009\tBest Meal Planning for Weight Loss - \thttps://www.jdoqocy.com/click-101630462-10754738-1534879214000\n240010\tBest VPN for Online Security - \thttps://www.jdoqocy.com/click-101630462-10754738-1534879214000\n240011\tBest Fitness Trackers for Heart Rate Monitoring - \thttps://www.jdoqocy.com/click-101630462-10754738-1534879214000\n240012\tBest Robo-Advisors for Retirement Planning - \thttps://www.jdoqocy.com/click-101630462-10754738-1534879214000\n240013\tBest Air Purifiers for Allergies - \thttps://www.jdoqocy.com/click-101630462-10754738-1534879214000\n240014\tBest Cryptocurrency for Beginners - \thttps://www.jdoqocy.com/click-101630462-10754738-1534879214000\n240015\tBest Wireless Headphones for Online Learning - \thttps://www.jdoqocy.com/click-101630462-10754738-1534879214000\n",
+  "stderr": "",
+  "execution_time_ms": 100
+}

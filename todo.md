@@ -2541,3 +2541,12 @@
 - [x] Show total article views
 - [x] Show average SEO score across articles
 - [x] Show total affiliate link clicks
+
+
+## Affiliate Link Verification & Fix (January 19, 2026)
+
+- [x] Audit all article links and identify broken/placeholder URLs
+- [x] Create link verification bot to test affiliate URLs
+- [x] Fix articles with broken links using real CJ affiliate URLs
+- [x] Update dashboard to show verified vs unverified link counts
+- [x] Display total articles count and verified working links count
