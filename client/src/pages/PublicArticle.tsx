@@ -467,8 +467,13 @@ export default function PublicArticle() {
         <div className="container max-w-6xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-center md:text-left">
-              <p className="text-2xl font-bold gradient-text">MoneyMachine</p>
-              <p className="text-sm text-muted-foreground">AI-Powered Content Monetization</p>
+              <div className="flex items-center gap-2 justify-center md:justify-start">
+                <span className="text-2xl">💰</span>
+                <div>
+                  <p className="text-xl font-bold text-primary">Benjamin Franklin's</p>
+                  <p className="text-sm text-muted-foreground">Top New Brands & Recommendations</p>
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <Link href="/blog">
@@ -480,9 +485,9 @@ export default function PublicArticle() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-border/50 text-center text-sm text-muted-foreground">
-            <p>© {new Date().getFullYear()} MoneyMachine. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Benjamin Franklin's Top New Brands & Recommendations. All rights reserved.</p>
             <p className="mt-2 text-xs">
-              Disclosure: This article contains affiliate links. We may earn a commission if you make a purchase through these links.
+              Disclosure: This article contains affiliate links. We may earn a commission if you make a purchase through these links, at no extra cost to you. Our editorial team independently reviews products to provide honest recommendations.
             </p>
           </div>
         </div>

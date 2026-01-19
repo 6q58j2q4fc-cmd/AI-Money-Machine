@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_published,\n  SUM(CASE WHEN content LIKE '%href=%' THEN 1 ELSE 0 END) as with_links,\n  SUM(CASE WHEN content LIKE '%amazon%' OR content LIKE '%awin%' OR content LIKE '%cj.com%' OR content LIKE '%shareasale%' OR content LIKE '%affiliate%' THEN 1 ELSE 0 END) as with_affiliate_keywords,\n  SUM(CASE WHEN content LIKE '%Buy Now%' OR content LIKE '%Check Price%' OR content LIKE '%View Deal%' THEN 1 ELSE 0 END) as with_cta_buttons\nFROM articles WHERE status = 'published';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT \n  COUNT(*) as total_published,\n  SUM(CASE WHEN content LIKE '%href=%' THEN 1 ELSE 0 END) as with_links,\n  SUM(CASE WHEN content LIKE '%amazon%' OR content LIKE '%awin%' OR content LIKE '%cj.com%' OR content LIKE '%shareasale%' OR content LIKE '%affiliate%' THEN 1 ELSE 0 END) as with_affiliate_keywords,\n  SUM(CASE WHEN content LIKE '%Buy Now%' OR content LIKE '%Check Price%' OR content LIKE '%View Deal%' THEN 1 ELSE 0 END) as with_cta_buttons\nFROM articles WHERE status = 'published';",
+  "rows": [
+    {
+      "total_published": "1474",
+      "with_links": "1375",
+      "with_affiliate_keywords": "1414",
+      "with_cta_buttons": "1356"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_published\twith_links\twith_affiliate_keywords\twith_cta_buttons\n1474\t1375\t1414\t1356\n",
+  "stderr": "",
+  "execution_time_ms": 7583
+}

@@ -1,0 +1,310 @@
+{
+  "query": "SELECT id, title, \n  CASE WHEN content LIKE '%href=%' THEN 'Has Links' ELSE 'No Links' END as has_links,\n  CASE WHEN content LIKE '%amazon%' OR content LIKE '%awin%' OR content LIKE '%cj.com%' OR content LIKE '%shareasale%' THEN 'Has Affiliate' ELSE 'No Affiliate' END as has_affiliate\nFROM articles WHERE status = 'published' LIMIT 50;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, \n  CASE WHEN content LIKE '%href=%' THEN 'Has Links' ELSE 'No Links' END as has_links,\n  CASE WHEN content LIKE '%amazon%' OR content LIKE '%awin%' OR content LIKE '%cj.com%' OR content LIKE '%shareasale%' THEN 'Has Affiliate' ELSE 'No Affiliate' END as has_affiliate\nFROM articles WHERE status = 'published' LIMIT 50;",
+  "rows": [
+    {
+      "id": "2",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "3",
+      "title": "AI-Powered Productivity Tools for Small Businesses",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "4",
+      "title": "Personalized Nutrition for Gut Health",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "6",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "7",
+      "title": "AI-Powered Productivity Tools for Small Business",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "8",
+      "title": "Personalized Nutrition & Gut Health Optimization",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "9",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "10",
+      "title": "AI-Powered Personal Productivity Tools",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "11",
+      "title": "Budget-Friendly Financial Planning for Gen Z/Millennials",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "12",
+      "title": "Sustainable Home Gardening for Small Spaces",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "13",
+      "title": "AI-Powered Productivity Tools for Solopreneurs",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "14",
+      "title": "Personalized Nutrition for Gut Health",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "15",
+      "title": "AI-Powered Home Security Systems",
+      "has_links": "No Links",
+      "has_affiliate": "Has Affiliate"
+    },
+    {
+      "id": "16",
+      "title": "Personalized Nutrition for Gut Health",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "17",
+      "title": "Sustainable & Ethical Fashion for Everyday Wear",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "18",
+      "title": "Sustainable Home Gardening & Urban Farming Solutions",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "19",
+      "title": "AI-Powered Productivity Tools for Small Businesses & Solopreneurs",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "20",
+      "title": "Non-Toxic & Eco-Friendly Pet Care Products",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "21",
+      "title": "AI-Powered Home Security Systems",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "22",
+      "title": "Sustainable & Eco-Friendly Pet Products",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "23",
+      "title": "Personalized Nutrition & Supplement Stacks",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "24",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "25",
+      "title": "AI-Powered Productivity Tools for Small Businesses",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "26",
+      "title": "Personalized Nutrition & Gut Health Supplements",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "27",
+      "title": "AI-Powered Personal Productivity Tools",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "28",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "29",
+      "title": "Personalized Wellness & Biohacking for Longevity",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "30001",
+      "title": "AI-Powered Home Security Systems",
+      "has_links": "No Links",
+      "has_affiliate": "Has Affiliate"
+    },
+    {
+      "id": "30002",
+      "title": "Sustainable & Eco-Friendly Pet Products",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "30003",
+      "title": "Beginner-Friendly Home Fermentation Kits",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "60001",
+      "title": "AI-Powered Productivity Tools",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "60002",
+      "title": "Sustainable Smart Home Devices",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "60003",
+      "title": "No-Code/Low-Code Development Platforms",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "60004",
+      "title": "Cybersecurity for Remote Work",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "90001",
+      "title": "Sustainable Home Gardening & Urban Farming",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "90002",
+      "title": "AI-Powered Productivity Tools for Small Businesses",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "90003",
+      "title": "Personalized Nutrition & Gut Health",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "90004",
+      "title": "Eco-Friendly Travel & Sustainable Tourism",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "90005",
+      "title": "Budget-Friendly Smart Home Devices",
+      "has_links": "No Links",
+      "has_affiliate": "Has Affiliate"
+    },
+    {
+      "id": "90006",
+      "title": "Financial Literacy for Young Adults",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "120002",
+      "title": "Sustainable Home Energy Solutions",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "120003",
+      "title": "Sustainable Smart Home Gadgets",
+      "has_links": "No Links",
+      "has_affiliate": "Has Affiliate"
+    },
+    {
+      "id": "120004",
+      "title": "AI-Powered Personal Productivity Tools",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "120005",
+      "title": "Budget-Friendly Home Fitness Equipment",
+      "has_links": "No Links",
+      "has_affiliate": "Has Affiliate"
+    },
+    {
+      "id": "120006",
+      "title": "Beginner-Friendly Investment Strategies",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "120007",
+      "title": "Digital Nomad Essentials & Setup",
+      "has_links": "No Links",
+      "has_affiliate": "Has Affiliate"
+    },
+    {
+      "id": "120008",
+      "title": "Specialty Coffee Brewing at Home",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "120009",
+      "title": "Sustainable Home Energy Solutions",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    },
+    {
+      "id": "150001",
+      "title": "Best Wireless Earbuds for Gym",
+      "has_links": "No Links",
+      "has_affiliate": "Has Affiliate"
+    },
+    {
+      "id": "150002",
+      "title": "Data Science Online Courses",
+      "has_links": "No Links",
+      "has_affiliate": "No Affiliate"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\thas_links\thas_affiliate\n2\tSustainable Home Gardening & Urban Farming\tNo Links\tNo Affiliate\n3\tAI-Powered Productivity Tools for Small Businesses\tNo Links\tNo Affiliate\n4\tPersonalized Nutrition for Gut Health\tNo Links\tNo Affiliate\n6\tSustainable Home Gardening & Urban Farming\tNo Links\tNo Affiliate\n7\tAI-Powered Productivity Tools for Small Business\tNo Links\tNo Affiliate\n8\tPersonalized Nutrition & Gut Health Optimization\tNo Links\tNo Affiliate\n9\tSustainable Home Gardening & Urban Farming\tNo Links\tNo Affiliate\n10\tAI-Powered Personal Productivity Tools\tNo Links\tNo Affiliate\n11\tBudget-Friendly Financial Planning for Gen Z/Millennials\tNo Links\tNo Affiliate\n12\tSustainable Home Gardening for Small Spaces\tNo Links\tNo Affiliate\n13\tAI-Powered Productivity Tools for Solopreneurs\tNo Links\tNo Affiliate\n14\tPersonalized Nutrition for Gut Health\tNo Links\tNo Affiliate\n15\tAI-Powered Home Security Systems\tNo Links\tHas Affiliate\n16\tPersonalized Nutrition for Gut Health\tNo Links\tNo Affiliate\n17\tSustainable & Ethical Fashion for Everyday Wear\tNo Links\tNo Affiliate\n18\tSustainable Home Gardening & Urban Farming Solutions\tNo Links\tNo Affiliate\n19\tAI-Powered Productivity Tools for Small Businesses & Solopreneurs\tNo Links\tNo Affiliate\n20\tNon-Toxic & Eco-Friendly Pet Care Products\tNo Links\tNo Affiliate\n21\tAI-Powered Home Security Systems\tNo Links\tNo Affiliate\n22\tSustainable & Eco-Friendly Pet Products\tNo Links\tNo Affiliate\n23\tPersonalized Nutrition & Supplement Stacks\tNo Links\tNo Affiliate\n24\tSustainable Home Gardening & Urban Farming\tNo Links\tNo Affiliate\n25\tAI-Powered Productivity Tools for Small Businesses\tNo Links\tNo Affiliate\n26\tPersonalized Nutrition & Gut Health Supplements\tNo Links\tNo Affiliate\n27\tAI-Powered Personal Productivity Tools\tNo Links\tNo Affiliate\n28\tSustainable Home Gardening & Urban Farming\tNo Links\tNo Affiliate\n29\tPersonalized Wellness & Biohacking for Longevity\tNo Links\tNo Affiliate\n30001\tAI-Powered Home Security Systems\tNo Links\tHas Affiliate\n30002\tSustainable & Eco-Friendly Pet Products\tNo Links\tNo Affiliate\n30003\tBeginner-Friendly Home Fermentation Kits\tNo Links\tNo Affiliate\n60001\tAI-Powered Productivity Tools\tNo Links\tNo Affiliate\n60002\tSustainable Smart Home Devices\tNo Links\tNo Affiliate\n60003\tNo-Code/Low-Code Development Platforms\tNo Links\tNo Affiliate\n60004\tCybersecurity for Remote Work\tNo Links\tNo Affiliate\n90001\tSustainable Home Gardening & Urban Farming\tNo Links\tNo Affiliate\n90002\tAI-Powered Productivity Tools for Small Businesses\tNo Links\tNo Affiliate\n90003\tPersonalized Nutrition & Gut Health\tNo Links\tNo Affiliate\n90004\tEco-Friendly Travel & Sustainable Tourism\tNo Links\tNo Affiliate\n90005\tBudget-Friendly Smart Home Devices\tNo Links\tHas Affiliate\n90006\tFinancial Literacy for Young Adults\tNo Links\tNo Affiliate\n120002\tSustainable Home Energy Solutions\tNo Links\tNo Affiliate\n120003\tSustainable Smart Home Gadgets\tNo Links\tHas Affiliate\n120004\tAI-Powered Personal Productivity Tools\tNo Links\tNo Affiliate\n120005\tBudget-Friendly Home Fitness Equipment\tNo Links\tHas Affiliate\n120006\tBeginner-Friendly Investment Strategies\tNo Links\tNo Affiliate\n120007\tDigital Nomad Essentials & Setup\tNo Links\tHas Affiliate\n120008\tSpecialty Coffee Brewing at Home\tNo Links\tNo Affiliate\n120009\tSustainable Home Energy Solutions\tNo Links\tNo Affiliate\n150001\tBest Wireless Earbuds for Gym\tNo Links\tHas Affiliate\n150002\tData Science Online Courses\tNo Links\tNo Affiliate\n",
+  "stderr": "",
+  "execution_time_ms": 153
+}

@@ -201,20 +201,20 @@ export default function CategoryPage() {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>{categoryData.label} Articles | MoneyMachine Blog</title>
+        <title>{categoryData.label} Articles | Benjamin Franklin's Top New Brands & Recommendations</title>
         <meta name="description" content={categoryData.description} />
         <meta name="keywords" content={categoryData.keywords.join(", ")} />
         <link rel="canonical" href={`${siteUrl}/blog/category/${categorySlug}`} />
         
         {/* Open Graph */}
-        <meta property="og:title" content={`${categoryData.label} Articles | MoneyMachine Blog`} />
+        <meta property="og:title" content={`${categoryData.label} Articles | Benjamin Franklin's Recommendations`} />
         <meta property="og:description" content={categoryData.description} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={`${siteUrl}/blog/category/${categorySlug}`} />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${categoryData.label} Articles | MoneyMachine Blog`} />
+        <meta name="twitter:title" content={`${categoryData.label} Articles | Benjamin Franklin's Recommendations`} />
         <meta name="twitter:description" content={categoryData.description} />
         
         {/* Structured Data - BreadcrumbList */}
@@ -269,8 +269,14 @@ export default function CategoryPage() {
       {/* Navigation */}
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container flex h-14 items-center justify-between">
-          <Link href="/">
-            <span className="font-bold text-xl gradient-text cursor-pointer">MoneyMachine</span>
+          <Link href="/blog">
+            <div className="flex items-center gap-2 cursor-pointer">
+              <span className="text-xl">💰</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-primary">Benjamin Franklin's</span>
+                <span className="text-[10px] text-muted-foreground -mt-0.5">Top New Brands</span>
+              </div>
+            </div>
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/rss.xml">

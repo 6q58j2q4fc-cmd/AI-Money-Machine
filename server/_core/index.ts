@@ -137,8 +137,8 @@ async function startServer() {
       const { getPublishedArticlesForSitemap } = await import('../db');
       const articles = await getPublishedArticlesForSitemap();
       const baseUrl = req.protocol + '://' + req.get('host');
-      const siteName = 'MoneyMachine';
-      const siteDescription = 'Your source for product reviews, buying guides, and money-saving tips';
+      const siteName = "Benjamin Franklin's Top New Brands & Recommendations";
+      const siteDescription = 'Your trusted source for honest product reviews, brand recommendations, and expert buying guides since 2024';
       
       let rss = `<?xml version="1.0" encoding="UTF-8"?>\n`;
       rss += `<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">\n`;

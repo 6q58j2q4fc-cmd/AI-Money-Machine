@@ -2489,3 +2489,25 @@
 - [x] Add routes for /blog/category/:slug
 - [x] Add category navigation to blog page and sidebar
 - [x] Implement SEO meta tags for category pages
+
+
+## Article Audit & Blog Rebranding (January 19, 2026)
+
+- [ ] Audit affiliate links in articles for functionality
+- [ ] Verify CJ and Awin affiliate links are commission-ready
+- [ ] Rebrand blog to "Benjamin Franklin's Top New Brands and Recommendations"
+- [ ] Update blog header, footer, and meta tags with new brand
+- [ ] Update category pages with new branding
+- [ ] Create professional brand identity (logo concept, tagline)
+- [ ] Ensure blog appears as legitimate recommendation site like NerdWallet
+
+
+## Blog Rebranding (January 19, 2026)
+
+- [x] Rebrand blog to "Benjamin Franklin's Top New Brands & Recommendations"
+- [x] Update Blog.tsx header and footer with new branding
+- [x] Update CategoryPage.tsx with new branding
+- [x] Update PublicArticle.tsx footer with new branding
+- [x] Update RSS feed with new brand name
+- [x] Add professional affiliate disclosure statements
+- [x] Audit affiliate links in articles (found broken 24-7PressRelease links)

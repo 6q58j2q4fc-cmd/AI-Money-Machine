@@ -281,23 +281,29 @@ export default function Blog() {
     <div className="min-h-screen bg-background">
       {/* SEO Meta Tags */}
       <Helmet>
-        <title>Blog - MoneyMachine | Expert Reviews, Tips & Recommendations</title>
-        <meta name="description" content="Discover expert reviews, tips, and recommendations on technology, finance, productivity, and more. Find the best products and services to help you succeed." />
-        <meta name="keywords" content="reviews, recommendations, best products, technology, finance, productivity, AI tools, crypto, NFT" />
-        <meta property="og:title" content="MoneyMachine Blog - Expert Reviews & Recommendations" />
-        <meta property="og:description" content="Discover expert reviews, tips, and recommendations on technology, finance, productivity, and more." />
+        <title>Benjamin Franklin's Top New Brands & Recommendations | Trusted Reviews Since 2024</title>
+        <meta name="description" content="Your trusted source for honest product reviews, brand recommendations, and buying guides. Benjamin Franklin's curates the best products across technology, finance, health, and lifestyle to help you make informed decisions." />
+        <meta name="keywords" content="product reviews, brand recommendations, buying guides, best products 2026, trusted reviews, expert recommendations, top brands, consumer advice" />
+        <meta property="og:title" content="Benjamin Franklin's Top New Brands & Recommendations" />
+        <meta property="og:description" content="Your trusted source for honest product reviews and brand recommendations. Expert-curated guides to help you find the best products." />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="/blog" />
-        <link rel="alternate" type="application/rss+xml" title="MoneyMachine Blog RSS" href="/rss.xml" />
+        <link rel="alternate" type="application/rss+xml" title="Benjamin Franklin's Reviews RSS" href="/rss.xml" />
       </Helmet>
 
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container py-4 flex items-center justify-between">
-          <Link href="/">
-            <span className="text-xl font-bold gradient-text cursor-pointer">MoneyMachine</span>
+          <Link href="/blog">
+            <div className="flex items-center gap-2 cursor-pointer">
+              <span className="text-2xl">💰</span>
+              <div className="flex flex-col">
+                <span className="text-lg font-bold text-primary">Benjamin Franklin's</span>
+                <span className="text-xs text-muted-foreground -mt-1">Top New Brands & Recommendations</span>
+              </div>
+            </div>
           </Link>
           <nav className="flex items-center gap-4">
             <a href="/rss.xml" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
@@ -322,10 +328,10 @@ export default function Blog() {
       {/* Hero with Search */}
       <section className="container py-12 text-center">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          Expert Reviews & Recommendations
+          <span className="text-primary">Benjamin Franklin's</span> Top Picks
         </h1>
         <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
-          Discover insights, tips, and curated recommendations to help you make smarter decisions
+          Honest reviews, trusted recommendations, and expert buying guides since 2024. We test products so you don't have to.
         </p>
         
         {/* Stats */}
@@ -796,9 +802,15 @@ export default function Blog() {
         <div className="container">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <h3 className="font-bold mb-4">MoneyMachine</h3>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">💰</span>
+                <div>
+                  <h3 className="font-bold text-primary">Benjamin Franklin's</h3>
+                  <span className="text-xs text-muted-foreground">Top New Brands & Recommendations</span>
+                </div>
+              </div>
               <p className="text-sm text-muted-foreground">
-                Your trusted source for expert reviews, recommendations, and insights.
+                Your trusted source for honest product reviews and expert recommendations since 2024. We help you make smarter purchasing decisions.
               </p>
             </div>
             <div>
