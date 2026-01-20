@@ -1,0 +1,35 @@
+{
+  "query": "SELECT id, slug, title FROM articles WHERE status = 'published' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, slug, title FROM articles WHERE status = 'published' LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "slug": "ai-powered-home-security-systems-mk9scsjv",
+      "title": "AI-Powered Home Security Systems"
+    },
+    {
+      "id": "2",
+      "slug": "sustainable-home-gardening-urban-farming-mk9swxmt",
+      "title": "Sustainable Home Gardening & Urban Farming"
+    },
+    {
+      "id": "3",
+      "slug": "ai-powered-productivity-tools-for-small-businesses-mk9sxkmo",
+      "title": "AI-Powered Productivity Tools for Small Businesses"
+    },
+    {
+      "id": "4",
+      "slug": "personalized-nutrition-for-gut-health-mk9sy1pi",
+      "title": "Personalized Nutrition for Gut Health"
+    },
+    {
+      "id": "5",
+      "slug": "ai-powered-personal-productivity-tools-mk9t307a",
+      "title": "AI-Powered Personal Productivity Tools"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tslug\ttitle\n1\tai-powered-home-security-systems-mk9scsjv\tAI-Powered Home Security Systems\n2\tsustainable-home-gardening-urban-farming-mk9swxmt\tSustainable Home Gardening & Urban Farming\n3\tai-powered-productivity-tools-for-small-businesses-mk9sxkmo\tAI-Powered Productivity Tools for Small Businesses\n4\tpersonalized-nutrition-for-gut-health-mk9sy1pi\tPersonalized Nutrition for Gut Health\n5\tai-powered-personal-productivity-tools-mk9t307a\tAI-Powered Personal Productivity Tools\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

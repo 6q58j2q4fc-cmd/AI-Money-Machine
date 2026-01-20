@@ -1,0 +1,360 @@
+{
+  "query": "SELECT id, name, category, program, url FROM affiliate_links ORDER BY category, id LIMIT 50",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, name, category, program, url FROM affiliate_links ORDER BY category, id LIMIT 50",
+  "rows": [
+    {
+      "id": "60024",
+      "name": "Coursera - Coursera Plus - 7 Day Trial",
+      "category": "education",
+      "program": "Coursera",
+      "url": "https://www.dpbolvw.net/click-7841523-6789013-31234567"
+    },
+    {
+      "id": "60025",
+      "name": "Udemy - Udemy - Courses from $9.99",
+      "category": "education",
+      "program": "Udemy",
+      "url": "https://www.kqzyfj.com/click-7841523-7890124-32345678"
+    },
+    {
+      "id": "60026",
+      "name": "Rosetta Stone - Rosetta Stone - Lifetime Access",
+      "category": "education",
+      "program": "Rosetta Stone",
+      "url": "https://www.anrdoezrs.net/click-7841523-8901235-33456789"
+    },
+    {
+      "id": "60027",
+      "name": "Skillshare - Skillshare - Free Trial",
+      "category": "education",
+      "program": "Skillshare",
+      "url": "https://www.jdoqocy.com/click-7841523-9012346-34567890"
+    },
+    {
+      "id": "60010",
+      "name": "TurboTax - TurboTax - Start Free",
+      "category": "finance",
+      "program": "TurboTax",
+      "url": "https://www.kqzyfj.com/click-7841523-5234567-17890123"
+    },
+    {
+      "id": "60011",
+      "name": "H&R Block - H&R Block Online",
+      "category": "finance",
+      "program": "H&R Block",
+      "url": "https://www.anrdoezrs.net/click-7841523-4567890-18901234"
+    },
+    {
+      "id": "60012",
+      "name": "Credit Karma - Check Your Score Free",
+      "category": "finance",
+      "program": "Credit Karma",
+      "url": "https://www.jdoqocy.com/click-7841523-3890123-19012345"
+    },
+    {
+      "id": "60013",
+      "name": "Quicken - Quicken - Save 40%",
+      "category": "finance",
+      "program": "Quicken",
+      "url": "https://www.tkqlhce.com/click-7841523-4123456-20123456"
+    },
+    {
+      "id": "60014",
+      "name": "Acorns - Start Investing with $5",
+      "category": "finance",
+      "program": "Acorns",
+      "url": "https://www.dpbolvw.net/click-7841523-5678901-21234567"
+    },
+    {
+      "id": "60035",
+      "name": "HelloFresh - HelloFresh - 16 Free Meals",
+      "category": "food",
+      "program": "HelloFresh",
+      "url": "https://www.kqzyfj.com/click-7841523-8901236-42345678"
+    },
+    {
+      "id": "60036",
+      "name": "Blue Apron - Blue Apron - First Box Free",
+      "category": "food",
+      "program": "Blue Apron",
+      "url": "https://www.anrdoezrs.net/click-7841523-9012347-43456789"
+    },
+    {
+      "id": "60037",
+      "name": "Thrive Market - Thrive Market - Free Gift",
+      "category": "food",
+      "program": "Thrive Market",
+      "url": "https://www.jdoqocy.com/click-7841523-1234569-44567890"
+    },
+    {
+      "id": "30012",
+      "name": "Press Release service",
+      "category": "general",
+      "program": "24-7PressRelease",
+      "url": "https://www.kqzyfj.com/click-101630462-10750177-1534879214000"
+    },
+    {
+      "id": "60015",
+      "name": "Vitacost - Vitacost - Up to 50% Off",
+      "category": "health",
+      "program": "Vitacost",
+      "url": "https://www.kqzyfj.com/click-7841523-6789012-22345678"
+    },
+    {
+      "id": "60016",
+      "name": "iHerb - iHerb - New Customer Discount",
+      "category": "health",
+      "program": "iHerb",
+      "url": "https://www.anrdoezrs.net/click-7841523-7890123-23456789"
+    },
+    {
+      "id": "60017",
+      "name": "Medical Guardian - Medical Guardian - Free Shipping",
+      "category": "health",
+      "program": "Medical Guardian",
+      "url": "https://www.jdoqocy.com/click-7841523-8901234-24567890"
+    },
+    {
+      "id": "60018",
+      "name": "Bay Alarm Medical - Bay Alarm - First Month Free",
+      "category": "health",
+      "program": "Bay Alarm Medical",
+      "url": "https://www.tkqlhce.com/click-7841523-9012345-25678901"
+    },
+    {
+      "id": "60019",
+      "name": "Teladoc - See a Doctor Now",
+      "category": "health",
+      "program": "Teladoc",
+      "url": "https://www.dpbolvw.net/click-7841523-1234567-26789012"
+    },
+    {
+      "id": "60028",
+      "name": "Wayfair - Wayfair - Up to 70% Off",
+      "category": "home",
+      "program": "Wayfair",
+      "url": "https://www.tkqlhce.com/click-7841523-1234568-35678901"
+    },
+    {
+      "id": "60029",
+      "name": "Overstock - Overstock - Flash Deals",
+      "category": "home",
+      "program": "Overstock",
+      "url": "https://www.dpbolvw.net/click-7841523-2345679-36789012"
+    },
+    {
+      "id": "60030",
+      "name": "SimpliSafe - SimpliSafe - 40% Off",
+      "category": "home",
+      "program": "SimpliSafe",
+      "url": "https://www.kqzyfj.com/click-7841523-3456780-37890123"
+    },
+    {
+      "id": "60031",
+      "name": "Ring - Ring Video Doorbell",
+      "category": "home",
+      "program": "Ring",
+      "url": "https://www.anrdoezrs.net/click-7841523-4567892-38901234"
+    },
+    {
+      "id": "60032",
+      "name": "eBay - eBay Daily Deals",
+      "category": "shopping",
+      "program": "eBay",
+      "url": "https://www.jdoqocy.com/click-7841523-5678903-39012345"
+    },
+    {
+      "id": "60033",
+      "name": "Target - Target - Free Shipping",
+      "category": "shopping",
+      "program": "Target",
+      "url": "https://www.tkqlhce.com/click-7841523-6789014-40123456"
+    },
+    {
+      "id": "60034",
+      "name": "Rakuten - Rakuten - $30 Welcome Bonus",
+      "category": "shopping",
+      "program": "Rakuten",
+      "url": "https://www.dpbolvw.net/click-7841523-7890125-41234567"
+    },
+    {
+      "id": "30032",
+      "name": "AntiBrowserSpy &gt; DE &gt; 468x60",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.kqzyfj.com/click-101630462-15402312-1684488656000"
+    },
+    {
+      "id": "30033",
+      "name": "YouTube Song Downloader &gt; DE",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.jdoqocy.com/click-101630462-15402725-1684488656000"
+    },
+    {
+      "id": "30034",
+      "name": "YouTube Song Downloader &gt; DE &gt; 300x250",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.jdoqocy.com/click-101630462-15402284-1684488656000"
+    },
+    {
+      "id": "30035",
+      "name": "Easter Sale &gt; EN &gt; 1080x1080",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.anrdoezrs.net/click-101630462-17060421-1743500772000"
+    },
+    {
+      "id": "30036",
+      "name": "PC Fresh &gt; DE &gt; 468x60",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.jdoqocy.com/click-101630462-15402349-1684488656000"
+    },
+    {
+      "id": "30037",
+      "name": "PC Fresh &gt; EN &gt; 468x60",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.dpbolvw.net/click-101630462-15402341-1684488656000"
+    },
+    {
+      "id": "30038",
+      "name": "Abelssoft &gt; EN &gt; 468x60 &gt; 60% Black Week discount",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.tkqlhce.com/click-101630462-16970606-1732186486000"
+    },
+    {
+      "id": "30039",
+      "name": "Abelssoft &gt; DE &gt; 120x600 &gt; Fall Sale",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.kqzyfj.com/click-101630462-15639151-1697008580000"
+    },
+    {
+      "id": "30040",
+      "name": "Abelssoft &gt; EN &gt; 120x600 &gt; Scary Halloween deals",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.kqzyfj.com/click-101630462-16942422-1729503964000"
+    },
+    {
+      "id": "30041",
+      "name": "Abelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; AntiBrowserSpy",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.dpbolvw.net/click-101630462-15639154-1697008689000"
+    },
+    {
+      "id": "30042",
+      "name": "HackCheck &gt; 120x600 &gt; DE",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.anrdoezrs.net/click-101630462-15777927-1711378591000"
+    },
+    {
+      "id": "30043",
+      "name": "YouTube Song Downloader &gt; 300x250 &gt; DE",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.anrdoezrs.net/click-101630462-15774694-1711009491000"
+    },
+    {
+      "id": "30044",
+      "name": "Abelssoft &gt; EN &gt; 468x60 &gt; Scary Halloween deals",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.kqzyfj.com/click-101630462-16942417-1729503593000"
+    },
+    {
+      "id": "30045",
+      "name": "Abelssoft &gt; DE &gt; 468x60 &gt; Fall Sale &gt; WashandGo",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.tkqlhce.com/click-101630462-15639171-1697010866000"
+    },
+    {
+      "id": "30046",
+      "name": "Abelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; WashandGo",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.anrdoezrs.net/click-101630462-15638638-1696947090000"
+    },
+    {
+      "id": "30047",
+      "name": "Abelssoft &gt; DE &gt; 300x250 &gt; Fall Sale &gt; YouTube Song Downloader",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.jdoqocy.com/click-101630462-15639163-1697009878000"
+    },
+    {
+      "id": "30048",
+      "name": "Abelssoft &gt; DE &gt; 300x250 &gt; Fall Sale &gt; HackCheck",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.kqzyfj.com/click-101630462-15639167-1697010271000"
+    },
+    {
+      "id": "30049",
+      "name": "Abelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; YouTube Song Downloader",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.tkqlhce.com/click-101630462-15638636-1696946978000"
+    },
+    {
+      "id": "30050",
+      "name": "Abelssoft &gt; DE &gt; 468x60",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.dpbolvw.net/click-101630462-15402687-1684488656000"
+    },
+    {
+      "id": "30051",
+      "name": "YouTube Song Downloader &gt; EN &gt; 468x60",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.jdoqocy.com/click-101630462-15402291-1684488656000"
+    },
+    {
+      "id": "30052",
+      "name": "WashAndGo &gt; EN &gt; 468x60",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.dpbolvw.net/click-101630462-15402369-1684488656000"
+    },
+    {
+      "id": "30053",
+      "name": "Abelssoft &gt; DE &gt; 300x250 &gt; Fall Sale",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.kqzyfj.com/click-101630462-15639162-1697009763000"
+    },
+    {
+      "id": "30054",
+      "name": "Abelssoft &gt; DE &gt; 468x60 &gt; Schaurige Halloween Deals",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.tkqlhce.com/click-101630462-16942418-1729503668000"
+    },
+    {
+      "id": "30055",
+      "name": "Abelssoft &gt; EN &gt; 300x250 &gt; 60% Black Week discount",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.tkqlhce.com/click-101630462-16970595-1732186361000"
+    },
+    {
+      "id": "30056",
+      "name": "Abelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; HackCheck",
+      "category": "technology",
+      "program": "Abelssoft Int",
+      "url": "https://www.jdoqocy.com/click-101630462-15639155-1697008836000"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcategory\tprogram\turl\n60024\tCoursera - Coursera Plus - 7 Day Trial\teducation\tCoursera\thttps://www.dpbolvw.net/click-7841523-6789013-31234567\n60025\tUdemy - Udemy - Courses from $9.99\teducation\tUdemy\thttps://www.kqzyfj.com/click-7841523-7890124-32345678\n60026\tRosetta Stone - Rosetta Stone - Lifetime Access\teducation\tRosetta Stone\thttps://www.anrdoezrs.net/click-7841523-8901235-33456789\n60027\tSkillshare - Skillshare - Free Trial\teducation\tSkillshare\thttps://www.jdoqocy.com/click-7841523-9012346-34567890\n60010\tTurboTax - TurboTax - Start Free\tfinance\tTurboTax\thttps://www.kqzyfj.com/click-7841523-5234567-17890123\n60011\tH&R Block - H&R Block Online\tfinance\tH&R Block\thttps://www.anrdoezrs.net/click-7841523-4567890-18901234\n60012\tCredit Karma - Check Your Score Free\tfinance\tCredit Karma\thttps://www.jdoqocy.com/click-7841523-3890123-19012345\n60013\tQuicken - Quicken - Save 40%\tfinance\tQuicken\thttps://www.tkqlhce.com/click-7841523-4123456-20123456\n60014\tAcorns - Start Investing with $5\tfinance\tAcorns\thttps://www.dpbolvw.net/click-7841523-5678901-21234567\n60035\tHelloFresh - HelloFresh - 16 Free Meals\tfood\tHelloFresh\thttps://www.kqzyfj.com/click-7841523-8901236-42345678\n60036\tBlue Apron - Blue Apron - First Box Free\tfood\tBlue Apron\thttps://www.anrdoezrs.net/click-7841523-9012347-43456789\n60037\tThrive Market - Thrive Market - Free Gift\tfood\tThrive Market\thttps://www.jdoqocy.com/click-7841523-1234569-44567890\n30012\tPress Release service\tgeneral\t24-7PressRelease\thttps://www.kqzyfj.com/click-101630462-10750177-1534879214000\n60015\tVitacost - Vitacost - Up to 50% Off\thealth\tVitacost\thttps://www.kqzyfj.com/click-7841523-6789012-22345678\n60016\tiHerb - iHerb - New Customer Discount\thealth\tiHerb\thttps://www.anrdoezrs.net/click-7841523-7890123-23456789\n60017\tMedical Guardian - Medical Guardian - Free Shipping\thealth\tMedical Guardian\thttps://www.jdoqocy.com/click-7841523-8901234-24567890\n60018\tBay Alarm Medical - Bay Alarm - First Month Free\thealth\tBay Alarm Medical\thttps://www.tkqlhce.com/click-7841523-9012345-25678901\n60019\tTeladoc - See a Doctor Now\thealth\tTeladoc\thttps://www.dpbolvw.net/click-7841523-1234567-26789012\n60028\tWayfair - Wayfair - Up to 70% Off\thome\tWayfair\thttps://www.tkqlhce.com/click-7841523-1234568-35678901\n60029\tOverstock - Overstock - Flash Deals\thome\tOverstock\thttps://www.dpbolvw.net/click-7841523-2345679-36789012\n60030\tSimpliSafe - SimpliSafe - 40% Off\thome\tSimpliSafe\thttps://www.kqzyfj.com/click-7841523-3456780-37890123\n60031\tRing - Ring Video Doorbell\thome\tRing\thttps://www.anrdoezrs.net/click-7841523-4567892-38901234\n60032\teBay - eBay Daily Deals\tshopping\teBay\thttps://www.jdoqocy.com/click-7841523-5678903-39012345\n60033\tTarget - Target - Free Shipping\tshopping\tTarget\thttps://www.tkqlhce.com/click-7841523-6789014-40123456\n60034\tRakuten - Rakuten - $30 Welcome Bonus\tshopping\tRakuten\thttps://www.dpbolvw.net/click-7841523-7890125-41234567\n30032\tAntiBrowserSpy &gt; DE &gt; 468x60\ttechnology\tAbelssoft Int\thttps://www.kqzyfj.com/click-101630462-15402312-1684488656000\n30033\tYouTube Song Downloader &gt; DE\ttechnology\tAbelssoft Int\thttps://www.jdoqocy.com/click-101630462-15402725-1684488656000\n30034\tYouTube Song Downloader &gt; DE &gt; 300x250\ttechnology\tAbelssoft Int\thttps://www.jdoqocy.com/click-101630462-15402284-1684488656000\n30035\tEaster Sale &gt; EN &gt; 1080x1080\ttechnology\tAbelssoft Int\thttps://www.anrdoezrs.net/click-101630462-17060421-1743500772000\n30036\tPC Fresh &gt; DE &gt; 468x60\ttechnology\tAbelssoft Int\thttps://www.jdoqocy.com/click-101630462-15402349-1684488656000\n30037\tPC Fresh &gt; EN &gt; 468x60\ttechnology\tAbelssoft Int\thttps://www.dpbolvw.net/click-101630462-15402341-1684488656000\n30038\tAbelssoft &gt; EN &gt; 468x60 &gt; 60% Black Week discount\ttechnology\tAbelssoft Int\thttps://www.tkqlhce.com/click-101630462-16970606-1732186486000\n30039\tAbelssoft &gt; DE &gt; 120x600 &gt; Fall Sale\ttechnology\tAbelssoft Int\thttps://www.kqzyfj.com/click-101630462-15639151-1697008580000\n30040\tAbelssoft &gt; EN &gt; 120x600 &gt; Scary Halloween deals\ttechnology\tAbelssoft Int\thttps://www.kqzyfj.com/click-101630462-16942422-1729503964000\n30041\tAbelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; AntiBrowserSpy\ttechnology\tAbelssoft Int\thttps://www.dpbolvw.net/click-101630462-15639154-1697008689000\n30042\tHackCheck &gt; 120x600 &gt; DE\ttechnology\tAbelssoft Int\thttps://www.anrdoezrs.net/click-101630462-15777927-1711378591000\n30043\tYouTube Song Downloader &gt; 300x250 &gt; DE\ttechnology\tAbelssoft Int\thttps://www.anrdoezrs.net/click-101630462-15774694-1711009491000\n30044\tAbelssoft &gt; EN &gt; 468x60 &gt; Scary Halloween deals\ttechnology\tAbelssoft Int\thttps://www.kqzyfj.com/click-101630462-16942417-1729503593000\n30045\tAbelssoft &gt; DE &gt; 468x60 &gt; Fall Sale &gt; WashandGo\ttechnology\tAbelssoft Int\thttps://www.tkqlhce.com/click-101630462-15639171-1697010866000\n30046\tAbelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; WashandGo\ttechnology\tAbelssoft Int\thttps://www.anrdoezrs.net/click-101630462-15638638-1696947090000\n30047\tAbelssoft &gt; DE &gt; 300x250 &gt; Fall Sale &gt; YouTube Song Downloader\ttechnology\tAbelssoft Int\thttps://www.jdoqocy.com/click-101630462-15639163-1697009878000\n30048\tAbelssoft &gt; DE &gt; 300x250 &gt; Fall Sale &gt; HackCheck\ttechnology\tAbelssoft Int\thttps://www.kqzyfj.com/click-101630462-15639167-1697010271000\n30049\tAbelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; YouTube Song Downloader\ttechnology\tAbelssoft Int\thttps://www.tkqlhce.com/click-101630462-15638636-1696946978000\n30050\tAbelssoft &gt; DE &gt; 468x60\ttechnology\tAbelssoft Int\thttps://www.dpbolvw.net/click-101630462-15402687-1684488656000\n30051\tYouTube Song Downloader &gt; EN &gt; 468x60\ttechnology\tAbelssoft Int\thttps://www.jdoqocy.com/click-101630462-15402291-1684488656000\n30052\tWashAndGo &gt; EN &gt; 468x60\ttechnology\tAbelssoft Int\thttps://www.dpbolvw.net/click-101630462-15402369-1684488656000\n30053\tAbelssoft &gt; DE &gt; 300x250 &gt; Fall Sale\ttechnology\tAbelssoft Int\thttps://www.kqzyfj.com/click-101630462-15639162-1697009763000\n30054\tAbelssoft &gt; DE &gt; 468x60 &gt; Schaurige Halloween Deals\ttechnology\tAbelssoft Int\thttps://www.tkqlhce.com/click-101630462-16942418-1729503668000\n30055\tAbelssoft &gt; EN &gt; 300x250 &gt; 60% Black Week discount\ttechnology\tAbelssoft Int\thttps://www.tkqlhce.com/click-101630462-16970595-1732186361000\n30056\tAbelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; HackCheck\ttechnology\tAbelssoft Int\thttps://www.jdoqocy.com/click-101630462-15639155-1697008836000\n",
+  "stderr": "",
+  "execution_time_ms": 118
+}

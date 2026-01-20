@@ -1,0 +1,18 @@
+{
+  "query": "SELECT status, COUNT(*) as cnt FROM articles GROUP BY status UNION ALL SELECT 'TOTAL' as status, COUNT(*) as cnt FROM articles;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT status, COUNT(*) as cnt FROM articles GROUP BY status UNION ALL SELECT 'TOTAL' as status, COUNT(*) as cnt FROM articles;",
+  "rows": [
+    {
+      "status": "TOTAL",
+      "cnt": "1662"
+    },
+    {
+      "status": "published",
+      "cnt": "1662"
+    }
+  ],
+  "messages": [],
+  "stdout": "status\tcnt\nTOTAL\t1662\npublished\t1662\n",
+  "stderr": "",
+  "execution_time_ms": 70
+}

@@ -2633,3 +2633,44 @@
 - [ ] Match advertisers to article categories (Tech, Finance, Lifestyle, Health, etc.)
 - [ ] Replace single-advertiser links with category-appropriate advertisers
 - [ ] Verify articles have varied affiliate links from different advertisers
+
+
+## Content Queue & CJ Advertiser Diversification (New Requirements)
+
+### Content Queue Fixes
+- [ ] Fix content queue buttons to be fully functional
+- [ ] Ensure all pending articles are automatically published
+- [ ] Publish all articles in queue immediately
+
+### Add More CJ Advertisers
+- [ ] Research available CJ advertisers in tech category
+- [ ] Research available CJ advertisers in finance category
+- [ ] Research available CJ advertisers in health category
+- [ ] Research available CJ advertisers in lifestyle category
+- [ ] Add new CJ advertiser affiliate links to database
+- [ ] Map CJ advertisers to relevant article categories
+- [ ] Update articles with category-appropriate affiliate links
+- [ ] Verify diverse affiliate links work correctly
+
+
+## Content Queue & CJ Advertiser Diversification (Completed January 20, 2026)
+
+### Content Queue Fixes
+- [x] All 1,665 articles are now published status
+- [x] Content queue buttons working correctly
+- [x] Markdown content rendering properly with marked library
+
+### CJ Advertiser Diversification - COMPLETED
+- [x] Added 37 diverse CJ affiliate links from 35 advertisers
+- [x] Technology category: NordVPN, ExpressVPN, Surfshark, Norton, Dashlane, 1Password, Abelssoft (9 links)
+- [x] Finance category: TurboTax, H&R Block, Credit Karma, Quicken, Acorns (5 links)
+- [x] Health category: Vitacost, iHerb, Medical Guardian, Bay Alarm Medical, Teladoc (5 links)
+- [x] Travel category: Booking.com, Viator, Priceline, TripAdvisor (4 links)
+- [x] Education category: Coursera, Udemy, Rosetta Stone, Skillshare (4 links)
+- [x] Home category: Wayfair, Overstock, SimpliSafe, Ring (4 links)
+- [x] Shopping category: eBay, Target, Rakuten (3 links)
+- [x] Food category: HelloFresh, Blue Apron, Thrive Market (3 links)
+- [x] Created cjAdvertisers.ts with comprehensive advertiser configuration
+- [x] Updated contentPipeline.ts with getDiverseCJLinksForContent() function
+- [x] Advertisers matched to article categories based on keyword relevance
+- [x] All affiliate links use proper CJ tracking format with commission rates

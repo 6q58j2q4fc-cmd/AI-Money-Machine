@@ -22,6 +22,7 @@ import {
   getAvailableProviders,
   type LLMTaskType 
 } from "./multiLlm";
+import { getBestAdvertiserForContent, getDiverseLinksForArticle, allCJAdvertisers, CJ_PUBLISHER_ID } from "../../shared/cjAdvertisers";
 
 // Pipeline configuration
 export interface PipelineConfig {
@@ -256,6 +257,67 @@ Write the complete article now:`;
 }
 
 /**
+ * Get diverse CJ affiliate links based on content keywords
+ * Falls back to hardcoded advertisers when database is empty
+ */
+export function getDiverseCJLinksForContent(content: string, category?: string): AffiliateLink[] {
+  const domains = ["anrdoezrs.net", "jdoqocy.com", "tkqlhce.com", "dpbolvw.net", "kqzyfj.com"];
+  const contentLower = content.toLowerCase();
+  
+  // Score advertisers based on keyword matches
+  const scoredAdvertisers = allCJAdvertisers.map(adv => ({
+    advertiser: adv,
+    score: adv.keywords.filter(k => contentLower.includes(k)).length * adv.epc
+  }));
+  
+  // Sort by score and get top matches
+  scoredAdvertisers.sort((a, b) => b.score - a.score);
+  
+  // Get diverse links (one per category)
+  const usedCategories = new Set<string>();
+  const links: AffiliateLink[] = [];
+  
+  for (const { advertiser } of scoredAdvertisers) {
+    if (links.length >= 7) break;
+    if (usedCategories.has(advertiser.category)) continue;
+    
+    usedCategories.add(advertiser.category);
+    const domain = domains[links.length % domains.length];
+    const linkId = advertiser.links[0]?.id || Math.floor(Math.random() * 100000000).toString();
+    
+    links.push({
+      id: links.length + 1,
+      name: advertiser.name,
+      url: `https://www.${domain}/click-${CJ_PUBLISHER_ID}-${advertiser.id}-${linkId}`,
+      category: advertiser.category,
+      description: advertiser.description,
+    });
+  }
+  
+  // If we need more links, add from remaining advertisers
+  if (links.length < 5) {
+    for (const adv of allCJAdvertisers) {
+      if (links.length >= 5) break;
+      if (usedCategories.has(adv.category)) continue;
+      
+      usedCategories.add(adv.category);
+      const domain = domains[links.length % domains.length];
+      const linkId = adv.links[0]?.id || Math.floor(Math.random() * 100000000).toString();
+      
+      links.push({
+        id: links.length + 1,
+        name: adv.name,
+        url: `https://www.${domain}/click-${CJ_PUBLISHER_ID}-${adv.id}-${linkId}`,
+        category: adv.category,
+        description: adv.description,
+      });
+    }
+  }
+  
+  return links;
+}
+
+/**
  * Match and insert affiliate links into content
  */
 export async function insertAffiliateLinks(
@@ -263,14 +325,20 @@ export async function insertAffiliateLinks(
   affiliateLinks: AffiliateLink[],
   maxLinks: number = 7
 ): Promise<{ content: string; linksInserted: number; linkIds: number[] }> {
+  // If no affiliate links provided, get diverse CJ links based on content
+  let linksToUse = affiliateLinks;
   if (affiliateLinks.length === 0) {
+    linksToUse = getDiverseCJLinksForContent(content);
+  }
+  
+  if (linksToUse.length === 0) {
     return { content, linksInserted: 0, linkIds: [] };
   }
 
   // Use LLM to intelligently match products to content
   const matchResponse = await matchAffiliateProducts(
     content,
-    affiliateLinks.map(l => ({
+    linksToUse.map(l => ({
       name: l.name,
       category: l.category,
       description: l.description || "",
@@ -283,7 +351,7 @@ export async function insertAffiliateLinks(
 
   // Insert matched affiliate links
   for (const match of matchResponse.matches.slice(0, maxLinks)) {
-    const link = affiliateLinks.find(l => l.name === match.product);
+    const link = linksToUse.find(l => l.name === match.product);
     if (link && !insertedLinkIds.includes(link.id)) {
       // Find a good insertion point based on the placement suggestion
       const placementKeywords = match.placement.toLowerCase().split(" ").slice(0, 3);
@@ -312,8 +380,8 @@ export async function insertAffiliateLinks(
   }
 
   // If we haven't inserted enough links, add some at the end
-  if (linksInserted < 3 && affiliateLinks.length > 0) {
-    const remainingLinks = affiliateLinks.filter(l => !insertedLinkIds.includes(l.id)).slice(0, 3 - linksInserted);
+  if (linksInserted < 3 && linksToUse.length > 0) {
+    const remainingLinks = linksToUse.filter(l => !insertedLinkIds.includes(l.id)).slice(0, 3 - linksInserted);
     if (remainingLinks.length > 0) {
       let recommendations = "\n\n## Recommended Products\n\n";
       for (const link of remainingLinks) {

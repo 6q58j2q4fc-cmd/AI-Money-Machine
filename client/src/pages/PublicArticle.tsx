@@ -1,6 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { useParams, Link } from "wouter";
-import { useMemo } from "react";
+import { useMemo, useEffect, useState as useStateReact } from "react";
+import { marked } from "marked";
 import { Loader2, ArrowLeft, Calendar, Eye, MousePointer, Share2, Twitter, Facebook, Linkedin, Mail, Copy, Check, ExternalLink, ShoppingCart, Star, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -147,6 +148,21 @@ export default function PublicArticle() {
           category: link.category 
         }
       }));
+
+  // Parse markdown content to HTML
+  const parsedContent = useMemo(() => {
+    if (!article?.content) return '';
+    // Check if content is already HTML (has HTML tags)
+    if (article.content.includes('<p>') || article.content.includes('<h1>') || article.content.includes('<div>')) {
+      return article.content;
+    }
+    // Parse markdown to HTML
+    try {
+      return marked.parse(article.content, { async: false }) as string;
+    } catch {
+      return article.content;
+    }
+  }, [article?.content]);
 
   // Get category from first affiliate link or default
   const articleCategory = displayLinks?.[0]?.link?.category?.toLowerCase() || "default";
@@ -350,7 +366,7 @@ export default function PublicArticle() {
             <div 
               className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-foreground/90 prose-blockquote:border-primary prose-blockquote:text-foreground/80 article-content"
               onClick={handleLinkClick}
-              dangerouslySetInnerHTML={{ __html: article.content || "" }}
+              dangerouslySetInnerHTML={{ __html: parsedContent }}
             />
 
             {/* Inline Product Cards */}

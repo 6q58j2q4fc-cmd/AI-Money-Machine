@@ -118,6 +118,9 @@ importers:
       '@trpc/server':
         specifier: ^11.6.0
         version: 11.6.0(typescript@5.9.3)
+      '@types/marked':
+        specifier: ^6.0.0
+        version: 6.0.0
       '@wagmi/core':
         specifier: ^2.0.0
         version: 2.22.1(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))
@@ -166,6 +169,9 @@ importers:
       lucide-react:
         specifier: ^0.453.0
         version: 0.453.0(react@19.2.1)
+      marked:
+        specifier: ^17.0.1
+        version: 17.0.1
       mysql2:
         specifier: ^3.15.0
         version: 3.15.1
@@ -2376,6 +2382,10 @@ packages:
   '@types/katex@0.16.7':
     resolution: {integrity: sha512-HMwFiRujE5PjrgwHQ25+bsLJgowjGjm5Z8FVSf0N6PwgJrwxH0QxzHYDcKsTfV3wva0vzrpqMTJS2jXPr5BMEQ==}
 
+  '@types/marked@6.0.0':
+    resolution: {integrity: sha512-jmjpa4BwUsmhxcfsgUit/7A9KbrC48Q0q8KvnY107ogcjGgTFDlIL3RpihNpx2Mu1hM4mdFQjoVc4O6JoGKHsA==}
+    deprecated: This is a stub types definition. marked provides its own type definitions, so you do not need this installed.
+
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
 
@@ -3923,6 +3933,11 @@ packages:
 
   marked@16.4.1:
     resolution: {integrity: sha512-ntROs7RaN3EvWfy3EZi14H4YxmT6A5YvywfhO+0pm+cH/dnSQRmdAmoFIc3B9aiwTehyk7pESH4ofyBY+V5hZg==}
+    engines: {node: '>= 20'}
+    hasBin: true
+
+  marked@17.0.1:
+    resolution: {integrity: sha512-boeBdiS0ghpWcSwoNm/jJBwdpFaMnZWRzjA6SkUMYb40SVaN1x7mmfGKp0jvexGcx+7y2La5zRZsYFZI6Qpypg==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -7609,6 +7624,10 @@ snapshots:
 
   '@types/katex@0.16.7': {}
 
+  '@types/marked@6.0.0':
+    dependencies:
+      marked: 17.0.1
+
   '@types/mdast@4.0.4':
     dependencies:
       '@types/unist': 3.0.3
@@ -9160,6 +9179,8 @@ snapshots:
   markdown-table@3.0.4: {}
 
   marked@16.4.1: {}
+
+  marked@17.0.1: {}
 
   math-intrinsics@1.1.0: {}
 

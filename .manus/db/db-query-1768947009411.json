@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, title, \n  CASE WHEN content LIKE '%anrdoezrs.net%' THEN 'Yes' ELSE 'No' END as has_cj_links\nFROM articles \nWHERE status = 'published' \nORDER BY id DESC \nLIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, \n  CASE WHEN content LIKE '%anrdoezrs.net%' THEN 'Yes' ELSE 'No' END as has_cj_links\nFROM articles \nWHERE status = 'published' \nORDER BY id DESC \nLIMIT 10",
+  "rows": [
+    {
+      "id": "390005",
+      "title": "Accurate Ovulation Prediction Kits",
+      "has_cj_links": "No"
+    },
+    {
+      "id": "390004",
+      "title": "Family Password Manager Plan",
+      "has_cj_links": "No"
+    },
+    {
+      "id": "390003",
+      "title": "Medical Alert with GPS Tracking",
+      "has_cj_links": "No"
+    },
+    {
+      "id": "390002",
+      "title": "Crypto Tax Filing Software",
+      "has_cj_links": "No"
+    },
+    {
+      "id": "390001",
+      "title": "FDA Approved EKG Monitors",
+      "has_cj_links": "No"
+    },
+    {
+      "id": "360182",
+      "title": "Best AI-Powered Productivity Tools - - Top Picks & Reviews",
+      "has_cj_links": "Yes"
+    },
+    {
+      "id": "360181",
+      "title": "Best Budgeting Apps for Small Business - - Top Picks & Reviews",
+      "has_cj_links": "No"
+    },
+    {
+      "id": "360180",
+      "title": "Best Sustainable Smart Home Devices - - Top Picks & Reviews",
+      "has_cj_links": "No"
+    },
+    {
+      "id": "360179",
+      "title": "Best No-Code/Low-Code Development Platforms - - Top Picks & Reviews",
+      "has_cj_links": "Yes"
+    },
+    {
+      "id": "360178",
+      "title": "Best Home Theater Systems for Gaming - - Top Picks & Reviews",
+      "has_cj_links": "Yes"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\thas_cj_links\n390005\tAccurate Ovulation Prediction Kits\tNo\n390004\tFamily Password Manager Plan\tNo\n390003\tMedical Alert with GPS Tracking\tNo\n390002\tCrypto Tax Filing Software\tNo\n390001\tFDA Approved EKG Monitors\tNo\n360182\tBest AI-Powered Productivity Tools - - Top Picks & Reviews\tYes\n360181\tBest Budgeting Apps for Small Business - - Top Picks & Reviews\tNo\n360180\tBest Sustainable Smart Home Devices - - Top Picks & Reviews\tNo\n360179\tBest No-Code/Low-Code Development Platforms - - Top Picks & Reviews\tYes\n360178\tBest Home Theater Systems for Gaming - - Top Picks & Reviews\tYes\n",
+  "stderr": "",
+  "execution_time_ms": 86
+}

@@ -1,0 +1,150 @@
+{
+  "query": "SELECT id, name, program, category, url FROM affiliate_links LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, name, program, category, url FROM affiliate_links LIMIT 20;",
+  "rows": [
+    {
+      "id": "30012",
+      "name": "Press Release service",
+      "program": "24-7PressRelease",
+      "category": "general",
+      "url": "https://www.kqzyfj.com/click-101630462-10750177-1534879214000"
+    },
+    {
+      "id": "30032",
+      "name": "AntiBrowserSpy &gt; DE &gt; 468x60",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.kqzyfj.com/click-101630462-15402312-1684488656000"
+    },
+    {
+      "id": "30033",
+      "name": "YouTube Song Downloader &gt; DE",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.jdoqocy.com/click-101630462-15402725-1684488656000"
+    },
+    {
+      "id": "30034",
+      "name": "YouTube Song Downloader &gt; DE &gt; 300x250",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.jdoqocy.com/click-101630462-15402284-1684488656000"
+    },
+    {
+      "id": "30035",
+      "name": "Easter Sale &gt; EN &gt; 1080x1080",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.anrdoezrs.net/click-101630462-17060421-1743500772000"
+    },
+    {
+      "id": "30036",
+      "name": "PC Fresh &gt; DE &gt; 468x60",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.jdoqocy.com/click-101630462-15402349-1684488656000"
+    },
+    {
+      "id": "30037",
+      "name": "PC Fresh &gt; EN &gt; 468x60",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.dpbolvw.net/click-101630462-15402341-1684488656000"
+    },
+    {
+      "id": "30038",
+      "name": "Abelssoft &gt; EN &gt; 468x60 &gt; 60% Black Week discount",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.tkqlhce.com/click-101630462-16970606-1732186486000"
+    },
+    {
+      "id": "30039",
+      "name": "Abelssoft &gt; DE &gt; 120x600 &gt; Fall Sale",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.kqzyfj.com/click-101630462-15639151-1697008580000"
+    },
+    {
+      "id": "30040",
+      "name": "Abelssoft &gt; EN &gt; 120x600 &gt; Scary Halloween deals",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.kqzyfj.com/click-101630462-16942422-1729503964000"
+    },
+    {
+      "id": "30041",
+      "name": "Abelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; AntiBrowserSpy",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.dpbolvw.net/click-101630462-15639154-1697008689000"
+    },
+    {
+      "id": "30042",
+      "name": "HackCheck &gt; 120x600 &gt; DE",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.anrdoezrs.net/click-101630462-15777927-1711378591000"
+    },
+    {
+      "id": "30043",
+      "name": "YouTube Song Downloader &gt; 300x250 &gt; DE",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.anrdoezrs.net/click-101630462-15774694-1711009491000"
+    },
+    {
+      "id": "30044",
+      "name": "Abelssoft &gt; EN &gt; 468x60 &gt; Scary Halloween deals",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.kqzyfj.com/click-101630462-16942417-1729503593000"
+    },
+    {
+      "id": "30045",
+      "name": "Abelssoft &gt; DE &gt; 468x60 &gt; Fall Sale &gt; WashandGo",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.tkqlhce.com/click-101630462-15639171-1697010866000"
+    },
+    {
+      "id": "30046",
+      "name": "Abelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; WashandGo",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.anrdoezrs.net/click-101630462-15638638-1696947090000"
+    },
+    {
+      "id": "30047",
+      "name": "Abelssoft &gt; DE &gt; 300x250 &gt; Fall Sale &gt; YouTube Song Downloader",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.jdoqocy.com/click-101630462-15639163-1697009878000"
+    },
+    {
+      "id": "30048",
+      "name": "Abelssoft &gt; DE &gt; 300x250 &gt; Fall Sale &gt; HackCheck",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.kqzyfj.com/click-101630462-15639167-1697010271000"
+    },
+    {
+      "id": "30049",
+      "name": "Abelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; YouTube Song Downloader",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.tkqlhce.com/click-101630462-15638636-1696946978000"
+    },
+    {
+      "id": "30050",
+      "name": "Abelssoft &gt; DE &gt; 468x60",
+      "program": "Abelssoft Int",
+      "category": "technology",
+      "url": "https://www.dpbolvw.net/click-101630462-15402687-1684488656000"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tprogram\tcategory\turl\n30012\tPress Release service\t24-7PressRelease\tgeneral\thttps://www.kqzyfj.com/click-101630462-10750177-1534879214000\n30032\tAntiBrowserSpy &gt; DE &gt; 468x60\tAbelssoft Int\ttechnology\thttps://www.kqzyfj.com/click-101630462-15402312-1684488656000\n30033\tYouTube Song Downloader &gt; DE\tAbelssoft Int\ttechnology\thttps://www.jdoqocy.com/click-101630462-15402725-1684488656000\n30034\tYouTube Song Downloader &gt; DE &gt; 300x250\tAbelssoft Int\ttechnology\thttps://www.jdoqocy.com/click-101630462-15402284-1684488656000\n30035\tEaster Sale &gt; EN &gt; 1080x1080\tAbelssoft Int\ttechnology\thttps://www.anrdoezrs.net/click-101630462-17060421-1743500772000\n30036\tPC Fresh &gt; DE &gt; 468x60\tAbelssoft Int\ttechnology\thttps://www.jdoqocy.com/click-101630462-15402349-1684488656000\n30037\tPC Fresh &gt; EN &gt; 468x60\tAbelssoft Int\ttechnology\thttps://www.dpbolvw.net/click-101630462-15402341-1684488656000\n30038\tAbelssoft &gt; EN &gt; 468x60 &gt; 60% Black Week discount\tAbelssoft Int\ttechnology\thttps://www.tkqlhce.com/click-101630462-16970606-1732186486000\n30039\tAbelssoft &gt; DE &gt; 120x600 &gt; Fall Sale\tAbelssoft Int\ttechnology\thttps://www.kqzyfj.com/click-101630462-15639151-1697008580000\n30040\tAbelssoft &gt; EN &gt; 120x600 &gt; Scary Halloween deals\tAbelssoft Int\ttechnology\thttps://www.kqzyfj.com/click-101630462-16942422-1729503964000\n30041\tAbelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; AntiBrowserSpy\tAbelssoft Int\ttechnology\thttps://www.dpbolvw.net/click-101630462-15639154-1697008689000\n30042\tHackCheck &gt; 120x600 &gt; DE\tAbelssoft Int\ttechnology\thttps://www.anrdoezrs.net/click-101630462-15777927-1711378591000\n30043\tYouTube Song Downloader &gt; 300x250 &gt; DE\tAbelssoft Int\ttechnology\thttps://www.anrdoezrs.net/click-101630462-15774694-1711009491000\n30044\tAbelssoft &gt; EN &gt; 468x60 &gt; Scary Halloween deals\tAbelssoft Int\ttechnology\thttps://www.kqzyfj.com/click-101630462-16942417-1729503593000\n30045\tAbelssoft &gt; DE &gt; 468x60 &gt; Fall Sale &gt; WashandGo\tAbelssoft Int\ttechnology\thttps://www.tkqlhce.com/click-101630462-15639171-1697010866000\n30046\tAbelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; WashandGo\tAbelssoft Int\ttechnology\thttps://www.anrdoezrs.net/click-101630462-15638638-1696947090000\n30047\tAbelssoft &gt; DE &gt; 300x250 &gt; Fall Sale &gt; YouTube Song Downloader\tAbelssoft Int\ttechnology\thttps://www.jdoqocy.com/click-101630462-15639163-1697009878000\n30048\tAbelssoft &gt; DE &gt; 300x250 &gt; Fall Sale &gt; HackCheck\tAbelssoft Int\ttechnology\thttps://www.kqzyfj.com/click-101630462-15639167-1697010271000\n30049\tAbelssoft &gt; DE &gt; 120x600 &gt; Fall Sale &gt; YouTube Song Downloader\tAbelssoft Int\ttechnology\thttps://www.tkqlhce.com/click-101630462-15638636-1696946978000\n30050\tAbelssoft &gt; DE &gt; 468x60\tAbelssoft Int\ttechnology\thttps://www.dpbolvw.net/click-101630462-15402687-1684488656000\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

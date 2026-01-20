@@ -1,0 +1,46 @@
+{
+  "query": "SELECT category, COUNT(*) as count FROM affiliate_links GROUP BY category ORDER BY count DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT category, COUNT(*) as count FROM affiliate_links GROUP BY category ORDER BY count DESC",
+  "rows": [
+    {
+      "category": "technology",
+      "count": "78"
+    },
+    {
+      "category": "finance",
+      "count": "5"
+    },
+    {
+      "category": "health",
+      "count": "5"
+    },
+    {
+      "category": "education",
+      "count": "4"
+    },
+    {
+      "category": "home",
+      "count": "4"
+    },
+    {
+      "category": "travel",
+      "count": "4"
+    },
+    {
+      "category": "food",
+      "count": "3"
+    },
+    {
+      "category": "shopping",
+      "count": "3"
+    },
+    {
+      "category": "general",
+      "count": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "category\tcount\ntechnology\t78\nfinance\t5\nhealth\t5\neducation\t4\nhome\t4\ntravel\t4\nfood\t3\nshopping\t3\ngeneral\t1\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

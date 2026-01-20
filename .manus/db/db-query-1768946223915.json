@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE articles SET status = 'published', publishedAt = NOW() WHERE status IN ('draft', 'pending', 'review');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute UPDATE articles SET status = 'published', publishedAt = NOW() WHERE status IN ('draft', 'pending', 'review');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 111
+}

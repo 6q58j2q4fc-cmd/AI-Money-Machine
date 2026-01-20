@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, title, LEFT(content, 500) as content_preview FROM articles WHERE slug = 'medical-alert-with-gps-tracking-mkn4xnf2';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user mexMZK3NDs3KsAz.c9d58c93f039 --database RymVrvaM7i66nf7Xs2w9Hu --execute SELECT id, title, LEFT(content, 500) as content_preview FROM articles WHERE slug = 'medical-alert-with-gps-tracking-mkn4xnf2';",
+  "rows": [
+    {
+      "id": "390003",
+      "title": "Medical Alert with GPS Tracking",
+      "content_preview": "# Best Medical Alert Systems With Fall Detection: Stay Safe and Independent"
+    }
+  ],
+  "messages": [
+    "Imagine being able to live independently, without worrying about the risks of falling or experiencing a medical emergency. For seniors and individuals with health conditions, this is a constant concern. But what if you could have a **proven** and **guaranteed** way to stay safe and connected to help, 24/7? With the best medical alert systems featuring **fall detection**, you can.",
+    "## What are Medical Alert Systems with F"
+  ],
+  "stdout": "id\ttitle\tcontent_preview\n390003\tMedical Alert with GPS Tracking\t# Best Medical Alert Systems With Fall Detection: Stay Safe and Independent\nImagine being able to live independently, without worrying about the risks of falling or experiencing a medical emergency. For seniors and individuals with health conditions, this is a constant concern. But what if you could have a **proven** and **guaranteed** way to stay safe and connected to help, 24/7? With the best medical alert systems featuring **fall detection**, you can.\n\n## What are Medical Alert Systems with F\n",
+  "stderr": "",
+  "execution_time_ms": 105
+}
