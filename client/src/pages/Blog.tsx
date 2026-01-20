@@ -576,7 +576,7 @@ export default function Blog() {
       {/* Main Content with Sidebar */}
       <div className="bg-white min-h-screen">
         <div className="container py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar - Archive */}
           <aside className="lg:w-64 shrink-0">
             <Card className="sticky top-24 border-amber-200 bg-amber-50/50">
@@ -870,7 +870,7 @@ export default function Blog() {
               </div>
             )}
           </main>
-        </div>
+          </div>
         </div>
       </div>
 

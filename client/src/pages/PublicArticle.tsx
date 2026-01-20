@@ -2,7 +2,8 @@ import { trpc } from "@/lib/trpc";
 import { useParams, Link } from "wouter";
 import { useMemo, useEffect, useState as useStateReact } from "react";
 import { marked } from "marked";
-import { Loader2, ArrowLeft, Calendar, Eye, MousePointer, Share2, Twitter, Facebook, Linkedin, Mail, Copy, Check, ExternalLink, ShoppingCart, Star, TrendingUp } from "lucide-react";
+import { getAuthorForArticle, type Author } from "@shared/authors";
+import { Loader2, ArrowLeft, Calendar, Eye, MousePointer, Share2, Twitter, Facebook, Linkedin, Mail, Copy, Check, ExternalLink, ShoppingCart, Star, TrendingUp, User, Clock, Award, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Streamdown } from "streamdown";
@@ -17,23 +18,100 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Product images by category
+// Product images by category - high-quality relevant images
 const categoryImages: Record<string, string> = {
+  // Technology & Software
   technology: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80",
   software: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80",
+  cybersecurity: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&q=80",
+  vpn: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&q=80",
+  ai: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80",
+  gadgets: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&q=80",
+  
+  // Finance & Business
   finance: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&q=80",
+  investing: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80",
+  crypto: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=800&q=80",
+  banking: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80",
+  tax: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80",
+  business: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
+  
+  // Health & Wellness
   health: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80",
+  wellness: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80",
+  fitness: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80",
+  medical: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80",
+  nutrition: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80",
+  
+  // Home & Lifestyle
+  home: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80",
   lifestyle: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=800&q=80",
+  "smart home": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+  security: "https://images.unsplash.com/photo-1558002038-1055907df827?w=800&q=80",
+  furniture: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80",
+  
+  // Education & Career
   education: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80",
-  entertainment: "https://images.unsplash.com/photo-1603190287605-e6ade32fa852?w=800&q=80",
+  learning: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80",
+  career: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80",
+  productivity: "https://images.unsplash.com/photo-1483058712412-4245e9b90334?w=800&q=80",
+  
+  // Travel & Adventure
   travel: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80",
+  adventure: "https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=800&q=80",
+  outdoor: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
+  vacation: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
+  
+  // Food & Shopping
   food: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80",
+  shopping: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&q=80",
+  entertainment: "https://images.unsplash.com/photo-1603190287605-e6ade32fa852?w=800&q=80",
+  
+  // Default
   default: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
 };
 
-// Category color themes
+// Category color themes - matching category images
 const categoryThemes: Record<string, { gradient: string; accent: string; badge: string }> = {
+  // Technology & Software
   technology: { gradient: "from-blue-600/20 to-cyan-600/10", accent: "text-blue-400", badge: "bg-blue-500/20 text-blue-300" },
+  cybersecurity: { gradient: "from-slate-600/20 to-gray-600/10", accent: "text-slate-400", badge: "bg-slate-500/20 text-slate-300" },
+  vpn: { gradient: "from-teal-600/20 to-cyan-600/10", accent: "text-teal-400", badge: "bg-teal-500/20 text-teal-300" },
+  ai: { gradient: "from-violet-600/20 to-purple-600/10", accent: "text-violet-400", badge: "bg-violet-500/20 text-violet-300" },
+  gadgets: { gradient: "from-sky-600/20 to-blue-600/10", accent: "text-sky-400", badge: "bg-sky-500/20 text-sky-300" },
+  
+  // Finance & Business
+  investing: { gradient: "from-emerald-600/20 to-green-600/10", accent: "text-emerald-400", badge: "bg-emerald-500/20 text-emerald-300" },
+  crypto: { gradient: "from-orange-600/20 to-amber-600/10", accent: "text-orange-400", badge: "bg-orange-500/20 text-orange-300" },
+  banking: { gradient: "from-blue-600/20 to-indigo-600/10", accent: "text-blue-400", badge: "bg-blue-500/20 text-blue-300" },
+  tax: { gradient: "from-lime-600/20 to-green-600/10", accent: "text-lime-400", badge: "bg-lime-500/20 text-lime-300" },
+  business: { gradient: "from-gray-600/20 to-slate-600/10", accent: "text-gray-400", badge: "bg-gray-500/20 text-gray-300" },
+  
+  // Health & Wellness
+  wellness: { gradient: "from-teal-600/20 to-emerald-600/10", accent: "text-teal-400", badge: "bg-teal-500/20 text-teal-300" },
+  fitness: { gradient: "from-orange-600/20 to-red-600/10", accent: "text-orange-400", badge: "bg-orange-500/20 text-orange-300" },
+  medical: { gradient: "from-red-600/20 to-rose-600/10", accent: "text-red-400", badge: "bg-red-500/20 text-red-300" },
+  nutrition: { gradient: "from-green-600/20 to-lime-600/10", accent: "text-green-400", badge: "bg-green-500/20 text-green-300" },
+  
+  // Home & Lifestyle
+  home: { gradient: "from-amber-600/20 to-yellow-600/10", accent: "text-amber-400", badge: "bg-amber-500/20 text-amber-300" },
+  "smart home": { gradient: "from-cyan-600/20 to-blue-600/10", accent: "text-cyan-400", badge: "bg-cyan-500/20 text-cyan-300" },
+  security: { gradient: "from-slate-600/20 to-zinc-600/10", accent: "text-slate-400", badge: "bg-slate-500/20 text-slate-300" },
+  furniture: { gradient: "from-stone-600/20 to-neutral-600/10", accent: "text-stone-400", badge: "bg-stone-500/20 text-stone-300" },
+  
+  // Education & Career
+  learning: { gradient: "from-blue-600/20 to-sky-600/10", accent: "text-blue-400", badge: "bg-blue-500/20 text-blue-300" },
+  career: { gradient: "from-indigo-600/20 to-blue-600/10", accent: "text-indigo-400", badge: "bg-indigo-500/20 text-indigo-300" },
+  productivity: { gradient: "from-purple-600/20 to-violet-600/10", accent: "text-purple-400", badge: "bg-purple-500/20 text-purple-300" },
+  
+  // Travel & Adventure
+  travel: { gradient: "from-sky-600/20 to-blue-600/10", accent: "text-sky-400", badge: "bg-sky-500/20 text-sky-300" },
+  adventure: { gradient: "from-emerald-600/20 to-teal-600/10", accent: "text-emerald-400", badge: "bg-emerald-500/20 text-emerald-300" },
+  outdoor: { gradient: "from-green-600/20 to-emerald-600/10", accent: "text-green-400", badge: "bg-green-500/20 text-green-300" },
+  vacation: { gradient: "from-cyan-600/20 to-sky-600/10", accent: "text-cyan-400", badge: "bg-cyan-500/20 text-cyan-300" },
+  
+  // Food & Shopping
+  shopping: { gradient: "from-pink-600/20 to-rose-600/10", accent: "text-pink-400", badge: "bg-pink-500/20 text-pink-300" },
   software: { gradient: "from-purple-600/20 to-pink-600/10", accent: "text-purple-400", badge: "bg-purple-500/20 text-purple-300" },
   finance: { gradient: "from-green-600/20 to-emerald-600/10", accent: "text-green-400", badge: "bg-green-500/20 text-green-300" },
   health: { gradient: "from-red-600/20 to-orange-600/10", accent: "text-red-400", badge: "bg-red-500/20 text-red-300" },
@@ -169,6 +247,19 @@ export default function PublicArticle() {
   const theme = categoryThemes[articleCategory] || categoryThemes.default;
   const heroImage = categoryImages[articleCategory] || categoryImages.default;
 
+  // Get author based on article keywords
+  const author = useMemo(() => {
+    if (!article?.keywords) return getAuthorForArticle([]);
+    return getAuthorForArticle(article.keywords as string[]);
+  }, [article?.keywords]);
+
+  // Calculate reading time
+  const readingTime = useMemo(() => {
+    if (!article?.content) return 5;
+    const wordCount = article.content.split(/\s+/).length;
+    return Math.max(3, Math.ceil(wordCount / 200));
+  }, [article?.content]);
+
   // Generate Article JSON-LD structured data
   const articleJsonLd = useMemo(() => {
     if (!article) return null;
@@ -180,7 +271,9 @@ export default function PublicArticle() {
       "image": heroImage,
       "author": {
         "@type": "Person",
-        "name": "Benjamin Franklin",
+        "name": author.name,
+        "jobTitle": author.title,
+        "description": author.bio,
         "url": typeof window !== 'undefined' ? `${window.location.origin}/about` : ''
       },
       "publisher": {
@@ -440,6 +533,34 @@ export default function PublicArticle() {
         <div className="grid lg:grid-cols-3 gap-12">
           {/* Main Content */}
           <div className="lg:col-span-2">
+            {/* Author Byline */}
+            <div className="author-byline">
+              <img 
+                src={author.avatar} 
+                alt={author.name}
+                className="author-avatar"
+              />
+              <div className="author-info">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h4 className="author-name">{author.name}</h4>
+                  <span className="reading-time">
+                    <Clock className="w-4 h-4" />
+                    {readingTime} min read
+                  </span>
+                </div>
+                <p className="author-title">{author.title}</p>
+                <div className="author-credentials">
+                  {author.credentials.slice(0, 2).map((credential, i) => (
+                    <span key={i} className="credential-badge">
+                      <Award className="w-3 h-3 inline mr-1" />
+                      {credential}
+                    </span>
+                  ))}
+                </div>
+                <p className="author-bio">{author.bio}</p>
+              </div>
+            </div>
+
             <div 
               className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-foreground/90 prose-blockquote:border-primary prose-blockquote:text-foreground/80 article-content"
               onClick={handleLinkClick}

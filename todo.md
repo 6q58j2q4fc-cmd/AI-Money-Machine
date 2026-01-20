@@ -2706,3 +2706,31 @@
 - [x] Update footer with amber-50 background
 - [x] Update newsletter section with amber gradient
 - [x] Add famous Franklin quote to hero section
+
+
+## Article Enhancement & E-E-A-T (January 20, 2026)
+
+### Author Profiles & Bylines
+- [x] Create author profiles with expertise credentials (shared/authors.ts)
+- [x] Add author bylines to article pages (PublicArticle.tsx)
+- [x] Include author bio, credentials, and expertise areas
+- [x] Add author avatar images (professional headshots)
+- [x] Implement Author JSON-LD schema (included in Article schema)
+
+### Article Formatting & Structure
+- [x] Fix article spacing and structure (index.css article styles)
+- [x] Improve paragraph formatting (prose class with proper line-height)
+- [x] Add proper heading hierarchy (H2 gold border, H3 gold text)
+- [x] Ensure consistent styling throughout articles
+- [x] Add reading time calculation (200 words/minute)
+
+### Article Images
+- [x] Add relevant featured images to articles (30+ category images)
+- [x] Implement image placeholders based on category (categoryImages map)
+- [x] Add category-specific color themes (categoryThemes map)
+
+### Affiliate Links
+- [x] Ensure all affiliate links are working (CJ tracking domains)
+- [x] Add category-relevant affiliate links (getDiverseCJLinksForContent)
+- [x] Verify CJ tracking parameters are correct (UTM parameters added)
+- [x] Add prominent CTA buttons for affiliate products (Recommended Products section)
