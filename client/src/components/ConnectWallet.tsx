@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
-import { useAccount, useConnect, useDisconnect, useBalance, useChainId, useSwitchChain } from 'wagmi';
+import { useAccount, useBalance, useChainId, useSwitchChain } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,191 +10,118 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Wallet, LogOut, Copy, ExternalLink, ChevronDown, Check, Loader2 } from 'lucide-react';
-import { SUPPORTED_CHAINS, getAddressExplorerUrl } from '../lib/wagmi';
+import { Wallet, LogOut, Copy, ExternalLink, ChevronDown, Check, Download } from 'lucide-react';
+import { SUPPORTED_CHAINS, getAddressExplorerUrl, WALLET_DOWNLOAD_LINKS } from '../lib/wagmi';
 import { toast } from 'sonner';
 
+// Main Connect Wallet component using RainbowKit
 export function ConnectWallet() {
-  const { address, isConnected, connector } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
-  const { disconnect } = useDisconnect();
-  const chainId = useChainId();
-  const { switchChain } = useSwitchChain();
-  const { data: balance } = useBalance({ address });
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const currentChain = SUPPORTED_CHAINS.find(c => c.id === chainId);
-
-  const copyAddress = async () => {
-    if (address) {
-      await navigator.clipboard.writeText(address);
-      setCopied(true);
-      toast.success('Address copied!', { description: address });
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
-
-  const formatBalance = (bal: typeof balance) => {
-    if (!bal) return '0.0000';
-    // Convert bigint value to formatted string
-    const value = Number(bal.value) / Math.pow(10, bal.decimals);
-    return value.toFixed(4);
-  };
-
-  if (isConnected && address) {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="gap-2 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30 hover:border-purple-500/50">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="font-mono">{formatAddress(address)}</span>
-            <span className="text-muted-foreground">
-              {formatBalance(balance)} {currentChain?.symbol || 'ETH'}
-            </span>
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-64">
-          <DropdownMenuLabel className="flex items-center gap-2">
-            <Wallet className="h-4 w-4" />
-            Connected Wallet
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          
-          <div className="px-2 py-2">
-            <p className="text-xs text-muted-foreground mb-1">Address</p>
-            <p className="font-mono text-sm">{formatAddress(address)}</p>
-          </div>
-          
-          <div className="px-2 py-2">
-            <p className="text-xs text-muted-foreground mb-1">Balance</p>
-            <p className="text-sm font-semibold">
-              {formatBalance(balance)} {currentChain?.symbol || 'ETH'}
-            </p>
-          </div>
-          
-          <div className="px-2 py-2">
-            <p className="text-xs text-muted-foreground mb-1">Network</p>
-            <p className="text-sm">{currentChain?.name || 'Unknown'}</p>
-          </div>
-          
-          <DropdownMenuSeparator />
-          
-          <DropdownMenuItem onClick={copyAddress} className="gap-2 cursor-pointer">
-            {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-            Copy Address
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => window.open(getAddressExplorerUrl(chainId, address), '_blank')}
-            className="gap-2 cursor-pointer"
-          >
-            <ExternalLink className="h-4 w-4" />
-            View on Explorer
-          </DropdownMenuItem>
-          
-          <DropdownMenuSeparator />
-          
-          <DropdownMenuLabel className="text-xs text-muted-foreground">Switch Network</DropdownMenuLabel>
-          {SUPPORTED_CHAINS.map((chain) => (
-            <DropdownMenuItem 
-              key={chain.id}
-              onClick={() => switchChain?.({ chainId: chain.id })}
-              className="gap-2 cursor-pointer"
-            >
-              {chain.id === chainId && <Check className="h-4 w-4 text-green-500" />}
-              {chain.id !== chainId && <div className="w-4" />}
-              {chain.name}
-            </DropdownMenuItem>
-          ))}
-          
-          <DropdownMenuSeparator />
-          
-          <DropdownMenuItem 
-            onClick={() => disconnect()}
-            className="gap-2 cursor-pointer text-red-500 focus:text-red-500"
-          >
-            <LogOut className="h-4 w-4" />
-            Disconnect
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
-
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-          <Wallet className="h-4 w-4" />
-          Connect Wallet
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Wallet className="h-5 w-5" />
-            Connect Your Wallet
-          </DialogTitle>
-          <DialogDescription>
-            Connect your wallet to buy, sell, and trade NFTs on the marketplace.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="grid gap-3 py-4">
-          {connectors.map((connector) => (
-            <Button
-              key={connector.uid}
-              variant="outline"
-              className="w-full justify-start gap-3 h-14 text-left"
-              onClick={() => {
-                connect({ connector });
-                setIsOpen(false);
-              }}
-              disabled={isPending}
-            >
-              {isPending ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : (
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
-                  <Wallet className="h-4 w-4 text-white" />
+    <ConnectButton.Custom>
+      {({
+        account,
+        chain,
+        openAccountModal,
+        openChainModal,
+        openConnectModal,
+        authenticationStatus,
+        mounted,
+      }) => {
+        const ready = mounted && authenticationStatus !== 'loading';
+        const connected =
+          ready &&
+          account &&
+          chain &&
+          (!authenticationStatus || authenticationStatus === 'authenticated');
+
+        return (
+          <div
+            {...(!ready && {
+              'aria-hidden': true,
+              style: {
+                opacity: 0,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              },
+            })}
+          >
+            {(() => {
+              if (!connected) {
+                return (
+                  <Button
+                    onClick={openConnectModal}
+                    className="gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-semibold rounded-xl shadow-lg shadow-yellow-500/20"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    Connect Wallet
+                  </Button>
+                );
+              }
+
+              if (chain.unsupported) {
+                return (
+                  <Button onClick={openChainModal} variant="destructive">
+                    Wrong network
+                  </Button>
+                );
+              }
+
+              return (
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={openChainModal}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
+                  >
+                    {chain.hasIcon && (
+                      <div
+                        style={{
+                          background: chain.iconBackground,
+                          width: 16,
+                          height: 16,
+                          borderRadius: 999,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {chain.iconUrl && (
+                          <img
+                            alt={chain.name ?? 'Chain icon'}
+                            src={chain.iconUrl}
+                            style={{ width: 16, height: 16 }}
+                          />
+                        )}
+                      </div>
+                    )}
+                    {chain.name}
+                  </Button>
+
+                  <Button
+                    onClick={openAccountModal}
+                    variant="outline"
+                    className="gap-2 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30 hover:border-purple-500/50"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="font-mono">{account.displayName}</span>
+                    {account.displayBalance && (
+                      <span className="text-muted-foreground">
+                        {account.displayBalance}
+                      </span>
+                    )}
+                  </Button>
                 </div>
-              )}
-              <div>
-                <p className="font-medium">{connector.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {connector.name === 'MetaMask' && 'Popular browser extension'}
-                  {connector.name === 'WalletConnect' && 'Scan with mobile wallet'}
-                  {connector.name === 'Injected' && 'Browser wallet'}
-                </p>
-              </div>
-            </Button>
-          ))}
-        </div>
-        
-        <div className="text-center text-xs text-muted-foreground">
-          <p>By connecting, you agree to our Terms of Service</p>
-          <p className="mt-1">
-            New to crypto?{' '}
-            <a 
-              href="https://metamask.io/download/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-purple-500 hover:underline"
-            >
-              Get MetaMask
-            </a>
-          </p>
-        </div>
-      </DialogContent>
-    </Dialog>
+              );
+            })()}
+          </div>
+        );
+      }}
+    </ConnectButton.Custom>
   );
+}
+
+// Simple wallet button for marketplace pages
+export function MarketplaceWalletButton() {
+  return <ConnectButton showBalance={true} chainStatus="icon" accountStatus="address" />;
 }
 
 // Hook to use wallet state in other components
@@ -219,4 +139,71 @@ export function useWallet() {
     balanceFormatted: balance ? (Number(balance.value) / Math.pow(10, balance.decimals)).toFixed(4) : '0',
     symbol: balance?.symbol || 'ETH',
   };
+}
+
+// Wallet download options component
+export function WalletDownloadOptions() {
+  return (
+    <div className="grid grid-cols-2 gap-3 p-4">
+      <a
+        href={WALLET_DOWNLOAD_LINKS.metamask}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors"
+      >
+        <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center">
+          <Wallet className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <p className="font-medium text-sm">MetaMask</p>
+          <p className="text-xs text-zinc-400">Browser & Mobile</p>
+        </div>
+      </a>
+      
+      <a
+        href={WALLET_DOWNLOAD_LINKS.coinbase}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors"
+      >
+        <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+          <Wallet className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <p className="font-medium text-sm">Coinbase</p>
+          <p className="text-xs text-zinc-400">Easy onboarding</p>
+        </div>
+      </a>
+      
+      <a
+        href={WALLET_DOWNLOAD_LINKS.rainbow}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors"
+      >
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 flex items-center justify-center">
+          <Wallet className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <p className="font-medium text-sm">Rainbow</p>
+          <p className="text-xs text-zinc-400">Mobile wallet</p>
+        </div>
+      </a>
+      
+      <a
+        href={WALLET_DOWNLOAD_LINKS.trust}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors"
+      >
+        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+          <Wallet className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <p className="font-medium text-sm">Trust Wallet</p>
+          <p className="text-xs text-zinc-400">Multi-chain</p>
+        </div>
+      </a>
+    </div>
+  );
 }

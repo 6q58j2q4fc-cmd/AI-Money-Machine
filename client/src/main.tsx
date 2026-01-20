@@ -5,11 +5,13 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import { WagmiProvider } from 'wagmi';
+import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 import { HelmetProvider } from 'react-helmet-async';
 import { config } from './lib/wagmi';
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
+import '@rainbow-me/rainbowkit/styles.css';
 
 const queryClient = new QueryClient();
 
@@ -58,11 +60,20 @@ const trpcClient = trpc.createClient({
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>
     <WagmiProvider config={config}>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
-      </trpc.Provider>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider 
+          theme={darkTheme({
+            accentColor: '#EAB308',
+            accentColorForeground: 'black',
+            borderRadius: 'medium',
+          })}
+          modalSize="compact"
+        >
+          <trpc.Provider client={trpcClient} queryClient={queryClient}>
+            <App />
+          </trpc.Provider>
+        </RainbowKitProvider>
+      </QueryClientProvider>
     </WagmiProvider>
   </HelmetProvider>
 );

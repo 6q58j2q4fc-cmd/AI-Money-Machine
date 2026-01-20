@@ -102,6 +102,21 @@ async function startServer() {
       // Add homepage
       sitemap += `  <url>\n    <loc>${baseUrl}/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
       
+      // Add blog main page
+      sitemap += `  <url>\n    <loc>${baseUrl}/blog</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
+      
+      // Add NFT marketplace
+      sitemap += `  <url>\n    <loc>${baseUrl}/market</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
+      
+      // Add About page
+      sitemap += `  <url>\n    <loc>${baseUrl}/about</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+      
+      // Add category pages
+      const categories = ['technology', 'finance', 'productivity', 'health', 'lifestyle', 'business', 'crypto', 'ai'];
+      for (const cat of categories) {
+        sitemap += `  <url>\n    <loc>${baseUrl}/blog/category/${cat}</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+      }
+      
       // Add all published articles
       for (const article of articles) {
         const lastmod = article.updatedAt ? new Date(article.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];

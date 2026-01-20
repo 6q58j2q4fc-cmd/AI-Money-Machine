@@ -21,43 +21,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount, useDisconnect, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { parseEther } from 'viem';
 
-// Wallet hook (same as marketplace)
-function useWallet() {
-  const [address, setAddress] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
+// Hot wallet address for receiving NFT purchase funds
+const HOT_WALLET_ADDRESS = '0x75812e1c7e6a87752b4429bc6eFe7e6a8775cD3a' as const;
+
+// Wallet hook using wagmi/RainbowKit
+function useWalletConnection() {
+  const { address, isConnected, isConnecting } = useAccount();
+  const { disconnect } = useDisconnect();
   
-  const connect = async () => {
-    setIsConnecting(true);
-    try {
-      if (typeof window !== "undefined" && (window as any).ethereum) {
-        const accounts = await (window as any).ethereum.request({
-          method: "eth_requestAccounts",
-        });
-        if (accounts[0]) {
-          setAddress(accounts[0]);
-          localStorage.setItem("walletAddress", accounts[0]);
-        }
-      } else {
-        alert("Please install MetaMask to connect your wallet");
-      }
-    } catch (err) {
-      console.error("Failed to connect wallet:", err);
-    }
-    setIsConnecting(false);
+  return { 
+    address: address || null, 
+    isConnected,
+    isConnecting, 
+    disconnect 
   };
-  
-  const disconnect = () => {
-    setAddress(null);
-    localStorage.removeItem("walletAddress");
-  };
-  
-  useEffect(() => {
-    const saved = localStorage.getItem("walletAddress");
-    if (saved) setAddress(saved);
-  }, []);
-  
-  return { address, isConnecting, connect, disconnect };
 }
 
 export default function PublicNFTDetail() {
@@ -73,7 +54,13 @@ export default function PublicNFTDetail() {
   const [buyerName, setBuyerName] = useState("");
   const [showStripeDialog, setShowStripeDialog] = useState(false);
   
-  const wallet = useWallet();
+  const wallet = useWalletConnection();
+  
+  // Wagmi transaction hooks for real blockchain purchases
+  const { sendTransaction, data: txHash, isPending: isSendingTx } = useSendTransaction();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: txHash,
+  });
   
   // Fetch NFT details
   const { data: nft, isLoading } = trpc.publicMarketplace.getNFTDetails.useQuery(
@@ -118,9 +105,7 @@ export default function PublicNFTDetail() {
     }
   }, [nft]);
   
-  const handleWalletConnect = async () => {
-    await wallet.connect();
-  };
+  // Wallet connection is handled by RainbowKit
   
   const handleBuy = async () => {
     if (!wallet.address) {
@@ -139,46 +124,35 @@ export default function PublicNFTDetail() {
       // For now, we record the purchase intent
       const price = nft.listing?.listPrice || nft.estimatedValue || "0";
       
-      // Simulate blockchain transaction
-      if ((window as any).ethereum) {
-        try {
-          // Request transaction
-          const txHash = await (window as any).ethereum.request({
-            method: "eth_sendTransaction",
-            params: [{
-              from: wallet.address,
-              to: nft.contractAddress || "0x0000000000000000000000000000000000000000",
-              value: "0x" + (parseFloat(String(price)) * 1e18).toString(16),
-            }],
-          });
-          
-          // Record purchase with tx hash
-          await recordPurchase.mutateAsync({
-            buyerId: user.id,
-            buyerWallet: wallet.address,
-            nftAssetId: nft.id,
-            purchasePrice: String(price),
-            currency: "ETH",
-            chain: nft.chain || "ethereum",
-            txHash,
-          });
-          
-          toast.success("Purchase successful! Transaction submitted.");
-        } catch (txErr: any) {
-          if (txErr.code === 4001) {
-            toast.error("Transaction cancelled by user");
-          } else {
-            // Record purchase without tx (pending)
-            await recordPurchase.mutateAsync({
-              buyerId: user.id,
-              buyerWallet: wallet.address,
-              nftAssetId: nft.id,
-              purchasePrice: String(price),
-              currency: "ETH",
-              chain: nft.chain || "ethereum",
-            });
-            toast.success("Purchase recorded! Awaiting blockchain confirmation.");
-          }
+      // Send real blockchain transaction to hot wallet
+      try {
+        // Convert price to wei and send to hot wallet
+        const priceInEth = parseFloat(String(price));
+        
+        sendTransaction({
+          to: HOT_WALLET_ADDRESS,
+          value: parseEther(priceInEth.toString()),
+        });
+        
+        toast.info("Transaction submitted! Waiting for confirmation...");
+        
+        // Record purchase with pending status
+        await recordPurchase.mutateAsync({
+          buyerId: user.id,
+          buyerWallet: wallet.address,
+          nftAssetId: nft.id,
+          purchasePrice: String(price),
+          currency: "ETH",
+          chain: nft.chain || "polygon",
+          txHash: txHash || undefined,
+        });
+        
+      } catch (txErr: any) {
+        if (txErr.code === 4001 || txErr.message?.includes('rejected')) {
+          toast.error("Transaction cancelled by user");
+        } else {
+          console.error("Transaction error:", txErr);
+          toast.error("Transaction failed: " + (txErr.shortMessage || txErr.message));
         }
       }
     } catch (err) {
@@ -289,20 +263,11 @@ export default function PublicNFTDetail() {
             </Link>
             
             <div className="flex items-center gap-3">
-              {wallet.address ? (
-                <Badge variant="outline" className="border-yellow-500/50 text-yellow-500">
-                  {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
-                </Badge>
-              ) : (
-                <Button
-                  onClick={handleWalletConnect}
-                  disabled={wallet.isConnecting}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
-                >
-                  <Wallet className="w-4 h-4 mr-2" />
-                  Connect Wallet
-                </Button>
-              )}
+              <ConnectButton 
+                showBalance={false}
+                chainStatus="icon"
+                accountStatus="address"
+              />
             </div>
           </div>
         </div>

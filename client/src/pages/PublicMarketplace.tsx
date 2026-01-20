@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Wallet, Search, Heart, ShoppingCart, TrendingUp, Grid3X3, Filter, ChevronRight, ExternalLink, Sparkles } from "lucide-react";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount, useDisconnect } from 'wagmi';
 
 // SEO Head component
 function SEOHead() {
@@ -43,42 +45,17 @@ function SEOHead() {
   return null;
 }
 
-// Wallet connection state (simplified - in production use wagmi/viem)
-function useWallet() {
-  const [address, setAddress] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
+// Wallet connection using wagmi/RainbowKit
+function useWalletConnection() {
+  const { address, isConnected, isConnecting } = useAccount();
+  const { disconnect } = useDisconnect();
   
-  const connect = async () => {
-    setIsConnecting(true);
-    try {
-      if (typeof window !== "undefined" && (window as any).ethereum) {
-        const accounts = await (window as any).ethereum.request({
-          method: "eth_requestAccounts",
-        });
-        if (accounts[0]) {
-          setAddress(accounts[0]);
-          localStorage.setItem("walletAddress", accounts[0]);
-        }
-      } else {
-        alert("Please install MetaMask to connect your wallet");
-      }
-    } catch (err) {
-      console.error("Failed to connect wallet:", err);
-    }
-    setIsConnecting(false);
+  return { 
+    address: address || null, 
+    isConnected,
+    isConnecting, 
+    disconnect 
   };
-  
-  const disconnect = () => {
-    setAddress(null);
-    localStorage.removeItem("walletAddress");
-  };
-  
-  useEffect(() => {
-    const saved = localStorage.getItem("walletAddress");
-    if (saved) setAddress(saved);
-  }, []);
-  
-  return { address, isConnecting, connect, disconnect };
 }
 
 // NFT Card component
@@ -142,7 +119,7 @@ export default function PublicMarketplace() {
   const [sortBy, setSortBy] = useState<string>("newest");
   const [priceRange, setPriceRange] = useState<string>("");
   
-  const wallet = useWallet();
+  const wallet = useWalletConnection();
   
   // Fetch data
   const { data: stats } = trpc.publicMarketplace.getStats.useQuery();
@@ -160,12 +137,12 @@ export default function PublicMarketplace() {
   // Auth mutation for wallet
   const walletAuth = trpc.publicMarketplace.walletAuth.useMutation();
   
-  const handleWalletConnect = async () => {
-    await wallet.connect();
+  // Wallet auth is handled automatically by RainbowKit
+  useEffect(() => {
     if (wallet.address) {
-      await walletAuth.mutateAsync({ walletAddress: wallet.address });
+      walletAuth.mutateAsync({ walletAddress: wallet.address }).catch(console.error);
     }
-  };
+  }, [wallet.address]);
   
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
@@ -221,34 +198,21 @@ export default function PublicMarketplace() {
                 </Link>
               </nav>
               
-              {/* Wallet Connection */}
-              {wallet.address ? (
-                <div className="flex items-center gap-2">
+              {/* Wallet Connection - RainbowKit */}
+              <div className="flex items-center gap-2">
+                {wallet.address && (
                   <Link href="/profile">
                     <Button variant="ghost" size="sm" className="text-zinc-300 hover:text-white hover:bg-zinc-800">
                       <Heart className="w-4 h-4" />
                     </Button>
                   </Link>
-                  <div className="flex items-center gap-2 px-3 py-2 bg-zinc-800 rounded-xl">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-sm font-mono text-zinc-300">
-                      {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
-                    </span>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={wallet.disconnect} className="text-zinc-400 hover:text-white">
-                    ✕
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  onClick={handleWalletConnect}
-                  disabled={wallet.isConnecting}
-                  className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-semibold rounded-xl shadow-lg shadow-yellow-500/20"
-                >
-                  <Wallet className="w-4 h-4 mr-2" />
-                  {wallet.isConnecting ? "Connecting..." : "Connect"}
-                </Button>
-              )}
+                )}
+                <ConnectButton 
+                  showBalance={false}
+                  chainStatus="icon"
+                  accountStatus="address"
+                />
+              </div>
             </div>
           </div>
           
@@ -346,10 +310,14 @@ export default function PublicMarketplace() {
                 Explore NFTs
               </Button>
               {!wallet.address && (
-                <Button size="lg" variant="outline" onClick={handleWalletConnect} className="border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10">
-                  <Wallet className="w-5 h-5 mr-2" />
-                  Connect Wallet
-                </Button>
+                <ConnectButton.Custom>
+                  {({ openConnectModal }) => (
+                    <Button size="lg" variant="outline" onClick={openConnectModal} className="border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10">
+                      <Wallet className="w-5 h-5 mr-2" />
+                      Connect Wallet
+                    </Button>
+                  )}
+                </ConnectButton.Custom>
               )}
             </div>
           </div>
