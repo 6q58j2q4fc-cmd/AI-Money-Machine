@@ -277,8 +277,75 @@ export default function Blog() {
     return pages;
   };
 
+  // Organization JSON-LD for the blog
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Benjamin Franklin's Recommendations",
+    "alternateName": "Benjamin Franklin's Top New Brands",
+    "url": typeof window !== 'undefined' ? window.location.origin : '',
+    "logo": typeof window !== 'undefined' ? `${window.location.origin}/benjamin-franklin-logo.png` : '',
+    "description": "Your trusted source for honest product reviews, brand recommendations, and buying guides.",
+    "foundingDate": "2024",
+    "sameAs": [],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer service",
+      "availableLanguage": "English"
+    }
+  };
+
+  // WebSite JSON-LD for search box
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Benjamin Franklin's Recommendations",
+    "url": typeof window !== 'undefined' ? window.location.origin : '',
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": typeof window !== 'undefined' ? `${window.location.origin}/blog?search={search_term_string}` : ''
+      },
+      "query-input": "required name=search_term_string"
+    }
+  };
+
+  // CollectionPage JSON-LD for the blog listing
+  const collectionPageJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Benjamin Franklin's Top New Brands & Recommendations",
+    "description": "Your trusted source for honest product reviews, brand recommendations, and buying guides.",
+    "url": typeof window !== 'undefined' ? `${window.location.origin}/blog` : '',
+    "mainEntity": {
+      "@type": "ItemList",
+      "numberOfItems": totalArticles,
+      "itemListElement": paginatedArticles.slice(0, 10).map((article, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "url": typeof window !== 'undefined' ? `${window.location.origin}/article/${article.slug}` : '',
+        "name": article.title
+      }))
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageJsonLd) }}
+      />
+      
       {/* SEO Meta Tags */}
       <Helmet>
         <title>Benjamin Franklin's Top New Brands & Recommendations | Trusted Reviews Since 2024</title>
@@ -287,39 +354,47 @@ export default function Blog() {
         <meta property="og:title" content="Benjamin Franklin's Top New Brands & Recommendations" />
         <meta property="og:description" content="Your trusted source for honest product reviews and brand recommendations. Expert-curated guides to help you find the best products." />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content="/og-blog.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="/og-blog.png" />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="/blog" />
         <link rel="alternate" type="application/rss+xml" title="Benjamin Franklin's Reviews RSS" href="/rss.xml" />
       </Helmet>
 
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container py-4 flex items-center justify-between">
+      {/* Header - Clean White Theme */}
+      <header className="border-b border-amber-200 bg-white sticky top-0 z-50 shadow-sm">
+        <div className="container py-3 flex items-center justify-between">
           <Link href="/blog">
-            <div className="flex items-center gap-2 cursor-pointer">
-              <span className="text-2xl">💰</span>
+            <div className="flex items-center gap-3 cursor-pointer group">
+              <img 
+                src="/benjamin-franklin-logo.png" 
+                alt="Benjamin Franklin" 
+                className="w-12 h-12 rounded-full border-2 border-amber-400 shadow-md group-hover:scale-105 transition-transform"
+              />
               <div className="flex flex-col">
-                <span className="text-lg font-bold text-primary">Benjamin Franklin's</span>
-                <span className="text-xs text-muted-foreground -mt-1">Top New Brands & Recommendations</span>
+                <span className="text-lg font-serif font-bold text-amber-800">Benjamin Franklin's</span>
+                <span className="text-xs text-amber-600 -mt-0.5">Top New Brands & Recommendations</span>
               </div>
             </div>
           </Link>
-          <nav className="flex items-center gap-4">
-            <a href="/rss.xml" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-              <Badge variant="outline" className="gap-1">
+          <nav className="flex items-center gap-3">
+            <a href="/rss.xml" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:text-amber-900 transition-colors">
+              <Badge variant="outline" className="gap-1 border-amber-300 text-amber-700 hover:bg-amber-50">
                 <ExternalLink className="w-3 h-3" />
                 RSS
               </Badge>
             </a>
             <Link href="/about">
-              <Button variant="ghost" size="sm">About Us</Button>
+              <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-900 hover:bg-amber-50">About Us</Button>
             </Link>
             <Link href="/market">
-              <Button variant="ghost" size="sm">NFT Market</Button>
+              <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-900 hover:bg-amber-50">NFT Market</Button>
             </Link>
             <Link href="/">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-900 hover:bg-amber-50">
                 <Home className="w-4 h-4 mr-2" />
                 Home
               </Button>
@@ -328,32 +403,43 @@ export default function Blog() {
         </div>
       </header>
 
-      {/* Hero with Search */}
-      <section className="container py-12 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          <span className="text-primary">Benjamin Franklin's</span> Top Picks
-        </h1>
-        <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
-          Honest reviews, trusted recommendations, and expert buying guides since 2024. We test products so you don't have to.
-        </p>
-        
-        {/* Stats */}
-        <div className="flex items-center justify-center gap-6 mb-8 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <TrendingUp className="w-4 h-4" />
-            {totalArticles.toLocaleString()} Articles
-          </span>
-          <span className="flex items-center gap-1">
-            <Eye className="w-4 h-4" />
-            {totalViews.toLocaleString()} Total Views
-          </span>
+      {/* Hero with Search - Clean White Background */}
+      <section className="bg-gradient-to-b from-amber-50 to-white py-16 text-center border-b border-amber-100">
+        <div className="container">
+          {/* Hero Image */}
+          <div className="mb-6">
+            <img 
+              src="/benjamin-franklin-logo.png" 
+              alt="Benjamin Franklin" 
+              className="w-24 h-24 mx-auto rounded-full border-4 border-amber-400 shadow-lg"
+            />
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 text-gray-900">
+            <span className="text-amber-700">Benjamin Franklin's</span> Top Picks
+          </h1>
+          <p className="text-xl text-gray-600 mb-6 max-w-2xl mx-auto font-light">
+            "An investment in knowledge pays the best interest." — Honest reviews, trusted recommendations, and expert buying guides since 2024.
+          </p>
+          
+          {/* Stats */}
+          <div className="flex items-center justify-center gap-8 mb-8 text-sm">
+            <span className="flex items-center gap-2 text-amber-700 bg-amber-100 px-4 py-2 rounded-full">
+              <TrendingUp className="w-4 h-4" />
+              <span className="font-semibold">{totalArticles.toLocaleString()}</span> Articles
+            </span>
+            <span className="flex items-center gap-2 text-amber-700 bg-amber-100 px-4 py-2 rounded-full">
+              <Eye className="w-4 h-4" />
+              <span className="font-semibold">{totalViews.toLocaleString()}</span> Total Views
+            </span>
+          </div>
         </div>
         
         {/* Search and Filters */}
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto container">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500" />
               <Input
                 type="text"
                 placeholder="Search articles by title, keyword, or topic..."
@@ -362,7 +448,7 @@ export default function Blog() {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-10 h-12"
+                className="pl-10 h-12 border-amber-200 focus:border-amber-400 focus:ring-amber-400 bg-white"
               />
             </div>
             <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); setCurrentPage(1); }}>
@@ -425,15 +511,15 @@ export default function Blog() {
 
       {/* Popular Tags */}
       {allKeywords.length > 0 && (
-        <section className="container py-6 border-b border-border">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Tag className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground mr-2">Popular topics:</span>
+        <section className="bg-white py-6 border-b border-amber-100">
+          <div className="container flex items-center gap-2 flex-wrap">
+            <Tag className="w-4 h-4 text-amber-600" />
+            <span className="text-sm text-amber-700 mr-2 font-medium">Popular topics:</span>
             {allKeywords.slice(0, 10).map(keyword => (
               <Badge 
                 key={keyword} 
                 variant="outline" 
-                className="cursor-pointer hover:bg-primary/10 transition-colors"
+                className="cursor-pointer border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors"
                 onClick={() => { setSearchQuery(keyword); setCurrentPage(1); }}
               >
                 {keyword}
@@ -444,9 +530,10 @@ export default function Blog() {
       )}
 
       {/* Browse by Category */}
-      <section className="container py-8 border-b border-border">
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Tag className="w-5 h-5" />
+      <section className="bg-white py-8 border-b border-amber-100">
+        <div className="container">
+        <h2 className="text-xl font-serif font-bold mb-4 flex items-center gap-2 text-gray-800">
+          <Tag className="w-5 h-5 text-amber-600" />
           Browse by Category
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
@@ -483,14 +570,16 @@ export default function Blog() {
             );
           })}
         </div>
+        </div>
       </section>
 
       {/* Main Content with Sidebar */}
-      <div className="container py-8">
+      <div className="bg-white min-h-screen">
+        <div className="container py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar - Archive */}
           <aside className="lg:w-64 shrink-0">
-            <Card className="sticky top-24">
+            <Card className="sticky top-24 border-amber-200 bg-amber-50/50">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Archive className="w-5 h-5" />
@@ -610,7 +699,7 @@ export default function Blog() {
                   <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {paginatedArticles.map((article, index) => (
                       <Link key={article.id} href={`/blog/${article.slug}`}>
-                        <Card className="h-full hover:border-primary/50 transition-all cursor-pointer group hover:shadow-lg">
+                        <Card className="h-full bg-white border-amber-200 hover:border-amber-400 transition-all cursor-pointer group hover:shadow-lg">
                           {index < 3 && sortBy === "popular" && currentPage === 1 && (
                             <div className="absolute top-2 right-2 z-10">
                               <Badge className="bg-primary text-primary-foreground">
@@ -632,7 +721,7 @@ export default function Blog() {
                                 {(article.views || 0).toLocaleString()}
                               </span>
                             </div>
-                            <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors text-lg">
+                            <CardTitle className="line-clamp-2 text-gray-900 group-hover:text-amber-700 transition-colors text-lg">
                               {article.title}
                             </CardTitle>
                             {article.excerpt && (
@@ -656,7 +745,7 @@ export default function Blog() {
                                 )}
                               </div>
                             )}
-                            <span className="text-sm text-primary flex items-center gap-1 group-hover:gap-2 transition-all font-medium">
+                            <span className="text-sm text-amber-700 flex items-center gap-1 group-hover:gap-2 transition-all font-medium">
                               Read Full Article <ArrowRight className="w-4 h-4" />
                             </span>
                           </CardContent>
@@ -668,7 +757,7 @@ export default function Blog() {
                   <div className="space-y-4">
                     {paginatedArticles.map((article, index) => (
                       <Link key={article.id} href={`/blog/${article.slug}`}>
-                        <Card className="hover:border-primary/50 transition-all cursor-pointer group hover:shadow-lg">
+                        <Card className="bg-white border-amber-200 hover:border-amber-400 transition-all cursor-pointer group hover:shadow-lg">
                           <div className="flex flex-col md:flex-row md:items-center p-4 gap-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
@@ -782,11 +871,13 @@ export default function Blog() {
             )}
           </main>
         </div>
+        </div>
       </div>
 
       {/* Newsletter CTA */}
-      <section className="container py-12">
-        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+      <section className="bg-white py-12">
+        <div className="container">
+        <Card className="bg-gradient-to-r from-amber-100 to-amber-50 border-amber-200">
           <CardContent className="py-8 text-center">
             <h2 className="text-2xl font-bold mb-2">Stay Updated</h2>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
@@ -798,10 +889,11 @@ export default function Blog() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12 mt-8 bg-card/30">
+      <footer className="border-t border-amber-200 py-12 mt-8 bg-amber-50">
         <div className="container">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>

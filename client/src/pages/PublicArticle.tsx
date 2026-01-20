@@ -169,6 +169,69 @@ export default function PublicArticle() {
   const theme = categoryThemes[articleCategory] || categoryThemes.default;
   const heroImage = categoryImages[articleCategory] || categoryImages.default;
 
+  // Generate Article JSON-LD structured data
+  const articleJsonLd = useMemo(() => {
+    if (!article) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": article.title,
+      "description": article.metaDescription || article.title,
+      "image": heroImage,
+      "author": {
+        "@type": "Person",
+        "name": "Benjamin Franklin",
+        "url": typeof window !== 'undefined' ? `${window.location.origin}/about` : ''
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Benjamin Franklin's Recommendations",
+        "logo": {
+          "@type": "ImageObject",
+          "url": typeof window !== 'undefined' ? `${window.location.origin}/benjamin-franklin-logo.png` : ''
+        }
+      },
+      "datePublished": article.createdAt ? new Date(article.createdAt).toISOString() : new Date().toISOString(),
+      "dateModified": article.updatedAt ? new Date(article.updatedAt).toISOString() : new Date().toISOString(),
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": typeof window !== 'undefined' ? window.location.href : ''
+      },
+      "keywords": article.keywords?.join(', ') || '',
+      "articleSection": articleCategory.charAt(0).toUpperCase() + articleCategory.slice(1)
+    };
+  }, [article, heroImage, articleCategory]);
+
+  // Generate BreadcrumbList JSON-LD
+  const breadcrumbJsonLd = useMemo(() => {
+    if (!article) return null;
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": baseUrl
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Blog",
+          "item": `${baseUrl}/blog`
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": article.title,
+          "item": typeof window !== 'undefined' ? window.location.href : ''
+        }
+      ]
+    };
+  }, [article]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -198,6 +261,20 @@ export default function PublicArticle() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* JSON-LD Structured Data */}
+      {articleJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+        />
+      )}
+      {breadcrumbJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        />
+      )}
+      
       {/* Professional Header with Category Theme */}
       <header className={`border-b border-border bg-gradient-to-r ${theme.gradient} backdrop-blur-sm sticky top-0 z-50`}>
         <div className="container max-w-6xl py-4 flex items-center justify-between">

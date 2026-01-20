@@ -2681,3 +2681,28 @@
 - [x] Add H1 heading to homepage for SEO (already present)
 - [x] Add H2 headings to homepage sections for SEO (added to Dashboard)
 - [x] Verify proper heading hierarchy on homepage (H1: 1, H2: 2)
+
+
+## SEO & Blog Redesign (January 20, 2026)
+
+### Structured Data (JSON-LD)
+- [x] Implement Article schema markup on blog posts (PublicArticle.tsx)
+- [x] Implement Organization schema on Blog page
+- [x] Add Website schema for search functionality
+- [x] Add CollectionPage schema for blog listing
+
+### Open Graph Images
+- [x] Create custom OG image for homepage (og-home.png)
+- [x] Create custom OG image for blog listing page (og-blog.png)
+- [x] Add Benjamin Franklin logo image (benjamin-franklin-logo.png)
+
+### Benjamin Franklin Blog Theme
+- [x] Add Benjamin Franklin hero logo/image (gold medallion style)
+- [x] Redesign blog with clean white background
+- [x] Update typography for classic/professional look (serif fonts, amber colors)
+- [x] Ensure proper contrast and readability (gray-900 text on white)
+- [x] Update blog header with Franklin branding (amber theme)
+- [x] Update article cards with white background and amber borders
+- [x] Update footer with amber-50 background
+- [x] Update newsletter section with amber gradient
+- [x] Add famous Franklin quote to hero section
