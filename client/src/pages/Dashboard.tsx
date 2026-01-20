@@ -353,7 +353,7 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white">
               <BarChart3 className="w-5 h-5 text-blue-400" />
-              Live System Performance
+              <h2 className="text-lg font-semibold">Live System Performance</h2>
             </CardTitle>
             <CardDescription>Real-time monitoring of all platform features</CardDescription>
           </CardHeader>
@@ -455,7 +455,7 @@ export default function Dashboard() {
               <div>
                 <CardTitle className="flex items-center gap-2 text-white">
                   <Globe className="w-5 h-5 text-emerald-400" />
-                  Benjamin Franklin's Recommendations Blog
+                  <h2 className="text-lg font-semibold">Benjamin Franklin's Recommendations Blog</h2>
                 </CardTitle>
                 <CardDescription>Real-time stats from your public article blog</CardDescription>
               </div>

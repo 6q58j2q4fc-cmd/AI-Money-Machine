@@ -2674,3 +2674,10 @@
 - [x] Updated contentPipeline.ts with getDiverseCJLinksForContent() function
 - [x] Advertisers matched to article categories based on keyword relevance
 - [x] All affiliate links use proper CJ tracking format with commission rates
+
+
+## Homepage SEO Fixes (January 20, 2026)
+
+- [x] Add H1 heading to homepage for SEO (already present)
+- [x] Add H2 headings to homepage sections for SEO (added to Dashboard)
+- [x] Verify proper heading hierarchy on homepage (H1: 1, H2: 2)
