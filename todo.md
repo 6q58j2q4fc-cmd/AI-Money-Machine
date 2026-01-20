@@ -2624,3 +2624,12 @@
 - [x] Updated sitemap.xml to include NFT marketplace pages
 - [x] Created robots.txt for SEO optimization
 - [x] Verified wallet connection modal works properly
+
+
+## CJ Advertiser Diversification (January 20, 2026)
+
+- [ ] Fetch available CJ advertisers from API across all categories
+- [ ] Add diverse affiliate links from multiple CJ advertisers
+- [ ] Match advertisers to article categories (Tech, Finance, Lifestyle, Health, etc.)
+- [ ] Replace single-advertiser links with category-appropriate advertisers
+- [ ] Verify articles have varied affiliate links from different advertisers
