@@ -18,6 +18,7 @@ import AutomationCenter from "./pages/AutomationCenter";
 import Blog from "./pages/Blog";
 import PublicArticle from './pages/PublicArticle';
 import CategoryPage from './pages/CategoryPage';
+import CategoryLanding from './pages/CategoryLanding';
 import AboutUs from './pages/AboutUs';
 import DistributionCenter from "./pages/DistributionCenter";
 import BotIntelligence from "./pages/BotIntelligence";
@@ -82,7 +83,7 @@ function Router() {
       <Route path="/security" component={SecurityDashboard} />
       <Route path="/watchlist" component={NFTWatchlist} />
       <Route path="/blog" component={Blog} />
-      <Route path="/blog/category/:slug" component={CategoryPage} />
+      <Route path="/blog/category/:category" component={CategoryLanding} />
       <Route path="/blog/:slug" component={PublicArticle} />
       <Route path="/about" component={AboutUs} />
       <Route path="/article/:slug" component={PublicArticle} />

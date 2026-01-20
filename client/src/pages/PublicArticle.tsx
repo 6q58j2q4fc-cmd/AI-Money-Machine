@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { SocialProofSection, StarRating, TrustBadges } from "@/components/SocialProof";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -611,6 +612,14 @@ export default function PublicArticle() {
                 </div>
               </div>
             )}
+
+            {/* Social Proof Section */}
+            <div className="mt-12 pt-8 border-t border-border">
+              <SocialProofSection 
+                productName={affiliateLinks.length > 0 ? affiliateLinks[0]?.link?.name : article.title}
+                category={articleCategory}
+              />
+            </div>
           </div>
 
           {/* Sidebar with Sticky Affiliate Links */}
