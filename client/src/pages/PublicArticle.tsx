@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { SocialProofSection, StarRating, TrustBadges } from "@/components/SocialProof";
+import { AdPlaceholder } from "@/components/AdSense";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -568,6 +569,11 @@ export default function PublicArticle() {
               dangerouslySetInnerHTML={{ __html: parsedContent }}
             />
 
+            {/* In-Article Ad Placement */}
+            <div className="my-8">
+              <AdPlaceholder type="in-article" className="mx-auto" />
+            </div>
+
             {/* Inline Product Cards */}
             {affiliateLinks.length > 0 && (
               <div className="mt-12 space-y-6">
@@ -731,6 +737,11 @@ export default function PublicArticle() {
                     {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
+              </div>
+
+              {/* Sidebar Ad Placement */}
+              <div className="mt-6">
+                <AdPlaceholder type="sidebar" className="mx-auto" />
               </div>
             </div>
           </div>

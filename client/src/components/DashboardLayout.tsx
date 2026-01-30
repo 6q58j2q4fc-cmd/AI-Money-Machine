@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package, Crown, Network, Gift, Palette, Coins, ExternalLink, Wallet, HeartPulse, Bug, ClipboardCheck, Key, Clock, Store, Heart, Newspaper, ChevronDown, ChevronRight, Rss, Archive, PenTool, FolderOpen } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, FileText, Link2, BarChart3, BookOpen, Settings2, Zap, Rocket, Globe, Brain, Cog, Bot, Shield, Activity, Cpu, Sparkles, Gauge, Package, Crown, Network, Gift, Palette, Coins, ExternalLink, Wallet, HeartPulse, Bug, ClipboardCheck, Key, Clock, Store, Heart, Newspaper, ChevronDown, ChevronRight, Rss, Archive, PenTool, FolderOpen, DollarSign } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -65,6 +65,7 @@ const menuItems: MenuItem[] = [
   { icon: Crown, label: "Hive Mind Center", path: "/hive-mind" },
   { icon: Network, label: "Network Connections", path: "/network-connections" },
   { icon: Gift, label: "Free Income", path: "/free-income" },
+  { icon: DollarSign, label: "Unclaimed Property", path: "/unclaimed-property" },
   { icon: Palette, label: "NFT Gallery", path: "/nft-gallery" },
   { icon: Crown, label: "NFT Empire", path: "/nft-empire" },
   { icon: Zap, label: "Always Awake", path: "/always-awake" },

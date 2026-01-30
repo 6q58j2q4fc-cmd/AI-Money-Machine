@@ -60,6 +60,7 @@ import NotificationSettings from './pages/NotificationSettings';
 import NotificationHistory from './pages/NotificationHistory';
 import BlockchainMinting from './pages/BlockchainMinting';
 import SecurityDashboard from './pages/SecurityDashboard';
+import UnclaimedProperty from './pages/UnclaimedProperty';
 import AdminOnly from './components/AdminOnly';
 
 // Admin-protected page wrapper
@@ -78,6 +79,7 @@ function Router() {
       <Route path="/marketplace" component={NFTMarketplace} />
       <Route path="/marketplace/nft/:id" component={NFTMarketplace} />
       <Route path="/transactions" component={TransactionHistory} />
+      <Route path="/unclaimed-property" component={UnclaimedProperty} />
       <Route path="/notification-history" component={NotificationHistory} />
       <Route path="/blockchain-minting" component={BlockchainMinting} />
       <Route path="/security" component={SecurityDashboard} />

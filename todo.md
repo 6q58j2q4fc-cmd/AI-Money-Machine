@@ -2758,3 +2758,37 @@
 - [x] Add related subcategories navigation (Browse Topics)
 - [x] Add customer testimonials section (What Readers Say)
 - [x] Add CTA section for browsing all articles
+
+
+## Cybersecurity Education Chatbot (January 29, 2026)
+
+### Chatbot Features
+- [ ] Create CyberSecurityChat page component
+- [ ] Implement chat interface with message history
+- [ ] Add LLM backend integration for responses
+- [ ] Create cybersecurity-focused system prompt
+- [ ] Add knowledge base for certifications (CEH, OSCP, CompTIA)
+- [ ] Include OWASP Top 10 educational content
+- [ ] Add career guidance responses
+- [ ] Implement defensive security best practices
+- [ ] Add chat history persistence
+- [ ] Style with cybersecurity/hacker aesthetic theme
+
+
+## Unclaimed Property Search & AdSense Integration (January 29, 2026)
+
+### Unclaimed Property Search Tool
+- [x] Create UnclaimedProperty page component
+- [x] Build search form with name, state selection
+- [x] Add all 50 US state + DC + Federal unclaimed property database links (52 total)
+- [x] Create search results display with claim links
+- [x] Add search history tracking
+- [x] Include direct links to official state claim portals
+- [x] Add sidebar navigation link
+
+### Google AdSense Integration
+- [x] Create AdPlaceholder component for display ads
+- [x] Add ad placements to PublicArticle page (sidebar + in-article)
+- [x] Add ad placeholder styling
+- [ ] User needs to apply for Google AdSense account
+- [ ] User needs to add AdSense publisher ID to activate ads

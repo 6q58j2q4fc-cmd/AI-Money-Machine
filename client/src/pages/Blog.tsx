@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format, parseISO, getYear, getMonth } from "date-fns";
 import { Helmet } from "react-helmet-async";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AdPlaceholder } from "@/components/AdSense";
 
 // Categories for filtering
 const CATEGORIES = [
