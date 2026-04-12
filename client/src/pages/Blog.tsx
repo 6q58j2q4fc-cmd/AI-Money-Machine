@@ -285,7 +285,7 @@ export default function Blog() {
     "name": "Benjamin Franklin's Recommendations",
     "alternateName": "Benjamin Franklin's Top New Brands",
     "url": typeof window !== 'undefined' ? window.location.origin : '',
-    "logo": typeof window !== 'undefined' ? `${window.location.origin}/benjamin-franklin-logo.png` : '',
+    "logo": "https://d2xsxph8kpxj0f.cloudfront.net/310519663234433834/RymVrvaM7i66nf7Xs2w9Hu/benjamin-franklin-logo_c2433bb0.png",
     "description": "Your trusted source for honest product reviews, brand recommendations, and buying guides.",
     "foundingDate": "2024",
     "sameAs": [],
@@ -355,11 +355,11 @@ export default function Blog() {
         <meta property="og:title" content="Benjamin Franklin's Top New Brands & Recommendations" />
         <meta property="og:description" content="Your trusted source for honest product reviews and brand recommendations. Expert-curated guides to help you find the best products." />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="/og-blog.png" />
+        <meta property="og:image" content="https://d2xsxph8kpxj0f.cloudfront.net/310519663234433834/RymVrvaM7i66nf7Xs2w9Hu/og-blog_3795dd4f.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:image" content="/og-blog.png" />
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://d2xsxph8kpxj0f.cloudfront.net/310519663234433834/RymVrvaM7i66nf7Xs2w9Hu/og-blog_3795dd4f.png" />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="/blog" />
         <link rel="alternate" type="application/rss+xml" title="Benjamin Franklin's Reviews RSS" href="/rss.xml" />
@@ -371,8 +371,8 @@ export default function Blog() {
           <Link href="/blog">
             <div className="flex items-center gap-3 cursor-pointer group">
               <img 
-                src="/benjamin-franklin-logo.png" 
-                alt="Benjamin Franklin" 
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663234433834/RymVrvaM7i66nf7Xs2w9Hu/benjamin-franklin-logo_c2433bb0.png"
+                alt="Benjamin Franklin"
                 className="w-12 h-12 rounded-full border-2 border-amber-400 shadow-md group-hover:scale-105 transition-transform"
               />
               <div className="flex flex-col">
@@ -410,8 +410,8 @@ export default function Blog() {
           {/* Hero Image */}
           <div className="mb-6">
             <img 
-              src="/benjamin-franklin-logo.png" 
-              alt="Benjamin Franklin" 
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663234433834/RymVrvaM7i66nf7Xs2w9Hu/benjamin-franklin-logo_c2433bb0.png"
+              alt="Benjamin Franklin"
               className="w-24 h-24 mx-auto rounded-full border-4 border-amber-400 shadow-lg"
             />
           </div>

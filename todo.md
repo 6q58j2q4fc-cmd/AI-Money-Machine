@@ -2792,3 +2792,39 @@
 - [x] Add ad placeholder styling
 - [ ] User needs to apply for Google AdSense account
 - [ ] User needs to add AdSense publisher ID to activate ads
+
+
+## Affiliate Link Fix & Advanced SEO (Apr 7, 2026)
+
+### Affiliate Links
+- [ ] Audit all affiliate links in articles for broken/non-working URLs
+- [ ] Replace all affiliate links with real working CJ tracking URLs
+- [ ] Map each article category to the most relevant CJ advertiser
+- [ ] Ensure CJ tracking parameters (cjevent, utm_source, etc.) are correct
+- [ ] Add affiliate disclosure to every article
+
+### Google Search Indexing
+- [ ] Implement dynamic meta title/description per article
+- [ ] Add canonical tags to all article pages
+- [ ] Create/update robots.txt with sitemap reference
+- [ ] Add breadcrumb schema to all pages
+- [ ] Implement Open Graph and Twitter Card meta tags per article
+- [ ] Add Article JSON-LD with full author, publisher, datePublished fields
+- [ ] Submit sitemap.xml to Google Search Console
+
+### Real-Time Lead Capture (Top Affiliate Marketer Strategies)
+- [ ] Exit-intent popup with email capture
+- [ ] Scroll-triggered lead magnet offer (at 60% scroll depth)
+- [ ] Sticky header CTA bar with offer
+- [ ] Inline content upgrades within articles
+- [ ] Social proof notification toasts (recent activity)
+- [ ] Email capture with lead magnet (free guide)
+- [ ] Cookie-based visitor memory (don't show popup to subscribers)
+- [ ] A/B testable CTA buttons
+
+### Conversion Optimization
+- [ ] Add urgency/scarcity elements to product cards
+- [ ] Implement comparison tables for affiliate products
+- [ ] Add "Best Price" badges to top affiliate links
+- [ ] Sticky sidebar affiliate CTA on articles
+- [ ] Related products section at article bottom

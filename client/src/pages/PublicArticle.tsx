@@ -13,6 +13,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { SocialProofSection, StarRating, TrustBadges } from "@/components/SocialProof";
 import { AdPlaceholder } from "@/components/AdSense";
+import { ExitIntentPopup, ScrollAffiliateCTA, ContentUpgradeBox, DealCountdown } from "@/components/LeadCapture";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,54 +74,55 @@ const categoryImages: Record<string, string> = {
   default: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
 };
 
-// Category color themes - matching category images
-const categoryThemes: Record<string, { gradient: string; accent: string; badge: string }> = {
+// Category color themes - clean white/amber theme matching Benjamin Franklin blog
+const categoryThemes: Record<string, { gradient: string; accent: string; badge: string; headerBg: string }> = {
   // Technology & Software
-  technology: { gradient: "from-blue-600/20 to-cyan-600/10", accent: "text-blue-400", badge: "bg-blue-500/20 text-blue-300" },
-  cybersecurity: { gradient: "from-slate-600/20 to-gray-600/10", accent: "text-slate-400", badge: "bg-slate-500/20 text-slate-300" },
-  vpn: { gradient: "from-teal-600/20 to-cyan-600/10", accent: "text-teal-400", badge: "bg-teal-500/20 text-teal-300" },
-  ai: { gradient: "from-violet-600/20 to-purple-600/10", accent: "text-violet-400", badge: "bg-violet-500/20 text-violet-300" },
-  gadgets: { gradient: "from-sky-600/20 to-blue-600/10", accent: "text-sky-400", badge: "bg-sky-500/20 text-sky-300" },
+  technology: { gradient: "from-blue-50 to-white", accent: "text-blue-600", badge: "bg-blue-100 text-blue-700", headerBg: "bg-blue-600" },
+  cybersecurity: { gradient: "from-slate-50 to-white", accent: "text-slate-600", badge: "bg-slate-100 text-slate-700", headerBg: "bg-slate-700" },
+  vpn: { gradient: "from-teal-50 to-white", accent: "text-teal-600", badge: "bg-teal-100 text-teal-700", headerBg: "bg-teal-600" },
+  ai: { gradient: "from-violet-50 to-white", accent: "text-violet-600", badge: "bg-violet-100 text-violet-700", headerBg: "bg-violet-600" },
+  gadgets: { gradient: "from-sky-50 to-white", accent: "text-sky-600", badge: "bg-sky-100 text-sky-700", headerBg: "bg-sky-600" },
   
   // Finance & Business
-  investing: { gradient: "from-emerald-600/20 to-green-600/10", accent: "text-emerald-400", badge: "bg-emerald-500/20 text-emerald-300" },
-  crypto: { gradient: "from-orange-600/20 to-amber-600/10", accent: "text-orange-400", badge: "bg-orange-500/20 text-orange-300" },
-  banking: { gradient: "from-blue-600/20 to-indigo-600/10", accent: "text-blue-400", badge: "bg-blue-500/20 text-blue-300" },
-  tax: { gradient: "from-lime-600/20 to-green-600/10", accent: "text-lime-400", badge: "bg-lime-500/20 text-lime-300" },
-  business: { gradient: "from-gray-600/20 to-slate-600/10", accent: "text-gray-400", badge: "bg-gray-500/20 text-gray-300" },
+  investing: { gradient: "from-emerald-50 to-white", accent: "text-emerald-600", badge: "bg-emerald-100 text-emerald-700", headerBg: "bg-emerald-600" },
+  crypto: { gradient: "from-orange-50 to-white", accent: "text-orange-600", badge: "bg-orange-100 text-orange-700", headerBg: "bg-orange-600" },
+  banking: { gradient: "from-blue-50 to-white", accent: "text-blue-600", badge: "bg-blue-100 text-blue-700", headerBg: "bg-blue-700" },
+  tax: { gradient: "from-lime-50 to-white", accent: "text-lime-700", badge: "bg-lime-100 text-lime-700", headerBg: "bg-lime-600" },
+  business: { gradient: "from-gray-50 to-white", accent: "text-gray-600", badge: "bg-gray-100 text-gray-700", headerBg: "bg-gray-700" },
   
   // Health & Wellness
-  wellness: { gradient: "from-teal-600/20 to-emerald-600/10", accent: "text-teal-400", badge: "bg-teal-500/20 text-teal-300" },
-  fitness: { gradient: "from-orange-600/20 to-red-600/10", accent: "text-orange-400", badge: "bg-orange-500/20 text-orange-300" },
-  medical: { gradient: "from-red-600/20 to-rose-600/10", accent: "text-red-400", badge: "bg-red-500/20 text-red-300" },
-  nutrition: { gradient: "from-green-600/20 to-lime-600/10", accent: "text-green-400", badge: "bg-green-500/20 text-green-300" },
+  wellness: { gradient: "from-teal-50 to-white", accent: "text-teal-600", badge: "bg-teal-100 text-teal-700", headerBg: "bg-teal-600" },
+  fitness: { gradient: "from-orange-50 to-white", accent: "text-orange-600", badge: "bg-orange-100 text-orange-700", headerBg: "bg-orange-500" },
+  medical: { gradient: "from-red-50 to-white", accent: "text-red-600", badge: "bg-red-100 text-red-700", headerBg: "bg-red-600" },
+  nutrition: { gradient: "from-green-50 to-white", accent: "text-green-600", badge: "bg-green-100 text-green-700", headerBg: "bg-green-600" },
   
   // Home & Lifestyle
-  home: { gradient: "from-amber-600/20 to-yellow-600/10", accent: "text-amber-400", badge: "bg-amber-500/20 text-amber-300" },
-  "smart home": { gradient: "from-cyan-600/20 to-blue-600/10", accent: "text-cyan-400", badge: "bg-cyan-500/20 text-cyan-300" },
-  security: { gradient: "from-slate-600/20 to-zinc-600/10", accent: "text-slate-400", badge: "bg-slate-500/20 text-slate-300" },
-  furniture: { gradient: "from-stone-600/20 to-neutral-600/10", accent: "text-stone-400", badge: "bg-stone-500/20 text-stone-300" },
+  home: { gradient: "from-amber-50 to-white", accent: "text-amber-600", badge: "bg-amber-100 text-amber-700", headerBg: "bg-amber-600" },
+  "smart home": { gradient: "from-cyan-50 to-white", accent: "text-cyan-600", badge: "bg-cyan-100 text-cyan-700", headerBg: "bg-cyan-600" },
+  security: { gradient: "from-slate-50 to-white", accent: "text-slate-600", badge: "bg-slate-100 text-slate-700", headerBg: "bg-slate-600" },
+  furniture: { gradient: "from-stone-50 to-white", accent: "text-stone-600", badge: "bg-stone-100 text-stone-700", headerBg: "bg-stone-600" },
   
   // Education & Career
-  learning: { gradient: "from-blue-600/20 to-sky-600/10", accent: "text-blue-400", badge: "bg-blue-500/20 text-blue-300" },
-  career: { gradient: "from-indigo-600/20 to-blue-600/10", accent: "text-indigo-400", badge: "bg-indigo-500/20 text-indigo-300" },
-  productivity: { gradient: "from-purple-600/20 to-violet-600/10", accent: "text-purple-400", badge: "bg-purple-500/20 text-purple-300" },
+  learning: { gradient: "from-blue-50 to-white", accent: "text-blue-600", badge: "bg-blue-100 text-blue-700", headerBg: "bg-blue-600" },
+  career: { gradient: "from-indigo-50 to-white", accent: "text-indigo-600", badge: "bg-indigo-100 text-indigo-700", headerBg: "bg-indigo-600" },
+  productivity: { gradient: "from-purple-50 to-white", accent: "text-purple-600", badge: "bg-purple-100 text-purple-700", headerBg: "bg-purple-600" },
   
   // Travel & Adventure
-  travel: { gradient: "from-sky-600/20 to-blue-600/10", accent: "text-sky-400", badge: "bg-sky-500/20 text-sky-300" },
-  adventure: { gradient: "from-emerald-600/20 to-teal-600/10", accent: "text-emerald-400", badge: "bg-emerald-500/20 text-emerald-300" },
-  outdoor: { gradient: "from-green-600/20 to-emerald-600/10", accent: "text-green-400", badge: "bg-green-500/20 text-green-300" },
-  vacation: { gradient: "from-cyan-600/20 to-sky-600/10", accent: "text-cyan-400", badge: "bg-cyan-500/20 text-cyan-300" },
+  travel: { gradient: "from-sky-50 to-white", accent: "text-sky-600", badge: "bg-sky-100 text-sky-700", headerBg: "bg-sky-600" },
+  adventure: { gradient: "from-emerald-50 to-white", accent: "text-emerald-600", badge: "bg-emerald-100 text-emerald-700", headerBg: "bg-emerald-600" },
+  outdoor: { gradient: "from-green-50 to-white", accent: "text-green-600", badge: "bg-green-100 text-green-700", headerBg: "bg-green-600" },
+  vacation: { gradient: "from-cyan-50 to-white", accent: "text-cyan-600", badge: "bg-cyan-100 text-cyan-700", headerBg: "bg-cyan-600" },
   
   // Food & Shopping
-  shopping: { gradient: "from-pink-600/20 to-rose-600/10", accent: "text-pink-400", badge: "bg-pink-500/20 text-pink-300" },
-  software: { gradient: "from-purple-600/20 to-pink-600/10", accent: "text-purple-400", badge: "bg-purple-500/20 text-purple-300" },
-  finance: { gradient: "from-green-600/20 to-emerald-600/10", accent: "text-green-400", badge: "bg-green-500/20 text-green-300" },
-  health: { gradient: "from-red-600/20 to-orange-600/10", accent: "text-red-400", badge: "bg-red-500/20 text-red-300" },
-  lifestyle: { gradient: "from-pink-600/20 to-rose-600/10", accent: "text-pink-400", badge: "bg-pink-500/20 text-pink-300" },
-  education: { gradient: "from-yellow-600/20 to-amber-600/10", accent: "text-yellow-400", badge: "bg-yellow-500/20 text-yellow-300" },
-  entertainment: { gradient: "from-indigo-600/20 to-violet-600/10", accent: "text-indigo-400", badge: "bg-indigo-500/20 text-indigo-300" },
-  default: { gradient: "from-primary/20 to-primary/5", accent: "text-primary", badge: "bg-primary/20 text-primary" },
+  shopping: { gradient: "from-pink-50 to-white", accent: "text-pink-600", badge: "bg-pink-100 text-pink-700", headerBg: "bg-pink-600" },
+  software: { gradient: "from-purple-50 to-white", accent: "text-purple-600", badge: "bg-purple-100 text-purple-700", headerBg: "bg-purple-600" },
+  finance: { gradient: "from-green-50 to-white", accent: "text-green-600", badge: "bg-green-100 text-green-700", headerBg: "bg-green-700" },
+  health: { gradient: "from-rose-50 to-white", accent: "text-rose-600", badge: "bg-rose-100 text-rose-700", headerBg: "bg-rose-600" },
+  lifestyle: { gradient: "from-pink-50 to-white", accent: "text-pink-600", badge: "bg-pink-100 text-pink-700", headerBg: "bg-pink-600" },
+  education: { gradient: "from-amber-50 to-white", accent: "text-amber-600", badge: "bg-amber-100 text-amber-700", headerBg: "bg-amber-600" },
+  entertainment: { gradient: "from-indigo-50 to-white", accent: "text-indigo-600", badge: "bg-indigo-100 text-indigo-700", headerBg: "bg-indigo-600" },
+  food: { gradient: "from-orange-50 to-white", accent: "text-orange-600", badge: "bg-orange-100 text-orange-700", headerBg: "bg-orange-500" },
+  default: { gradient: "from-amber-50 to-white", accent: "text-amber-600", badge: "bg-amber-100 text-amber-700", headerBg: "bg-amber-600" },
 };
 
 export default function PublicArticle() {
@@ -244,8 +246,33 @@ export default function PublicArticle() {
     }
   }, [article?.content]);
 
-  // Get category from first affiliate link or default
-  const articleCategory = displayLinks?.[0]?.link?.category?.toLowerCase() || "default";
+  // Detect category from article title/keywords for better relevance
+  const articleCategory = useMemo(() => {
+    const titleAndKeywords = [
+      article?.title || '',
+      ...(article?.keywords as string[] || [])
+    ].join(' ').toLowerCase();
+    
+    // Health/Medical keywords
+    if (/blood pressure|medical alert|heart|diabetes|senior|health|wellness|fitness|nutrition|supplement|vitamin|doctor|hospital|medicine|gps tracking|fall detection/.test(titleAndKeywords)) return 'health';
+    // Finance keywords
+    if (/tax|invest|credit|bank|loan|mortgage|budget|finance|money|saving|401k|ira|stock|crypto|insurance/.test(titleAndKeywords)) return 'finance';
+    // Technology keywords
+    if (/vpn|software|app|tech|computer|phone|laptop|gadget|security|antivirus|password|cloud|ai|robot/.test(titleAndKeywords)) return 'technology';
+    // Travel keywords
+    if (/travel|hotel|flight|vacation|trip|tour|booking|airbnb|cruise|destination/.test(titleAndKeywords)) return 'travel';
+    // Education keywords
+    if (/learn|course|education|school|college|degree|skill|training|language|certification/.test(titleAndKeywords)) return 'education';
+    // Home keywords
+    if (/home|house|furniture|decor|kitchen|garden|security camera|doorbell|smart home|cleaning/.test(titleAndKeywords)) return 'home';
+    // Food keywords
+    if (/food|meal|recipe|cook|diet|nutrition|grocery|restaurant|delivery/.test(titleAndKeywords)) return 'food';
+    // Shopping keywords
+    if (/shop|buy|deal|discount|coupon|sale|product|review|best|top/.test(titleAndKeywords)) return 'shopping';
+    // Fall back to first affiliate link category or default
+    return displayLinks?.[0]?.link?.category?.toLowerCase() || 'default';
+  }, [article?.title, article?.keywords, displayLinks]);
+  
   const theme = categoryThemes[articleCategory] || categoryThemes.default;
   const heroImage = categoryImages[articleCategory] || categoryImages.default;
 
@@ -356,6 +383,17 @@ export default function PublicArticle() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Lead Capture Components */}
+      <ExitIntentPopup 
+        articleTitle={article.title}
+        category={articleCategory}
+        affiliateLinks={affiliateLinks}
+      />
+      <ScrollAffiliateCTA 
+        affiliateLinks={affiliateLinks}
+        category={articleCategory}
+      />
+
       {/* JSON-LD Structured Data */}
       {articleJsonLd && (
         <script
@@ -371,10 +409,12 @@ export default function PublicArticle() {
       )}
       
       {/* Professional Header with Category Theme */}
-      <header className={`border-b border-border bg-gradient-to-r ${theme.gradient} backdrop-blur-sm sticky top-0 z-50`}>
-        <div className="container max-w-6xl py-4 flex items-center justify-between">
+      <header className="border-b border-gray-200 bg-white sticky top-0 z-50 shadow-sm">
+        {/* Colored top bar */}
+        <div className={`h-1 w-full ${theme.headerBg}`} />
+        <div className="container max-w-6xl py-3 flex items-center justify-between">
           <Link href="/blog">
-            <Button variant="ghost" size="sm" className="hover:bg-white/10">
+            <Button variant="ghost" size="sm" className="text-gray-700 hover:bg-gray-100">
               <ArrowLeft className="w-4 h-4 mr-2" />
               All Articles
             </Button>
@@ -388,7 +428,7 @@ export default function PublicArticle() {
             {/* Share Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="bg-white/10 border-white/20">
+                <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50">
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </Button>
@@ -431,12 +471,12 @@ export default function PublicArticle() {
       </header>
 
       {/* Hero Section with Product Image */}
-      <div className={`relative bg-gradient-to-b ${theme.gradient} pb-12`}>
+      <div className={`relative bg-gradient-to-b ${theme.gradient} pb-12 border-b border-gray-100`}>
         <div className="container max-w-6xl pt-12">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             {/* Article Info */}
             <div className="space-y-6">
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-3 text-sm text-gray-500">
                 {article.publishedAt && (
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
@@ -453,12 +493,12 @@ export default function PublicArticle() {
                 </span>
               </div>
               
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight">
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight text-gray-900">
                 {article.title}
               </h1>
               
               {article.excerpt && (
-                <p className="text-xl text-muted-foreground leading-relaxed">
+                <p className="text-xl text-gray-600 leading-relaxed">
                   {article.excerpt
                     .replace(/( - Top Picks & Reviews)+/g, '')
                     .replace(/Top Picks & Reviews/g, '')
@@ -469,7 +509,7 @@ export default function PublicArticle() {
               {article.keywords && (article.keywords as string[]).length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {(article.keywords as string[]).slice(0, 5).map((keyword, i) => (
-                    <Badge key={i} variant="secondary" className="bg-white/10">
+                    <Badge key={i} variant="secondary" className="bg-white border border-gray-200 text-gray-600">
                       {keyword}
                     </Badge>
                   ))}
@@ -531,7 +571,8 @@ export default function PublicArticle() {
       </div>
 
       {/* Article Content */}
-      <article className="container max-w-6xl py-12">
+      <article className="bg-white">
+      <div className="container max-w-6xl py-12">
         <div className="grid lg:grid-cols-3 gap-12">
           {/* Main Content */}
           <div className="lg:col-span-2">
@@ -564,15 +605,31 @@ export default function PublicArticle() {
             </div>
 
             <div 
-              className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-foreground/90 prose-blockquote:border-primary prose-blockquote:text-foreground/80 article-content"
+              className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-strong:text-gray-900 prose-a:text-amber-600 prose-a:no-underline hover:prose-a:underline prose-li:text-gray-700 prose-blockquote:border-amber-400 prose-blockquote:text-gray-600 prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-2 article-content"
               onClick={handleLinkClick}
               dangerouslySetInnerHTML={{ __html: parsedContent }}
-            />
+            ></div>
 
             {/* In-Article Ad Placement */}
             <div className="my-8">
               <AdPlaceholder type="in-article" className="mx-auto" />
             </div>
+
+            {/* Content Upgrade Box - Lead Capture */}
+            <ContentUpgradeBox 
+              articleTitle={article.title}
+              category={articleCategory}
+              affiliateLinks={affiliateLinks}
+            />
+
+            {/* Deal Countdown Timer */}
+            {affiliateLinks.length > 0 && affiliateLinks[0]?.link?.url && (
+              <DealCountdown
+                linkName={affiliateLinks[0].link?.name || 'Top Recommended Product'}
+                linkUrl={affiliateLinks[0].link?.url}
+                onLinkClick={() => handleAffiliateClick(affiliateLinks[0].affiliateLinkId)}
+              />
+            )}
 
             {/* Inline Product Cards */}
             {affiliateLinks.length > 0 && (
@@ -746,31 +803,32 @@ export default function PublicArticle() {
             </div>
           </div>
         </div>
+      </div>
       </article>
 
       {/* Professional Footer with Branding */}
-      <footer className={`border-t border-border bg-gradient-to-r ${theme.gradient} py-12`}>
+      <footer className={`border-t border-gray-200 bg-white py-12`}>
         <div className="container max-w-6xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-center md:text-left">
               <div className="flex items-center gap-2 justify-center md:justify-start">
                 <span className="text-2xl">💰</span>
                 <div>
-                  <p className="text-xl font-bold text-primary">Benjamin Franklin's</p>
-                  <p className="text-sm text-muted-foreground">Top New Brands & Recommendations</p>
+                  <p className="text-xl font-bold text-amber-600">Benjamin Franklin's</p>
+                  <p className="text-sm text-gray-500">Top New Brands & Recommendations</p>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <Link href="/blog">
-                <Button variant="outline" className="bg-white/10">
+                <Button variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   More Articles
                 </Button>
               </Link>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t border-border/50 text-center text-sm text-muted-foreground">
+          <div className="mt-8 pt-8 border-t border-gray-200 text-center text-sm text-gray-500">
             <p>© {new Date().getFullYear()} Benjamin Franklin's Top New Brands & Recommendations. All rights reserved.</p>
             <p className="mt-2 text-xs">
               Disclosure: This article contains affiliate links. We may earn a commission if you make a purchase through these links, at no extra cost to you. Our editorial team independently reviews products to provide honest recommendations.
