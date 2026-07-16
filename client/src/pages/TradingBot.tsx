@@ -68,33 +68,50 @@ type LiveSignal = {
   timestamp: number;
 };
 
-type BacktestResult = {
+// Walk-forward result types — mirror the exact server response shape
+type WFWindow = {
+  windowIndex: number;
+  trainStart: number;
+  trainEnd: number;
+  testStart: number;
+  testEnd: number;
+  selectedStrategy: string;  // server field name
+  trainSharpe: number;
+  testSharpe: number;
+  testSortino: number;
+  testMaxDrawdown: number;
+  testWinRate: number;
+  testProfitFactor: number;
+  testCagr: number;
+  testNetPnl: number;
+  tradeCount: number;        // server field name
+};
+
+type WFAggregate = {
+  sharpe: number;
+  sortino: number;
+  maxDrawdown: number;
+  winRate: number;
+  profitFactor: number;
+  cagr: number;
+  totalNetPnl: number;
+  totalTrades: number;
+  deflatedSharpe: number;
+  nVariantsTested: number;
+};
+
+type WFResult = {
+  runId: string;
   symbol: string;
-  strategy: string;
-  startDate: string;
-  endDate: string;
-  startCapital: number;
-  endCapital: number;
-  metrics: {
-    total_return_pct: number;
-    sharpe_ratio: number;
-    sortino_ratio: number;
-    max_drawdown_pct: number;
-    win_rate_pct: number;
-    total_trades: number;
-    profit_factor: number;
-    avg_trade_pct: number;
-  };
-  trades: {
-    entry_time: string;
-    exit_time: string;
-    entry_price: number;
-    exit_price: number;
-    pnl: number;
-    pnl_pct: number;
-    exit_reason: string;
-  }[];
-  equityCurve: { timestamp: string; equity: number }[];
+  initialCapital: number;
+  finalCapital: number;
+  windowCount: number;
+  totalCandles: number;
+  aggregate: WFAggregate;
+  windows: WFWindow[];
+  aggregateEquityCurve: { time: number; equity: number; drawdown: number }[];
+  costs: { commissionFlat: number; commissionPct: number; slippagePct: number };
+  createdAt: number;
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -220,41 +237,55 @@ export default function TradingBot() {
     },
   });
 
-  // Backtest form state
-  const [btSymbol, setBtSymbol] = useState("AAPL");
-  const [btStrategy, setBtStrategy] = useState<"macd_rsi" | "bollinger" | "ma_crossover" | "ml_ensemble">("ml_ensemble");
-  const [btStart, setBtStart] = useState("2023-01-01");
-  const [btEnd, setBtEnd] = useState("2024-01-01");
-  const [btCapital, setBtCapital] = useState("10000");
-  const [btResult, setBtResult] = useState<BacktestResult | null>(null);
+  // Walk-forward backtest state
+  const [wfSymbol, setWfSymbol] = useState("AAPL");
+  const [wfTimeframe, setWfTimeframe] = useState<"1d" | "1h" | "1m">("1d");
+  const [wfTrainBars, setWfTrainBars] = useState("252");
+  const [wfTestBars, setWfTestBars] = useState("63");
+  const [wfCapital, setWfCapital] = useState("10000");
+  const [wfCommFlat, setWfCommFlat] = useState("1.00");
+  const [wfCommPct, setWfCommPct] = useState("0.001");
+  const [wfSlippage, setWfSlippage] = useState("0.0005");
+  const [wfResult, setWfResult] = useState<WFResult | null>(null);
+  const [wfSelectedWindow, setWfSelectedWindow] = useState<number | null>(null);
 
-  const runBacktest = trpc.tradingBot.runBacktest.useMutation({
+  const runWalkForward = trpc.tradingBot.runWalkForward.useMutation({
     onSuccess: (data) => {
-      setBtResult(data as BacktestResult);
-      toast.success("Backtest Complete", { description: `${data.symbol} — ${data.metrics.total_return_pct > 0 ? "+" : ""}${data.metrics.total_return_pct}% return` });
+      setWfResult(data as unknown as WFResult);
+      setWfSelectedWindow(null);
+      const ret = ((data.finalCapital - data.initialCapital) / data.initialCapital * 100).toFixed(1);
+      const agg = (data as unknown as WFResult).aggregate;
+      toast.success("Walk-Forward Complete", {
+        description: `${data.windowCount} windows · Sharpe ${agg?.sharpe?.toFixed(2) ?? "N/A"} · ${ret}% return`,
+      });
     },
-    onError: (err) => {
-      toast.error("Backtest Failed", { description: err.message });
-    },
+    onError: (err) => toast.error("Backtest Failed", { description: err.message }),
   });
 
-  const equityChartData = useMemo(() => {
-    if (!btResult?.equityCurve) return [];
-    // Sample to max 200 points for performance
-    const curve = btResult.equityCurve;
-    const step = Math.max(1, Math.floor(curve.length / 200));
-    return curve.filter((_, i) => i % step === 0);
-  }, [btResult]);
+  const displayedWindow = useMemo(() => {
+    if (!wfResult) return null;
+    if (wfSelectedWindow === null) return null;
+    return wfResult.windows.find((w) => w.windowIndex === wfSelectedWindow) ?? null;
+  }, [wfResult, wfSelectedWindow]);
+
+  const aggregateChartData = useMemo(() => {
+    if (!wfResult?.aggregateEquityCurve) return [];
+    const curve = wfResult.aggregateEquityCurve;
+    const step = Math.max(1, Math.floor(curve.length / 300));
+    return curve.filter((_, i) => i % step === 0).map((p) => ({
+      t: new Date(p.time).toLocaleDateString(),  // server uses 'time' not 't'
+      equity: p.equity,
+    }));
+  }, [wfResult]);
+
+  // Window equity curves are not in the summary response (stripped for size)
+  // We show a placeholder message instead
+  const windowChartData: { t: string; equity: number }[] = [];
 
   const strategyLabels: Record<string, string> = {
     sma_crossover: "SMA Crossover",
     ema_crossover: "EMA Crossover",
     macd: "MACD",
-    // legacy labels kept for backtest display
-    macd_rsi: "MACD + RSI",
-    bollinger: "Bollinger Bands",
-    ma_crossover: "MA Crossover",
-    ml_ensemble: "ML Ensemble",
   };
 
   return (
@@ -515,264 +546,324 @@ export default function TradingBot() {
             </div>
           </TabsContent>
 
-          {/* ── Backtest Tab ── */}
+          {/* ── Walk-Forward Backtest Tab ── */}
           <TabsContent value="backtest">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Form */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* ── Config Panel ── */}
               <Card className="bg-zinc-900 border-zinc-800 lg:col-span-1">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-white text-base">Run Backtest</CardTitle>
+                  <CardTitle className="text-white text-base flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-emerald-400" />
+                    Walk-Forward Config
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3">
                   <div className="space-y-1.5">
                     <Label className="text-zinc-400 text-xs">Symbol</Label>
                     <Input
-                      value={btSymbol}
-                      onChange={(e) => setBtSymbol(e.target.value.toUpperCase())}
+                      value={wfSymbol}
+                      onChange={(e) => setWfSymbol(e.target.value.toUpperCase())}
                       placeholder="AAPL"
-                      className="bg-zinc-800 border-zinc-700 text-white font-mono"
+                      className="bg-zinc-800 border-zinc-700 text-white font-mono h-8 text-sm"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-zinc-400 text-xs">Strategy</Label>
-                    <Select
-                      value={btStrategy}
-                      onValueChange={(v) => setBtStrategy(v as typeof btStrategy)}
-                    >
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                    <Label className="text-zinc-400 text-xs">Timeframe</Label>
+                    <Select value={wfTimeframe} onValueChange={(v) => setWfTimeframe(v as typeof wfTimeframe)}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white h-8 text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-zinc-800 border-zinc-700">
-                        <SelectItem value="ml_ensemble">ML Ensemble</SelectItem>
-                        <SelectItem value="macd_rsi">MACD + RSI</SelectItem>
-                        <SelectItem value="bollinger">Bollinger Bands</SelectItem>
-                        <SelectItem value="ma_crossover">MA Crossover</SelectItem>
+                        <SelectItem value="1d">Daily (1d)</SelectItem>
+                        <SelectItem value="1h">Hourly (1h)</SelectItem>
+                        <SelectItem value="1m">1-Minute (1m)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1.5">
-                      <Label className="text-zinc-400 text-xs">Start Date</Label>
-                      <Input
-                        type="date"
-                        value={btStart}
-                        onChange={(e) => setBtStart(e.target.value)}
-                        className="bg-zinc-800 border-zinc-700 text-white"
-                      />
+                      <Label className="text-zinc-400 text-xs">Train Bars</Label>
+                      <Input type="number" value={wfTrainBars} onChange={(e) => setWfTrainBars(e.target.value)}
+                        min={30} className="bg-zinc-800 border-zinc-700 text-white font-mono h-8 text-sm" />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-zinc-400 text-xs">End Date</Label>
-                      <Input
-                        type="date"
-                        value={btEnd}
-                        onChange={(e) => setBtEnd(e.target.value)}
-                        className="bg-zinc-800 border-zinc-700 text-white"
-                      />
+                      <Label className="text-zinc-400 text-xs">Test Bars</Label>
+                      <Input type="number" value={wfTestBars} onChange={(e) => setWfTestBars(e.target.value)}
+                        min={10} className="bg-zinc-800 border-zinc-700 text-white font-mono h-8 text-sm" />
                     </div>
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-zinc-400 text-xs">Initial Capital ($)</Label>
-                    <Input
-                      type="number"
-                      value={btCapital}
-                      onChange={(e) => setBtCapital(e.target.value)}
-                      min={100}
-                      className="bg-zinc-800 border-zinc-700 text-white font-mono"
-                    />
+                    <Input type="number" value={wfCapital} onChange={(e) => setWfCapital(e.target.value)}
+                      min={100} className="bg-zinc-800 border-zinc-700 text-white font-mono h-8 text-sm" />
+                  </div>
+                  <div className="pt-1 border-t border-zinc-800">
+                    <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Transaction Costs</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-zinc-400 text-xs">Commission (flat $)</Label>
+                        <Input type="number" value={wfCommFlat} onChange={(e) => setWfCommFlat(e.target.value)}
+                          step="0.01" className="bg-zinc-800 border-zinc-700 text-white font-mono h-7 text-xs w-20 text-right" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-zinc-400 text-xs">Commission (%)</Label>
+                        <Input type="number" value={wfCommPct} onChange={(e) => setWfCommPct(e.target.value)}
+                          step="0.0001" className="bg-zinc-800 border-zinc-700 text-white font-mono h-7 text-xs w-20 text-right" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-zinc-400 text-xs">Slippage (%)</Label>
+                        <Input type="number" value={wfSlippage} onChange={(e) => setWfSlippage(e.target.value)}
+                          step="0.0001" className="bg-zinc-800 border-zinc-700 text-white font-mono h-7 text-xs w-20 text-right" />
+                      </div>
+                    </div>
                   </div>
                   <Button
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-1"
                     onClick={() =>
-                      runBacktest.mutate({
-                        symbol: btSymbol,
-                        strategy: btStrategy,
-                        startDate: btStart,
-                        endDate: btEnd,
-                        initialCapital: parseFloat(btCapital) || 10000,
+                      runWalkForward.mutate({
+                        symbol: wfSymbol,
+                        timeframe: wfTimeframe,
+                        trainBars: parseInt(wfTrainBars) || 252,
+                        testBars: parseInt(wfTestBars) || 63,
+                        portfolioValue: parseFloat(wfCapital) || 10000,
+                        commissionFlat: parseFloat(wfCommFlat) || 1,
+                        commissionPct: parseFloat(wfCommPct) || 0.001,
+                        slippagePct: parseFloat(wfSlippage) || 0.0005,
                       })
                     }
-                    disabled={runBacktest.isPending}
+                    disabled={runWalkForward.isPending}
                   >
-                    {runBacktest.isPending ? (
+                    {runWalkForward.isPending ? (
                       <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
                       <BarChart3 className="w-4 h-4 mr-2" />
                     )}
-                    {runBacktest.isPending ? "Running…" : "Run Backtest"}
+                    {runWalkForward.isPending ? "Running…" : "Run Walk-Forward"}
                   </Button>
+                  {runWalkForward.isPending && (
+                    <p className="text-xs text-zinc-500 text-center">Fetching OHLCV + running all strategy variants…</p>
+                  )}
                 </CardContent>
               </Card>
 
-              {/* Results */}
-              <div className="lg:col-span-2 space-y-4">
-                {btResult ? (
+              {/* ── Results Panel ── */}
+              <div className="lg:col-span-3 space-y-4">
+                {wfResult ? (
                   <>
-                    {/* Metrics grid */}
+                    {/* Aggregate Metrics — all from wfResult.aggregate */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <MetricCard
-                        label="Total Return"
-                        value={`${btResult.metrics.total_return_pct > 0 ? "+" : ""}${btResult.metrics.total_return_pct}%`}
-                        icon={TrendingUp}
-                        positive={btResult.metrics.total_return_pct >= 0}
+                        label="Sharpe Ratio"
+                        value={wfResult.aggregate.sharpe.toFixed(2)}
+                        sub="Out-of-sample"
+                        icon={Activity}
+                        positive={wfResult.aggregate.sharpe >= 1}
                       />
                       <MetricCard
-                        label="Sharpe Ratio"
-                        value={btResult.metrics.sharpe_ratio.toFixed(2)}
-                        sub="Risk-adjusted return"
-                        icon={Activity}
-                        positive={btResult.metrics.sharpe_ratio >= 1}
+                        label="Deflated Sharpe"
+                        value={wfResult.aggregate.deflatedSharpe.toFixed(3)}
+                        sub={`${wfResult.aggregate.nVariantsTested} variants tested`}
+                        icon={Shield}
+                        positive={wfResult.aggregate.deflatedSharpe >= 0.95}
                       />
                       <MetricCard
                         label="Max Drawdown"
-                        value={`${btResult.metrics.max_drawdown_pct.toFixed(1)}%`}
+                        value={`${(wfResult.aggregate.maxDrawdown * 100).toFixed(1)}%`}
                         icon={AlertTriangle}
                         positive={false}
                       />
                       <MetricCard
                         label="Win Rate"
-                        value={`${btResult.metrics.win_rate_pct.toFixed(1)}%`}
-                        sub={`${btResult.metrics.total_trades} trades`}
+                        value={`${(wfResult.aggregate.winRate * 100).toFixed(1)}%`}
+                        sub={`${wfResult.aggregate.totalTrades} trades`}
                         icon={CheckCircle}
-                        positive={btResult.metrics.win_rate_pct >= 50}
-                      />
-                      <MetricCard
-                        label="Profit Factor"
-                        value={btResult.metrics.profit_factor.toFixed(2)}
-                        icon={DollarSign}
-                        positive={btResult.metrics.profit_factor >= 1.5}
+                        positive={wfResult.aggregate.winRate >= 0.5}
                       />
                       <MetricCard
                         label="Sortino Ratio"
-                        value={btResult.metrics.sortino_ratio.toFixed(2)}
-                        icon={Shield}
-                        positive={btResult.metrics.sortino_ratio >= 1}
+                        value={wfResult.aggregate.sortino.toFixed(2)}
+                        icon={TrendingUp}
+                        positive={wfResult.aggregate.sortino >= 1}
                       />
                       <MetricCard
-                        label="End Capital"
-                        value={`$${btResult.endCapital.toLocaleString()}`}
-                        sub={`Started $${btResult.startCapital.toLocaleString()}`}
+                        label="Profit Factor"
+                        value={wfResult.aggregate.profitFactor.toFixed(2)}
                         icon={DollarSign}
-                        positive={btResult.endCapital >= btResult.startCapital}
+                        positive={wfResult.aggregate.profitFactor >= 1.5}
                       />
                       <MetricCard
-                        label="Avg Trade"
-                        value={`${btResult.metrics.avg_trade_pct > 0 ? "+" : ""}${btResult.metrics.avg_trade_pct.toFixed(2)}%`}
-                        icon={Target}
-                        positive={btResult.metrics.avg_trade_pct >= 0}
+                        label="CAGR"
+                        value={`${(wfResult.aggregate.cagr * 100).toFixed(1)}%`}
+                        icon={TrendingUp}
+                        positive={wfResult.aggregate.cagr >= 0}
+                      />
+                      <MetricCard
+                        label="Final Capital"
+                        value={`$${wfResult.finalCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+                        sub={`Started $${wfResult.initialCapital.toLocaleString()}`}
+                        icon={DollarSign}
+                        positive={wfResult.finalCapital >= wfResult.initialCapital}
                       />
                     </div>
 
-                    {/* Equity Curve */}
+                    {/* Transaction cost summary */}
+                    <div className="flex flex-wrap gap-3 text-xs">
+                      <Badge variant="outline" className="border-zinc-700 text-zinc-400 font-mono">
+                        Commission: ${wfResult.costs.commissionFlat.toFixed(2)} flat + {(wfResult.costs.commissionPct * 100).toFixed(3)}%
+                      </Badge>
+                      <Badge variant="outline" className="border-zinc-700 text-zinc-400 font-mono">
+                        Slippage: {(wfResult.costs.slippagePct * 100).toFixed(3)}% per trade
+                      </Badge>
+                      <Badge variant="outline" className="border-zinc-700 text-zinc-400 font-mono">
+                        {wfResult.windowCount} windows
+                      </Badge>
+                    </div>
+
+                    {/* Aggregate Equity Curve */}
                     <Card className="bg-zinc-900 border-zinc-800">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-white text-sm">
-                          Equity Curve — {btResult.symbol} ({strategyLabels[btResult.strategy]})
+                          Aggregate Out-of-Sample Equity Curve — {wfResult.symbol}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <ResponsiveContainer width="100%" height={220}>
-                          <LineChart data={equityChartData}>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <LineChart data={aggregateChartData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                            <XAxis
-                              dataKey="timestamp"
-                              tick={{ fill: "#71717a", fontSize: 10 }}
-                              tickFormatter={(v) => v.slice(5)}
-                              interval="preserveStartEnd"
-                            />
-                            <YAxis
-                              tick={{ fill: "#71717a", fontSize: 10 }}
-                              tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`}
-                              width={55}
-                            />
+                            <XAxis dataKey="t" tick={{ fill: "#71717a", fontSize: 10 }} interval="preserveStartEnd" />
+                            <YAxis tick={{ fill: "#71717a", fontSize: 10 }}
+                              tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`} width={55} />
                             <Tooltip
-                              contentStyle={{
-                                background: "#18181b",
-                                border: "1px solid #3f3f46",
-                                borderRadius: 8,
-                                color: "#fff",
-                                fontSize: 12,
-                              }}
-                              formatter={(v: number) => [`$${v.toLocaleString()}`, "Equity"]}
+                              contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8, color: "#fff", fontSize: 12 }}
+                              formatter={(v: number) => [`$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, "Equity"]}
                             />
-                            <ReferenceLine
-                              y={btResult.startCapital}
-                              stroke="#52525b"
-                              strokeDasharray="4 4"
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="equity"
-                              stroke={btResult.endCapital >= btResult.startCapital ? "#10b981" : "#ef4444"}
-                              strokeWidth={2}
-                              dot={false}
-                            />
+                            <ReferenceLine y={wfResult.initialCapital} stroke="#52525b" strokeDasharray="4 4" />
+                            <Line type="monotone" dataKey="equity"
+                              stroke={wfResult.finalCapital >= wfResult.initialCapital ? "#10b981" : "#ef4444"}
+                              strokeWidth={2} dot={false} />
                           </LineChart>
                         </ResponsiveContainer>
                       </CardContent>
                     </Card>
 
-                    {/* Trade History */}
-                    {btResult.trades.length > 0 && (
+                    {/* Per-Window Breakdown */}
+                    <Card className="bg-zinc-900 border-zinc-800">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-white text-sm">Window Breakdown</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="text-zinc-500 uppercase border-b border-zinc-800">
+                                <th className="text-left pb-2 pr-3">#</th>
+                                <th className="text-left pb-2 pr-3">Test Period</th>
+                                <th className="text-left pb-2 pr-3">Strategy Selected</th>
+                                <th className="text-right pb-2 pr-3">Train SR</th>
+                                <th className="text-right pb-2 pr-3">Test SR</th>
+                                <th className="text-right pb-2 pr-3">Drawdown</th>
+                                <th className="text-right pb-2 pr-3">Win%</th>
+                                <th className="text-right pb-2 pr-3">Trades</th>
+                                <th className="text-right pb-2">Net P&L</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-800/50">
+                              {wfResult.windows.map((w) => (
+                                <tr
+                                  key={w.windowIndex}
+                                  className={`hover:bg-zinc-800/40 cursor-pointer transition-colors ${
+                                    wfSelectedWindow === w.windowIndex ? "bg-zinc-800/60" : ""
+                                  }`}
+                                  onClick={() => setWfSelectedWindow(
+                                    wfSelectedWindow === w.windowIndex ? null : w.windowIndex
+                                  )}
+                                >
+                                  <td className="py-2 pr-3 text-zinc-400 font-mono">{w.windowIndex + 1}</td>
+                                  <td className="py-2 pr-3 text-zinc-400 font-mono">
+                                    {new Date(w.testStart).toLocaleDateString()} – {new Date(w.testEnd).toLocaleDateString()}
+                                  </td>
+                                  <td className="py-2 pr-3">
+                                    <Badge variant="outline" className="text-xs border-zinc-700 text-zinc-300">
+                                      {strategyLabels[w.selectedStrategy] ?? w.selectedStrategy}
+                                    </Badge>
+                                  </td>
+                                  <td className={`py-2 pr-3 text-right font-mono ${
+                                    w.trainSharpe >= 1 ? "text-emerald-400" : w.trainSharpe >= 0 ? "text-zinc-300" : "text-red-400"
+                                  }`}>{w.trainSharpe.toFixed(2)}</td>
+                                  <td className={`py-2 pr-3 text-right font-mono ${
+                                    w.testSharpe >= 1 ? "text-emerald-400" : w.testSharpe >= 0 ? "text-zinc-300" : "text-red-400"
+                                  }`}>{w.testSharpe.toFixed(2)}</td>
+                                  <td className="py-2 pr-3 text-right font-mono text-red-400">
+                                    {(w.testMaxDrawdown * 100).toFixed(1)}%
+                                  </td>
+                                  <td className={`py-2 pr-3 text-right font-mono ${
+                                    w.testWinRate >= 0.5 ? "text-emerald-400" : "text-zinc-400"
+                                  }`}>{(w.testWinRate * 100).toFixed(1)}%</td>
+                                  <td className="py-2 pr-3 text-right font-mono text-zinc-400">{w.tradeCount}</td>
+                                  <td className={`py-2 text-right font-mono font-semibold ${
+                                    w.testNetPnl >= 0 ? "text-emerald-400" : "text-red-400"
+                                  }`}>
+                                    {w.testNetPnl >= 0 ? "+" : ""}${w.testNetPnl.toFixed(0)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Selected Window Stats */}
+                    {displayedWindow && (
                       <Card className="bg-zinc-900 border-zinc-800">
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-white text-sm">Trade History (sample)</CardTitle>
+                          <CardTitle className="text-white text-sm">
+                            Window {displayedWindow.windowIndex + 1} Detail — {strategyLabels[displayedWindow.selectedStrategy] ?? displayedWindow.selectedStrategy}
+                            <span className="text-zinc-500 font-normal ml-2 text-xs">
+                              ({new Date(displayedWindow.testStart).toLocaleDateString()} – {new Date(displayedWindow.testEnd).toLocaleDateString()})
+                            </span>
+                          </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-xs">
-                              <thead>
-                                <tr className="text-zinc-500 uppercase border-b border-zinc-800">
-                                  <th className="text-left pb-2 pr-3">Entry</th>
-                                  <th className="text-left pb-2 pr-3">Exit</th>
-                                  <th className="text-right pb-2 pr-3">Entry $</th>
-                                  <th className="text-right pb-2 pr-3">Exit $</th>
-                                  <th className="text-right pb-2 pr-3">P&L</th>
-                                  <th className="text-right pb-2 pr-3">P&L %</th>
-                                  <th className="text-left pb-2">Reason</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-zinc-800/50">
-                                {btResult.trades.slice(0, 15).map((t, i) => (
-                                  <tr key={i} className="hover:bg-zinc-800/30">
-                                    <td className="py-2 pr-3 font-mono text-zinc-400">{t.entry_time}</td>
-                                    <td className="py-2 pr-3 font-mono text-zinc-400">{t.exit_time}</td>
-                                    <td className="py-2 pr-3 text-right font-mono text-zinc-300">
-                                      ${t.entry_price.toFixed(2)}
-                                    </td>
-                                    <td className="py-2 pr-3 text-right font-mono text-zinc-300">
-                                      ${t.exit_price.toFixed(2)}
-                                    </td>
-                                    <td
-                                      className={`py-2 pr-3 text-right font-mono font-semibold ${
-                                        t.pnl >= 0 ? "text-emerald-400" : "text-red-400"
-                                      }`}
-                                    >
-                                      {t.pnl >= 0 ? "+" : ""}${t.pnl.toFixed(2)}
-                                    </td>
-                                    <td
-                                      className={`py-2 pr-3 text-right font-mono ${
-                                        t.pnl_pct >= 0 ? "text-emerald-400" : "text-red-400"
-                                      }`}
-                                    >
-                                      {t.pnl_pct >= 0 ? "+" : ""}{t.pnl_pct.toFixed(2)}%
-                                    </td>
-                                    <td className="py-2 text-zinc-500 capitalize">
-                                      {t.exit_reason.replace(/_/g, " ")}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="bg-zinc-800 rounded-lg p-3">
+                              <p className="text-xs text-zinc-500 mb-1">Test Sharpe</p>
+                              <p className={`text-lg font-bold ${
+                                displayedWindow.testSharpe >= 1 ? "text-emerald-400" : displayedWindow.testSharpe >= 0 ? "text-zinc-300" : "text-red-400"
+                              }`}>{displayedWindow.testSharpe.toFixed(2)}</p>
+                            </div>
+                            <div className="bg-zinc-800 rounded-lg p-3">
+                              <p className="text-xs text-zinc-500 mb-1">Max Drawdown</p>
+                              <p className="text-lg font-bold text-red-400">{(displayedWindow.testMaxDrawdown * 100).toFixed(1)}%</p>
+                            </div>
+                            <div className="bg-zinc-800 rounded-lg p-3">
+                              <p className="text-xs text-zinc-500 mb-1">Win Rate</p>
+                              <p className={`text-lg font-bold ${
+                                displayedWindow.testWinRate >= 0.5 ? "text-emerald-400" : "text-zinc-300"
+                              }`}>{(displayedWindow.testWinRate * 100).toFixed(1)}%</p>
+                            </div>
+                            <div className="bg-zinc-800 rounded-lg p-3">
+                              <p className="text-xs text-zinc-500 mb-1">Net P&L</p>
+                              <p className={`text-lg font-bold ${
+                                displayedWindow.testNetPnl >= 0 ? "text-emerald-400" : "text-red-400"
+                              }`}>{displayedWindow.testNetPnl >= 0 ? "+" : ""}${displayedWindow.testNetPnl.toFixed(0)}</p>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
                     )}
                   </>
                 ) : (
-                  <Card className="bg-zinc-900 border-zinc-800 h-64 flex items-center justify-center">
-                    <div className="text-center text-zinc-500">
-                      <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                      <p className="text-sm">Configure and run a backtest to see results</p>
+                  <Card className="bg-zinc-900 border-zinc-800 h-80 flex items-center justify-center">
+                    <div className="text-center text-zinc-500 space-y-3">
+                      <BarChart3 className="w-14 h-14 mx-auto opacity-20" />
+                      <p className="text-sm font-medium">Walk-Forward Backtester</p>
+                      <p className="text-xs max-w-xs leading-relaxed">
+                        Trains on rolling windows, selects the best strategy out-of-sample, and reports
+                        Sharpe, Sortino, max drawdown, win rate, and deflated Sharpe adjusted for
+                        {" "}{3} strategy variants tested.
+                      </p>
+                      <p className="text-xs text-zinc-600">Configure parameters and click Run Walk-Forward</p>
                     </div>
                   </Card>
                 )}

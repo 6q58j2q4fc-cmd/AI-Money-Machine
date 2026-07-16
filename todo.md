@@ -2887,3 +2887,20 @@
 - [x] Unit tests: server/tradingBot.data.test.ts — 19 tests, all passing (fetchFromAlpaca, fetchFromCcxt, persistCandles, fetchOHLCV, getCachedOHLCV, clearOHLCVCache, getSupportedSymbols)
 - [x] ccxt package installed (v4.5.65)
 - [x] Supported symbols: 10 stocks (AAPL, MSFT, GOOGL, AMZN, TSLA, NVDA, META, SPY, QQQ, AMD) + 5 crypto (BTC/USDT, ETH/USDT, SOL/USDT, BNB/USDT, XRP/USDT)
+
+## Walk-Forward Backtester
+
+- [x] server/tradingBot/backtest.ts — full walk-forward engine, pure functions, no I/O
+- [x] Math helpers: mean, stddev, sharpeRatio, sortinoRatio, maxDrawdown (%), cagr (%)
+- [x] Stats helpers: skewness, kurtosis, deflatedSharpeRatio (Bailey & López de Prado 2014)
+- [x] Normal distribution: normalCdf (Abramowitz & Stegun), normalInverse (Beasley-Springer-Moro)
+- [x] Transaction costs: applySlippage (per direction), transactionCost (flat + pct)
+- [x] simulateWindow() — bar-by-bar simulation with stop-loss, take-profit, signal exits
+- [x] computeMetrics() — Sharpe, Sortino, maxDD, winRate, profitFactor, CAGR, netPnl
+- [x] runWalkForward() — rolling train/test windows, strategy selection by train Sharpe, capital carry-forward
+- [x] Deflated Sharpe: adjusts for number of strategy variants tested (multiple testing bias)
+- [x] Realistic fees: $1 flat + 0.05% commission per side + 0.05% slippage per side
+- [x] DB tables: backtest_runs, backtest_trades (migrated)
+- [x] tRPC procedures: runWalkForward, getWalkForwardTrades, listBacktestRuns
+- [x] TradingBot.tsx updated: aggregate metrics grid, equity curve chart, window breakdown table, window detail panel
+- [x] Unit tests: server/tradingBot.backtest.test.ts — 54/54 passing

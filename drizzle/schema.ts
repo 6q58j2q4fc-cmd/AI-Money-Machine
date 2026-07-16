@@ -1554,3 +1554,63 @@ export const ohlcvFetchLog = mysqlTable("ohlcv_fetch_log", {
 
 export type OhlcvFetchLog = typeof ohlcvFetchLog.$inferSelect;
 export type InsertOhlcvFetchLog = typeof ohlcvFetchLog.$inferInsert;
+
+// ─── Backtest Tables ──────────────────────────────────────────────────────────
+
+/**
+ * backtest_runs — one row per walk-forward run, stores aggregate metrics and config.
+ */
+export const backtestRuns = mysqlTable("backtest_runs", {
+  id:              int("id").autoincrement().primaryKey(),
+  runId:           varchar("runId", { length: 64 }).notNull().unique(),
+  symbol:          varchar("symbol", { length: 20 }).notNull(),
+  timeframe:       varchar("timeframe", { length: 10 }).notNull(),
+  trainBars:       int("trainBars").notNull(),
+  testBars:        int("testBars").notNull(),
+  windowCount:     int("windowCount").notNull().default(0),
+  totalCandles:    int("totalCandles").notNull().default(0),
+  initialCapital:  double("initialCapital").notNull(),
+  finalCapital:    double("finalCapital").notNull(),
+  sharpe:          double("sharpe"),
+  sortino:         double("sortino"),
+  maxDrawdown:     double("maxDrawdown"),
+  winRate:         double("winRate"),
+  profitFactor:    double("profitFactor"),
+  cagr:            double("cagr"),
+  totalNetPnl:     double("totalNetPnl"),
+  totalTrades:     int("totalTrades").default(0),
+  deflatedSharpe:  double("deflatedSharpe"),
+  nVariantsTested: int("nVariantsTested").default(3),
+  commissionFlat:  double("commissionFlat"),
+  commissionPct:   double("commissionPct"),
+  slippagePct:     double("slippagePct"),
+  windowSummaries:      json("windowSummaries"),
+  aggregateEquityCurve: json("aggregateEquityCurve"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BacktestRun = typeof backtestRuns.$inferSelect;
+export type InsertBacktestRun = typeof backtestRuns.$inferInsert;
+
+/**
+ * backtest_trades — individual trades from each walk-forward run.
+ */
+export const backtestTrades = mysqlTable("backtest_trades", {
+  id:          int("id").autoincrement().primaryKey(),
+  runId:       varchar("runId", { length: 64 }).notNull(),
+  windowIndex: int("windowIndex").notNull(),
+  entryTime:   bigint("entryTime", { mode: "number" }).notNull(),
+  exitTime:    bigint("exitTime",  { mode: "number" }).notNull(),
+  entryPrice:  double("entryPrice").notNull(),
+  exitPrice:   double("exitPrice").notNull(),
+  direction:   mysqlEnum("direction", ["LONG", "SHORT"]).notNull().default("LONG"),
+  shares:      int("shares").notNull(),
+  grossPnl:    double("grossPnl").notNull(),
+  commission:  double("commission").notNull(),
+  slippage:    double("slippage").notNull(),
+  netPnl:      double("netPnl").notNull(),
+  exitReason:  mysqlEnum("exitReason", ["SIGNAL", "STOP_LOSS", "TAKE_PROFIT", "END_OF_WINDOW"]).notNull(),
+  strategy:    varchar("strategy", { length: 30 }).notNull(),
+  createdAt:   timestamp("createdAt").defaultNow().notNull(),
+});
+export type BacktestTrade = typeof backtestTrades.$inferSelect;
+export type InsertBacktestTrade = typeof backtestTrades.$inferInsert;

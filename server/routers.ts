@@ -6879,6 +6879,177 @@ const tradingBotRouter = router({
     const { getStrategyInfo } = await import("./tradingBot/signals");
     return getStrategyInfo();
   }),
+
+  // ─── Walk-Forward Backtester ─────────────────────────────────────────────
+
+  runWalkForward: protectedProcedure
+    .input(z.object({
+      symbol:      z.string().min(1).max(20),
+      timeframe:   z.enum(["1d", "1h", "15m", "5m", "1m"]).default("1d"),
+      trainBars:   z.number().int().min(30).max(1000).default(252),
+      testBars:    z.number().int().min(10).max(500).default(63),
+      stepBars:    z.number().int().min(1).max(500).optional(),
+      annualisationFactor: z.number().min(1).max(365).default(252),
+      strategyNames: z.array(z.enum(["sma_crossover", "ema_crossover", "macd"])).default(["sma_crossover", "ema_crossover", "macd"]),
+      // Position sizing overrides
+      portfolioValue:  z.number().positive().default(100_000),
+      riskPctPerTrade: z.number().min(0.001).max(0.2).default(0.02),
+      stopLossPct:     z.number().min(0.001).max(0.2).default(0.02),
+      takeProfitPct:   z.number().min(0.001).max(0.5).default(0.04),
+      maxPositionPct:  z.number().min(0.01).max(1).default(0.05),
+      // Transaction cost overrides
+      commissionFlat: z.number().min(0).max(100).default(1.00),
+      commissionPct:  z.number().min(0).max(0.05).default(0.0005),
+      slippagePct:    z.number().min(0).max(0.05).default(0.0005),
+    }))
+    .mutation(async ({ input }) => {
+      const { fetchOHLCV } = await import("./tradingBot/data");
+      const { runWalkForward } = await import("./tradingBot/backtest");
+      const { DEFAULT_STRATEGY_CONFIGS } = await import("./tradingBot/signals");
+
+      // Fetch candles (uses cache if fresh, otherwise fetches from Alpaca/CCXT)
+      const results = await fetchOHLCV({
+        symbols:   [input.symbol],
+        timeframe: input.timeframe as import("./tradingBot/data").Timeframe,
+        limit:     (input.trainBars + input.testBars) * 10, // enough for multiple windows
+      });
+      const candles = (results[0]?.candles ?? []).map((c) => ({
+        openTime: c.openTime,
+        close:    c.close,
+        high:     c.high,
+        low:      c.low,
+        volume:   c.volume,
+      }));
+
+      if (candles.length < input.trainBars + input.testBars) {
+        throw new Error(
+          `Insufficient candle data: need ${input.trainBars + input.testBars} bars, got ${candles.length}. ` +
+          `Try a shorter trainBars/testBars or a symbol with more history.`
+        );
+      }
+
+      const strategyVariants = input.strategyNames.map((name) => ({
+        ...DEFAULT_STRATEGY_CONFIGS[name],
+        name,
+      }));
+
+      const result = runWalkForward(
+        input.symbol,
+        candles,
+        {
+          trainBars:           input.trainBars,
+          testBars:            input.testBars,
+          stepBars:            input.stepBars,
+          annualisationFactor: input.annualisationFactor,
+          strategyVariants,
+          sizing: {
+            portfolioValue:  input.portfolioValue,
+            riskPctPerTrade: input.riskPctPerTrade,
+            stopLossPct:     input.stopLossPct,
+            takeProfitPct:   input.takeProfitPct,
+            maxPositionPct:  input.maxPositionPct,
+            minPositionSize: 1,
+          },
+          costs: {
+            commissionFlat: input.commissionFlat,
+            commissionPct:  input.commissionPct,
+            slippagePct:    input.slippagePct,
+          },
+        }
+      );
+
+      // Strip per-trade arrays from windows to keep response size manageable
+      // (full trade data available via getBacktestTrades)
+      const windowSummaries = result.windows.map((w) => ({
+        windowIndex:      w.windowIndex,
+        trainStart:       w.trainStart,
+        trainEnd:         w.trainEnd,
+        testStart:        w.testStart,
+        testEnd:          w.testEnd,
+        selectedStrategy: w.selectedStrategy,
+        trainSharpe:      w.trainSharpe,
+        testSharpe:       w.testSharpe,
+        testSortino:      w.testSortino,
+        testMaxDrawdown:  w.testMaxDrawdown,
+        testWinRate:      w.testWinRate,
+        testProfitFactor: w.testProfitFactor,
+        testCagr:         w.testCagr,
+        testNetPnl:       w.testNetPnl,
+        tradeCount:       w.testTrades.length,
+      }));
+
+      return {
+        runId:                result.runId,
+        symbol:               result.symbol,
+        windows:              windowSummaries,
+        aggregateEquityCurve: result.aggregateEquityCurve.map((p) => ({
+          time:     p.time,
+          equity:   Math.round(p.equity * 100) / 100,
+          drawdown: Math.round(p.drawdown * 100) / 100,
+        })),
+        aggregate:     result.aggregate,
+        initialCapital: result.initialCapital,
+        finalCapital:   Math.round(result.finalCapital * 100) / 100,
+        costs:         result.costs,
+        createdAt:     result.createdAt,
+        totalCandles:  candles.length,
+        windowCount:   result.windows.length,
+      };
+    }),
+
+  getWalkForwardTrades: protectedProcedure
+    .input(z.object({
+      symbol:    z.string().min(1).max(20),
+      timeframe: z.enum(["1d", "1h", "15m", "5m", "1m"]).default("1d"),
+      trainBars: z.number().int().min(30).max(1000).default(252),
+      testBars:  z.number().int().min(10).max(500).default(63),
+      windowIndex: z.number().int().min(0).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { fetchOHLCV } = await import("./tradingBot/data");
+      const { runWalkForward } = await import("./tradingBot/backtest");
+      const { DEFAULT_STRATEGY_CONFIGS } = await import("./tradingBot/signals");
+
+      const results = await fetchOHLCV({
+        symbols:   [input.symbol],
+        timeframe: input.timeframe as import("./tradingBot/data").Timeframe,
+        limit:     (input.trainBars + input.testBars) * 10,
+      });
+      const candles = (results[0]?.candles ?? []).map((c) => ({
+        openTime: c.openTime, close: c.close, high: c.high, low: c.low, volume: c.volume,
+      }));
+
+      if (candles.length < input.trainBars + input.testBars) {
+        return { trades: [], windows: 0 };
+      }
+
+      const result = runWalkForward(
+        input.symbol, candles,
+        { trainBars: input.trainBars, testBars: input.testBars,
+          strategyVariants: Object.values(DEFAULT_STRATEGY_CONFIGS) }
+      );
+
+      const targetWindows = input.windowIndex !== undefined
+        ? result.windows.filter((w) => w.windowIndex === input.windowIndex)
+        : result.windows;
+
+      const trades = targetWindows.flatMap((w) => w.testTrades).map((t) => ({
+        entryTime:   t.entryTime,
+        exitTime:    t.exitTime,
+        entryPrice:  Math.round(t.entryPrice * 100) / 100,
+        exitPrice:   Math.round(t.exitPrice  * 100) / 100,
+        direction:   t.direction,
+        shares:      t.shares,
+        grossPnl:    Math.round(t.grossPnl   * 100) / 100,
+        commission:  Math.round(t.commission * 100) / 100,
+        slippage:    Math.round(t.slippage   * 100) / 100,
+        netPnl:      Math.round(t.netPnl     * 100) / 100,
+        exitReason:  t.exitReason,
+        strategy:    t.strategy,
+      }));
+
+      return { trades, windows: result.windows.length };
+    }),
 });
 
 export const appRouter = router({
