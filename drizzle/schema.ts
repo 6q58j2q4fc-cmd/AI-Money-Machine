@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, json, decimal, boolean } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, json, decimal, boolean, bigint, double, index } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -1508,3 +1508,49 @@ export const pushSubscriptions = mysqlTable("push_subscriptions", {
 });
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
+
+/**
+ * OHLCV candle cache — stores fetched candles from Alpaca / CCXT.
+ * Primary key is (symbol, timeframe, openTime) to allow upserts.
+ */
+export const ohlcvCache = mysqlTable(
+  "ohlcv_cache",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    symbol: varchar("symbol", { length: 20 }).notNull(),
+    timeframe: varchar("timeframe", { length: 10 }).notNull(),
+    openTime: bigint("openTime", { mode: "number" }).notNull(),   // Unix ms
+    open: double("open").notNull(),
+    high: double("high").notNull(),
+    low: double("low").notNull(),
+    close: double("close").notNull(),
+    volume: double("volume").notNull(),
+    source: mysqlEnum("source", ["alpaca", "ccxt", "mock"]).default("alpaca").notNull(),
+    fetchedAt: timestamp("fetchedAt").defaultNow().notNull(),
+  },
+  (t) => ({
+    symbolTimeframeIdx: index("symbol_timeframe_idx").on(t.symbol, t.timeframe, t.openTime),
+  })
+);
+
+export type OhlcvCandle = typeof ohlcvCache.$inferSelect;
+export type InsertOhlcvCandle = typeof ohlcvCache.$inferInsert;
+
+/**
+ * OHLCV fetch log — tracks every data pull for auditing and cache-staleness checks.
+ */
+export const ohlcvFetchLog = mysqlTable("ohlcv_fetch_log", {
+  id: int("id").autoincrement().primaryKey(),
+  symbol: varchar("symbol", { length: 20 }).notNull(),
+  timeframe: varchar("timeframe", { length: 10 }).notNull(),
+  source: mysqlEnum("source", ["alpaca", "ccxt", "mock"]).notNull(),
+  candlesFetched: int("candlesFetched").default(0).notNull(),
+  fromTime: bigint("fromTime", { mode: "number" }),
+  toTime: bigint("toTime", { mode: "number" }),
+  durationMs: int("durationMs"),
+  error: text("error"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OhlcvFetchLog = typeof ohlcvFetchLog.$inferSelect;
+export type InsertOhlcvFetchLog = typeof ohlcvFetchLog.$inferInsert;

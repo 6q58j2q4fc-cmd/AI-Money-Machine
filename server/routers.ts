@@ -6719,6 +6719,55 @@ const tradingBotRouter = router({
       },
     };
   }),
+
+  // ─── OHLCV Data Module ────────────────────────────────────────────────────
+
+  /** Fetch live OHLCV candles for one or more symbols (Alpaca → CCXT fallback) */
+  fetchOHLCV: protectedProcedure
+    .input(z.object({
+      symbols:      z.array(z.string().min(1).max(20)).min(1).max(20),
+      timeframe:    z.enum(["1m","5m","15m","30m","1h","4h","1d"]).default("1h"),
+      limit:        z.number().int().min(1).max(1000).default(200),
+      from:         z.number().optional(),
+      to:           z.number().optional(),
+      forceRefresh: z.boolean().default(false),
+    }))
+    .mutation(async ({ input }) => {
+      const { fetchOHLCV } = await import("./tradingBot/data");
+      return fetchOHLCV(input);
+    }),
+
+  /** Read candles from the DB cache without triggering a live fetch */
+  getCachedOHLCV: protectedProcedure
+    .input(z.object({
+      symbol:    z.string().min(1).max(20),
+      timeframe: z.enum(["1m","5m","15m","30m","1h","4h","1d"]).default("1h"),
+      from:      z.number().optional(),
+      to:        z.number().optional(),
+      limit:     z.number().int().min(1).max(1000).default(500),
+    }))
+    .query(async ({ input }) => {
+      const { getCachedOHLCV } = await import("./tradingBot/data");
+      return getCachedOHLCV(input.symbol, input.timeframe, input.from, input.to, input.limit);
+    }),
+
+  /** Delete cached candles for a symbol (or all if omitted) */
+  clearOHLCVCache: protectedProcedure
+    .input(z.object({
+      symbol:    z.string().optional(),
+      timeframe: z.enum(["1m","5m","15m","30m","1h","4h","1d"]).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { clearOHLCVCache } = await import("./tradingBot/data");
+      const deleted = await clearOHLCVCache(input.symbol, input.timeframe);
+      return { deleted };
+    }),
+
+  /** Return the list of supported symbols grouped by asset class */
+  getSupportedSymbols: publicProcedure.query(async () => {
+    const { getSupportedSymbols } = await import("./tradingBot/data");
+    return getSupportedSymbols();
+  }),
 });
 
 export const appRouter = router({

@@ -105,7 +105,7 @@ importers:
         version: 1.2.8(@types/react-dom@19.2.1(@types/react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@rainbow-me/rainbowkit':
         specifier: ^2.2.10
-        version: 2.2.10(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))(wagmi@3.3.2(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(typescript@5.9.3)(zod@4.1.12)))
+        version: 2.2.10(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12))(wagmi@3.3.2(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12)))
       '@tanstack/react-query':
         specifier: ^5.90.2
         version: 5.90.2(react@19.2.1)
@@ -123,10 +123,13 @@ importers:
         version: 6.0.0
       '@wagmi/core':
         specifier: ^2.0.0
-        version: 2.22.1(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))
+        version: 2.22.1(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12))
       axios:
         specifier: ^1.12.0
         version: 1.12.2
+      ccxt:
+        specifier: ^4.5.65
+        version: 4.5.65
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -153,7 +156,7 @@ importers:
         version: 8.6.0(react@19.2.1)
       ethers:
         specifier: ^6.9.0
-        version: 6.16.0
+        version: 6.16.0(bufferutil@4.1.0)
       express:
         specifier: ^4.21.2
         version: 4.21.2
@@ -183,13 +186,13 @@ importers:
         version: 0.4.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       puppeteer:
         specifier: ^24.35.0
-        version: 24.35.0(typescript@5.9.3)
+        version: 24.35.0(bufferutil@4.1.0)(typescript@5.9.3)
       puppeteer-extra:
         specifier: ^3.3.6
-        version: 3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3))
+        version: 3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3))
       puppeteer-extra-plugin-stealth:
         specifier: ^2.11.2
-        version: 2.11.2(puppeteer-extra@3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3)))
+        version: 2.11.2(puppeteer-extra@3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3)))
       react:
         specifier: ^19.2.1
         version: 19.2.1
@@ -234,10 +237,10 @@ importers:
         version: 1.1.2(@types/react-dom@19.2.1(@types/react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       viem:
         specifier: ^2.44.2
-        version: 2.44.2(typescript@5.9.3)(zod@4.1.12)
+        version: 2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12)
       wagmi:
         specifier: ^3.3.2
-        version: 3.3.2(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))
+        version: 3.3.2(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12))
       web-push:
         specifier: ^3.6.7
         version: 3.6.7
@@ -1117,6 +1120,10 @@ packages:
     resolution: {integrity: sha512-k11yZxZg+t+gWvBbIswW0yoJlu8cHOC7dhunwOzoWH/mXGBiYyR4YY6hAEK/3EUs4UpB8la1RfdRpeGsFHkWsA==}
     engines: {node: ^14.21.3 || >=16}
 
+  '@noble/curves@2.2.0':
+    resolution: {integrity: sha512-T/BoHgFXirb0ENSPBquzX0rcjXeM6Lo892a2jlYJkqk83LqZx0l1Of7DzlKJ6jkpvMrkHSnAcgb5JegL8SeIkQ==}
+    engines: {node: '>= 20.19.0'}
+
   '@noble/hashes@1.3.2':
     resolution: {integrity: sha512-MVC8EAQp7MvEcm30KWENFjgR+Mkmf+D189XJTkFIlwohU5hcBbn1ZkKq7KVTi2Hme3PMGF390DaL52beVrIihQ==}
     engines: {node: '>= 16'}
@@ -1124,6 +1131,10 @@ packages:
   '@noble/hashes@1.8.0':
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
     engines: {node: ^14.21.3 || >=16}
+
+  '@noble/hashes@2.2.0':
+    resolution: {integrity: sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg==}
+    engines: {node: '>= 20.19.0'}
 
   '@puppeteer/browsers@2.11.1':
     resolution: {integrity: sha512-YmhAxs7XPuxN0j7LJloHpfD1ylhDuFmmwMvfy/+6nBSrETT2ycL53LrhgPtR+f+GcPSybQVuQ5inWWu5MrWCpA==}
@@ -1868,11 +1879,18 @@ packages:
   '@scure/base@1.2.6':
     resolution: {integrity: sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg==}
 
+  '@scure/base@2.2.0':
+    resolution: {integrity: sha512-b8XEupJibegiXV+tDUseI8oLQc8ei3d/4Jkb2RpbHh3MfE054ov3uIz2dhFkB3FI8iwYkEh0gGCApkrYggkPNg==}
+
   '@scure/bip32@1.7.0':
     resolution: {integrity: sha512-E4FFX/N3f4B80AKWp5dP6ow+flD1LQZo/w8UnLGYZO674jS6YnYeepycOOksv+vLPSpgN35wgKgy+ybfTb2SMw==}
 
   '@scure/bip39@1.6.0':
     resolution: {integrity: sha512-+lF0BbLiJNwVlev4eKelw1WWLaiKXw7sSl8T6FvBlWkdX+94aGJ4o8XjUdlyhTCjd8c+B3KT3JfS8P0bLRNU6A==}
+
+  '@scure/starknet@2.2.0':
+    resolution: {integrity: sha512-FPgUFyEgbEG7ewrj9gWUeXpf2b6klBnqcZOSFz6z4ycVCIAeGhNqKQUPlvl2Ka8gfmrbCcdIrImyi+dINr06Uw==}
+    engines: {node: '>= 20.19.0'}
 
   '@shikijs/core@3.14.0':
     resolution: {integrity: sha512-qRSeuP5vlYHCNUIrpEBQFO7vSkR7jn7Kv+5X3FO/zBKVDGQbcnlScD3XhkrHi/R8Ltz0kEjvFR9Szp/XMRbFMw==}
@@ -2719,6 +2737,10 @@ packages:
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
 
+  bufferutil@4.1.0:
+    resolution: {integrity: sha512-ZMANVnAixE6AWWnPzlW2KpUrxhm9woycYvPOo67jWHyFowASTEd9s+QN1EIMsSDtwhIxN4sWE1jotpuDUIgyIw==}
+    engines: {node: '>=6.14.2'}
+
   bytes@3.1.2:
     resolution: {integrity: sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==}
     engines: {node: '>= 0.8'}
@@ -2744,6 +2766,15 @@ packages:
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
+
+  ccxt@4.5.65:
+    resolution: {integrity: sha512-i/TdFOe8hqqXXJbLCnnk3cFKrT4Yn1PVHR7b35eMMPQr6o62SzvRtVJ3trFllZ8T2JFvvIZ4tf0mYYdOslF+cg==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      protobufjs: ^7.5.3
+    peerDependenciesMeta:
+      protobufjs:
+        optional: true
 
   chai@5.3.3:
     resolution: {integrity: sha512-4zNhdJD/iOjSH0A05ea+Ke6MU5mmpQcbQsSOkgdaUMJ9zTlDTD/GYlwohmIE2u0gaxHYiVHEn1Fw9mZ/ktJWgw==}
@@ -3444,6 +3475,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   finalhandler@1.3.1:
     resolution: {integrity: sha512-6BN9trH7bp3qvnrRyzsBz+g3lZxTNZTbVO2EV1CS0WIcDbawYVdYvGflME/9QP0h0pYlCDBCTjYa9nZzMDpyxQ==}
@@ -4199,6 +4233,10 @@ packages:
       react: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
       react-dom: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
 
+  node-gyp-build@4.8.4:
+    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
+    hasBin: true
+
   node-releases@2.0.23:
     resolution: {integrity: sha512-cCmFDMSm26S6tQSDpBCg/NR8NENrVPhAJSf+XbxBG4rPFaaonlEoE9wHQmun+cls499TQGSb7ZyPBRlzgKfpeg==}
 
@@ -4889,6 +4927,10 @@ packages:
   undici-types@7.14.0:
     resolution: {integrity: sha512-QQiYxHuyZ9gQUIrmPo3IA+hUl4KYk8uSA7cHrcKd/l3p1OTpZcM0Tbp9x7FAtXdAYhlasd60ncPpgu6ihG6TOA==}
 
+  undici@7.28.0:
+    resolution: {integrity: sha512-cRZYrTDwWznlnRiPjggAGxZXanty6M8RV1ff8Wm4LWXBp7/IG8v5DnOm74DtUBp9OONpK75YlPnIjQqX0dBDtA==}
+    engines: {node: '>=20.18.1'}
+
   unified@11.0.5:
     resolution: {integrity: sha512-xKvGhPWw3k84Qjh8bI3ZeJjqnyadK+GEFtazSfZv/rKeTkTjOJho6mFqh2SM96iIcZokxiOpg78GazTSg8+KHA==}
 
@@ -5187,6 +5229,18 @@ packages:
 
   ws@8.19.0:
     resolution: {integrity: sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.21.0:
+    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -6194,9 +6248,15 @@ snapshots:
     dependencies:
       '@noble/hashes': 1.8.0
 
+  '@noble/curves@2.2.0':
+    dependencies:
+      '@noble/hashes': 2.2.0
+
   '@noble/hashes@1.3.2': {}
 
   '@noble/hashes@1.8.0': {}
+
+  '@noble/hashes@2.2.0': {}
 
   '@puppeteer/browsers@2.11.1':
     dependencies:
@@ -6866,7 +6926,7 @@ snapshots:
 
   '@radix-ui/rect@1.1.1': {}
 
-  '@rainbow-me/rainbowkit@2.2.10(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))(wagmi@3.3.2(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(typescript@5.9.3)(zod@4.1.12)))':
+  '@rainbow-me/rainbowkit@2.2.10(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12))(wagmi@3.3.2(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12)))':
     dependencies:
       '@tanstack/react-query': 5.90.2(react@19.2.1)
       '@vanilla-extract/css': 1.17.3
@@ -6878,8 +6938,8 @@ snapshots:
       react-dom: 19.2.1(react@19.2.1)
       react-remove-scroll: 2.6.2(@types/react@19.2.1)(react@19.2.1)
       ua-parser-js: 1.0.41
-      viem: 2.44.2(typescript@5.9.3)(zod@4.1.12)
-      wagmi: 3.3.2(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))
+      viem: 2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12)
+      wagmi: 3.3.2(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12))
     transitivePeerDependencies:
       - '@types/react'
       - babel-plugin-macros
@@ -6955,6 +7015,8 @@ snapshots:
 
   '@scure/base@1.2.6': {}
 
+  '@scure/base@2.2.0': {}
+
   '@scure/bip32@1.7.0':
     dependencies:
       '@noble/curves': 1.9.1
@@ -6965,6 +7027,11 @@ snapshots:
     dependencies:
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
+
+  '@scure/starknet@2.2.0':
+    dependencies:
+      '@noble/curves': 2.2.0
+      '@noble/hashes': 2.2.0
 
   '@shikijs/core@3.14.0':
     dependencies:
@@ -7768,18 +7835,18 @@ snapshots:
       loupe: 3.2.1
       tinyrainbow: 1.2.0
 
-  '@wagmi/connectors@7.1.2(@wagmi/core@3.2.2(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(typescript@5.9.3)(zod@4.1.12)))(typescript@5.9.3)(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))':
+  '@wagmi/connectors@7.1.2(@wagmi/core@3.2.2(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12)))(typescript@5.9.3)(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12))':
     dependencies:
-      '@wagmi/core': 3.2.2(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))
-      viem: 2.44.2(typescript@5.9.3)(zod@4.1.12)
+      '@wagmi/core': 3.2.2(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12))
+      viem: 2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12)
     optionalDependencies:
       typescript: 5.9.3
 
-  '@wagmi/core@2.22.1(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))':
+  '@wagmi/core@2.22.1(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12))':
     dependencies:
       eventemitter3: 5.0.1
       mipd: 0.0.7(typescript@5.9.3)
-      viem: 2.44.2(typescript@5.9.3)(zod@4.1.12)
+      viem: 2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12)
       zustand: 5.0.0(@types/react@19.2.1)(react@19.2.1)(use-sync-external-store@1.4.0(react@19.2.1))
     optionalDependencies:
       '@tanstack/query-core': 5.90.2
@@ -7790,11 +7857,11 @@ snapshots:
       - react
       - use-sync-external-store
 
-  '@wagmi/core@3.2.2(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))':
+  '@wagmi/core@3.2.2(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12))':
     dependencies:
       eventemitter3: 5.0.1
       mipd: 0.0.7(typescript@5.9.3)
-      viem: 2.44.2(typescript@5.9.3)(zod@4.1.12)
+      viem: 2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12)
       zustand: 5.0.0(@types/react@19.2.1)(react@19.2.1)(use-sync-external-store@1.4.0(react@19.2.1))
     optionalDependencies:
       '@tanstack/query-core': 5.90.2
@@ -7962,6 +8029,11 @@ snapshots:
 
   buffer-from@1.1.2: {}
 
+  bufferutil@4.1.0:
+    dependencies:
+      node-gyp-build: 4.8.4
+    optional: true
+
   bytes@3.1.2: {}
 
   cac@6.7.14: {}
@@ -7981,6 +8053,20 @@ snapshots:
   caniuse-lite@1.0.30001748: {}
 
   ccount@2.0.1: {}
+
+  ccxt@4.5.65:
+    dependencies:
+      '@noble/curves': 2.2.0
+      '@noble/hashes': 2.2.0
+      '@scure/base': 2.2.0
+      '@scure/starknet': 2.2.0
+      undici: 7.28.0
+      ws: 8.21.0(bufferutil@4.1.0)
+    optionalDependencies:
+      bufferutil: 4.1.0
+      fflate: 0.8.3
+    transitivePeerDependencies:
+      - utf-8-validate
 
   chai@5.3.3:
     dependencies:
@@ -8576,7 +8662,7 @@ snapshots:
 
   etag@1.8.1: {}
 
-  ethers@6.16.0:
+  ethers@6.16.0(bufferutil@4.1.0):
     dependencies:
       '@adraffy/ens-normalize': 1.10.1
       '@noble/curves': 1.2.0
@@ -8584,7 +8670,7 @@ snapshots:
       '@types/node': 22.7.5
       aes-js: 4.0.0-beta.5
       tslib: 2.7.0
-      ws: 8.17.1
+      ws: 8.17.1(bufferutil@4.1.0)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -8666,6 +8752,9 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.3):
     optionalDependencies:
       picomatch: 4.0.3
+
+  fflate@0.8.3:
+    optional: true
 
   finalhandler@1.3.1:
     dependencies:
@@ -9018,9 +9107,9 @@ snapshots:
 
   isobject@3.0.1: {}
 
-  isows@1.0.7(ws@8.18.3):
+  isows@1.0.7(ws@8.18.3(bufferutil@4.1.0)):
     dependencies:
-      ws: 8.18.3
+      ws: 8.18.3(bufferutil@4.1.0)
 
   jiti@2.6.1: {}
 
@@ -9674,6 +9763,9 @@ snapshots:
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
 
+  node-gyp-build@4.8.4:
+    optional: true
+
   node-releases@2.0.23: {}
 
   normalize-range@0.1.2: {}
@@ -9851,7 +9943,7 @@ snapshots:
       end-of-stream: 1.4.5
       once: 1.4.0
 
-  puppeteer-core@24.35.0:
+  puppeteer-core@24.35.0(bufferutil@4.1.0):
     dependencies:
       '@puppeteer/browsers': 2.11.1
       chromium-bidi: 12.0.1(devtools-protocol@0.0.1534754)
@@ -9859,7 +9951,7 @@ snapshots:
       devtools-protocol: 0.0.1534754
       typed-query-selector: 2.12.0
       webdriver-bidi-protocol: 0.3.10
-      ws: 8.19.0
+      ws: 8.19.0(bufferutil@4.1.0)
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
@@ -9868,66 +9960,66 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  puppeteer-extra-plugin-stealth@2.11.2(puppeteer-extra@3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3))):
+  puppeteer-extra-plugin-stealth@2.11.2(puppeteer-extra@3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3))):
     dependencies:
       debug: 4.4.3
-      puppeteer-extra-plugin: 3.2.3(puppeteer-extra@3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3)))
-      puppeteer-extra-plugin-user-preferences: 2.4.1(puppeteer-extra@3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3)))
+      puppeteer-extra-plugin: 3.2.3(puppeteer-extra@3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3)))
+      puppeteer-extra-plugin-user-preferences: 2.4.1(puppeteer-extra@3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3)))
     optionalDependencies:
-      puppeteer-extra: 3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3))
+      puppeteer-extra: 3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3))
     transitivePeerDependencies:
       - supports-color
 
-  puppeteer-extra-plugin-user-data-dir@2.4.1(puppeteer-extra@3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3))):
+  puppeteer-extra-plugin-user-data-dir@2.4.1(puppeteer-extra@3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3))):
     dependencies:
       debug: 4.4.3
       fs-extra: 10.1.0
-      puppeteer-extra-plugin: 3.2.3(puppeteer-extra@3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3)))
+      puppeteer-extra-plugin: 3.2.3(puppeteer-extra@3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3)))
       rimraf: 3.0.2
     optionalDependencies:
-      puppeteer-extra: 3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3))
+      puppeteer-extra: 3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3))
     transitivePeerDependencies:
       - supports-color
 
-  puppeteer-extra-plugin-user-preferences@2.4.1(puppeteer-extra@3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3))):
+  puppeteer-extra-plugin-user-preferences@2.4.1(puppeteer-extra@3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3))):
     dependencies:
       debug: 4.4.3
       deepmerge: 4.3.1
-      puppeteer-extra-plugin: 3.2.3(puppeteer-extra@3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3)))
-      puppeteer-extra-plugin-user-data-dir: 2.4.1(puppeteer-extra@3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3)))
+      puppeteer-extra-plugin: 3.2.3(puppeteer-extra@3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3)))
+      puppeteer-extra-plugin-user-data-dir: 2.4.1(puppeteer-extra@3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3)))
     optionalDependencies:
-      puppeteer-extra: 3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3))
+      puppeteer-extra: 3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3))
     transitivePeerDependencies:
       - supports-color
 
-  puppeteer-extra-plugin@3.2.3(puppeteer-extra@3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3))):
+  puppeteer-extra-plugin@3.2.3(puppeteer-extra@3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3))):
     dependencies:
       '@types/debug': 4.1.12
       debug: 4.4.3
       merge-deep: 3.0.3
     optionalDependencies:
-      puppeteer-extra: 3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3))
+      puppeteer-extra: 3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3))
     transitivePeerDependencies:
       - supports-color
 
-  puppeteer-extra@3.3.6(puppeteer-core@24.35.0)(puppeteer@24.35.0(typescript@5.9.3)):
+  puppeteer-extra@3.3.6(puppeteer-core@24.35.0(bufferutil@4.1.0))(puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3)):
     dependencies:
       '@types/debug': 4.1.12
       debug: 4.4.3
       deepmerge: 4.3.1
     optionalDependencies:
-      puppeteer: 24.35.0(typescript@5.9.3)
-      puppeteer-core: 24.35.0
+      puppeteer: 24.35.0(bufferutil@4.1.0)(typescript@5.9.3)
+      puppeteer-core: 24.35.0(bufferutil@4.1.0)
     transitivePeerDependencies:
       - supports-color
 
-  puppeteer@24.35.0(typescript@5.9.3):
+  puppeteer@24.35.0(bufferutil@4.1.0)(typescript@5.9.3):
     dependencies:
       '@puppeteer/browsers': 2.11.1
       chromium-bidi: 12.0.1(devtools-protocol@0.0.1534754)
       cosmiconfig: 9.0.0(typescript@5.9.3)
       devtools-protocol: 0.0.1534754
-      puppeteer-core: 24.35.0
+      puppeteer-core: 24.35.0(bufferutil@4.1.0)
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bare-abort-controller
@@ -10507,6 +10599,8 @@ snapshots:
 
   undici-types@7.14.0: {}
 
+  undici@7.28.0: {}
+
   unified@11.0.5:
     dependencies:
       '@types/unist': 3.0.3
@@ -10632,16 +10726,16 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  viem@2.44.2(typescript@5.9.3)(zod@4.1.12):
+  viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
       abitype: 1.2.3(typescript@5.9.3)(zod@4.1.12)
-      isows: 1.0.7(ws@8.18.3)
+      isows: 1.0.7(ws@8.18.3(bufferutil@4.1.0))
       ox: 0.11.3(typescript@5.9.3)(zod@4.1.12)
-      ws: 8.18.3
+      ws: 8.18.3(bufferutil@4.1.0)
     optionalDependencies:
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -10754,14 +10848,14 @@ snapshots:
 
   vscode-uri@3.0.8: {}
 
-  wagmi@3.3.2(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(typescript@5.9.3)(zod@4.1.12)):
+  wagmi@3.3.2(@tanstack/query-core@5.90.2)(@tanstack/react-query@5.90.2(react@19.2.1))(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12)):
     dependencies:
       '@tanstack/react-query': 5.90.2(react@19.2.1)
-      '@wagmi/connectors': 7.1.2(@wagmi/core@3.2.2(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(typescript@5.9.3)(zod@4.1.12)))(typescript@5.9.3)(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))
-      '@wagmi/core': 3.2.2(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(typescript@5.9.3)(zod@4.1.12))
+      '@wagmi/connectors': 7.1.2(@wagmi/core@3.2.2(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12)))(typescript@5.9.3)(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12))
+      '@wagmi/core': 3.2.2(@tanstack/query-core@5.90.2)(@types/react@19.2.1)(ox@0.11.3(typescript@5.9.3)(zod@4.1.12))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.1))(viem@2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12))
       react: 19.2.1
       use-sync-external-store: 1.4.0(react@19.2.1)
-      viem: 2.44.2(typescript@5.9.3)(zod@4.1.12)
+      viem: 2.44.2(bufferutil@4.1.0)(typescript@5.9.3)(zod@4.1.12)
     optionalDependencies:
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -10812,11 +10906,21 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  ws@8.17.1: {}
+  ws@8.17.1(bufferutil@4.1.0):
+    optionalDependencies:
+      bufferutil: 4.1.0
 
-  ws@8.18.3: {}
+  ws@8.18.3(bufferutil@4.1.0):
+    optionalDependencies:
+      bufferutil: 4.1.0
 
-  ws@8.19.0: {}
+  ws@8.19.0(bufferutil@4.1.0):
+    optionalDependencies:
+      bufferutil: 4.1.0
+
+  ws@8.21.0(bufferutil@4.1.0):
+    optionalDependencies:
+      bufferutil: 4.1.0
 
   y18n@5.0.8: {}
 

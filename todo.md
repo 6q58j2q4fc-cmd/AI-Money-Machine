@@ -2854,3 +2854,19 @@
 - [ ] Add backtest results display with P&L chart
 - [ ] Add risk management settings panel (stop-loss, position sizing, max drawdown)
 - [ ] Push updated code to GitHub AI-Money-Machine
+
+## OHLCV Data Module (Trading Bot)
+
+- [x] ohlcv_cache table added to Drizzle schema (symbol, timeframe, openTime, OHLCV, source enum, composite index)
+- [x] ohlcv_fetch_log table added for audit trail of every data pull
+- [x] DB migration pushed (pnpm db:push) — both tables live in production DB
+- [x] server/tradingBot/data.ts — fetchFromAlpaca (equity bars via Alpaca Market Data API v2)
+- [x] server/tradingBot/data.ts — fetchFromCcxt (Binance public, crypto fallback via ccxt 4.x)
+- [x] server/tradingBot/data.ts — getCachedCandles (TTL-aware cache read per timeframe)
+- [x] server/tradingBot/data.ts — persistCandles (batch upsert in 500-row chunks, onDuplicateKeyUpdate)
+- [x] server/tradingBot/data.ts — fetchOHLCV (orchestrator: cache → Alpaca → CCXT → log)
+- [x] server/tradingBot/data.ts — getCachedOHLCV, clearOHLCVCache, getSupportedSymbols
+- [x] tRPC procedures: tradingBot.fetchOHLCV, getCachedOHLCV, clearOHLCVCache, getSupportedSymbols
+- [x] Unit tests: server/tradingBot.data.test.ts — 19 tests, all passing (fetchFromAlpaca, fetchFromCcxt, persistCandles, fetchOHLCV, getCachedOHLCV, clearOHLCVCache, getSupportedSymbols)
+- [x] ccxt package installed (v4.5.65)
+- [x] Supported symbols: 10 stocks (AAPL, MSFT, GOOGL, AMZN, TSLA, NVDA, META, SPY, QQQ, AMD) + 5 crypto (BTC/USDT, ETH/USDT, SOL/USDT, BNB/USDT, XRP/USDT)

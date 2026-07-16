@@ -148,6 +148,13 @@
       "when": 1768589984286,
       "tag": "0020_wet_blizzard",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1784162774681,
+      "tag": "0021_empty_vulture",
+      "breakpoints": true
     }
   ]
 }
