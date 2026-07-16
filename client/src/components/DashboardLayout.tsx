@@ -66,6 +66,7 @@ const menuItems: MenuItem[] = [
   { icon: Network, label: "Network Connections", path: "/network-connections" },
   { icon: Gift, label: "Free Income", path: "/free-income" },
   { icon: CandlestickChart, label: "AI Trading Bot", path: "/trading-bot" },
+  { icon: Activity, label: "Bot Monitor", path: "/monitor" },
   { icon: DollarSign, label: "Unclaimed Property", path: "/unclaimed-property" },
   { icon: Palette, label: "NFT Gallery", path: "/nft-gallery" },
   { icon: Crown, label: "NFT Empire", path: "/nft-empire" },

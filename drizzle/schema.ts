@@ -1672,3 +1672,43 @@ export const executionOrders = mysqlTable("execution_orders", {
   createdAt:        bigint("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
   updatedAt:        bigint("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
 });
+
+// ─── Monitor Snapshots ────────────────────────────────────────────────────────
+// Periodic snapshots of bot state: positions, equity, P&L, risk state
+export const monitorSnapshots = mysqlTable("monitor_snapshots", {
+  id:              int("id").primaryKey().autoincrement(),
+  portfolioValue:  double("portfolio_value").notNull(),
+  cash:            double("cash").notNull(),
+  equity:          double("equity").notNull(),
+  dailyPnl:        double("daily_pnl").notNull(),
+  dailyPnlPct:     double("daily_pnl_pct").notNull(),
+  totalPnl:        double("total_pnl").notNull(),
+  drawdownPct:     double("drawdown_pct").notNull(),
+  openPositions:   int("open_positions").notNull().default(0),
+  killSwitchActive: boolean("kill_switch_active").notNull().default(false),
+  positionsJson:   text("positions_json"),   // JSON array of AlpacaPosition
+  createdAt:       bigint("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+});
+
+// ─── Monitor Logs ─────────────────────────────────────────────────────────────
+// Structured log entries from bot operations
+export const monitorLogs = mysqlTable("monitor_logs", {
+  id:        int("id").primaryKey().autoincrement(),
+  level:     varchar("level", { length: 10 }).notNull().default("info"),  // debug|info|warn|error|critical
+  source:    varchar("source", { length: 64 }).notNull().default("bot"),  // bot|risk|execution|signal|backtest
+  message:   text("message").notNull(),
+  metaJson:  text("meta_json"),   // optional JSON metadata
+  createdAt: bigint("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+});
+
+// ─── Kill Switch State ────────────────────────────────────────────────────────
+// Single-row table tracking the manual kill switch state
+export const killSwitchState = mysqlTable("kill_switch_state", {
+  id:          int("id").primaryKey().autoincrement(),
+  active:      boolean("active").notNull().default(false),
+  reason:      varchar("reason", { length: 255 }).notNull().default(""),
+  triggeredBy: varchar("triggered_by", { length: 64 }).notNull().default(""),  // "manual"|"risk"|"drawdown"
+  triggeredAt: bigint("triggered_at", { mode: "number" }),
+  resetAt:     bigint("reset_at", { mode: "number" }),
+  updatedAt:   bigint("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+});

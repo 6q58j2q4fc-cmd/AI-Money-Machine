@@ -2962,3 +2962,35 @@
 - [x] TradingBot.tsx Execution tab: paper mode banner, account info cards, order entry form, positions panel, open orders table with cancel, order history table
 - [x] Unit tests: server/tradingBot.execution.test.ts — 34/34 passing
 - [x] Dev server restarted — float schema error cleared
+
+## Monitoring Dashboard (Trading Bot)
+
+- [ ] server/tradingBot/monitor.ts — snapshot aggregator, P&L calc, log writer, kill switch state
+- [ ] DB tables: monitor_snapshots, monitor_logs (migrated)
+- [ ] tRPC procedures: getMonitorSnapshot, getEquityCurve, getLogs, triggerKillSwitch, resetKillSwitch, getKillSwitchState
+- [ ] MonitorDashboard.tsx — dedicated page with live polling (5s), equity chart, positions table, log stream, kill switch panel
+- [ ] Route: /monitor (admin-protected)
+- [ ] Sidebar nav entry: Monitor with Activity icon
+- [ ] Unit tests: server/tradingBot.monitor.test.ts
+
+## Monitoring Dashboard (Trading Bot)
+
+- [x] server/tradingBot/monitor.ts — pure functions, no I/O, no side effects
+- [x] parseAlpacaNum() — safe string→number with null/undefined guard
+- [x] toPositionSummary() — Alpaca position → typed PositionSummary with costBasis-based unrealizedPlPct
+- [x] computeTotalUnrealizedPnl() — sum across all positions
+- [x] computeDailyPnl() — equity vs lastEquity → { dailyPnl, dailyPnlPct }
+- [x] computeDrawdown() — peak-relative positive percentage, clamped to 0
+- [x] buildSnapshot() — full MonitorSnapshot from Alpaca account + positions + peakEquity + killSwitchActive
+- [x] buildLogEntry() — structured log record with level, source, message, meta, createdAt
+- [x] buildKillSwitchActivated() — kill switch state on activation with reason + triggeredBy + timestamp
+- [x] buildKillSwitchReset() — kill switch state on reset (active=false, cleared fields)
+- [x] computePeakEquity() — running max over equity curve points
+- [x] logLevelClass() — CSS class mapping for log level badges
+- [x] snapshotToLogLine() — human-readable snapshot summary string
+- [x] DB tables: monitor_snapshots, monitor_logs, kill_switch_state (created in production)
+- [x] tRPC procedures: getMonitorSnapshot, getEquityCurve, getLogs, triggerKillSwitch, resetKillSwitch, getKillSwitchState
+- [x] client/src/pages/MonitorDashboard.tsx — live polling (5s auto-refresh), equity curve chart, positions table, log stream with level filter, kill switch panel with confirmation dialogs
+- [x] Route /monitor added (admin-protected) in App.tsx
+- [x] Sidebar nav entry "Bot Monitor" (Activity icon) added after AI Trading Bot
+- [x] Unit tests: server/tradingBot.monitor.test.ts — 49/49 passing

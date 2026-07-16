@@ -7290,6 +7290,195 @@ const tradingBotRouter = router({
       return rows;
     }),
 
+
+  // ─── Monitor procedures ────────────────────────────────────────────────────
+
+  getMonitorSnapshot: protectedProcedure.query(async () => {
+    const {
+      buildSnapshot, buildLogEntry, snapshotToLogLine,
+    } = await import("./tradingBot/monitor");
+    const { getAccountInfo, getPositions } = await import("./tradingBot/execution");
+    const { monitorSnapshots, monitorLogs, killSwitchState } = await import("../drizzle/schema");
+    const { desc, eq } = await import("drizzle-orm");
+    const dbConn = (await db.getDb())!;
+
+    // Fetch kill switch state
+    const [ksRow] = await dbConn.select().from(killSwitchState).where(eq(killSwitchState.id, 1));
+    const killActive = ksRow ? Boolean(ksRow.active) : false;
+
+    // Fetch peak equity from last 500 snapshots
+    const snapRows = await dbConn.select({ equity: monitorSnapshots.equity })
+      .from(monitorSnapshots).orderBy(desc(monitorSnapshots.createdAt)).limit(500);
+    const peakEquity = snapRows.length > 0 ? Math.max(...snapRows.map((r: { equity: number }) => r.equity)) : 0;
+
+    // Fetch live data from Alpaca paper API
+    const [accountResult, positionsResult] = await Promise.all([
+      getAccountInfo(),
+      getPositions(),
+    ]);
+
+    if (!accountResult.ok || !positionsResult.ok) {
+      // Return last known snapshot if Alpaca is unavailable
+      const [lastSnap] = await dbConn.select().from(monitorSnapshots)
+        .orderBy(desc(monitorSnapshots.createdAt)).limit(1);
+      if (lastSnap) {
+        return {
+          ...lastSnap,
+          positions: lastSnap.positionsJson ? JSON.parse(lastSnap.positionsJson) : [],
+          capturedAt: lastSnap.createdAt,
+          stale: true,
+        };
+      }
+      return null;
+    }
+
+    const snapshot = buildSnapshot(accountResult.data as any, positionsResult.data as any, peakEquity, killActive);
+
+    // Persist snapshot
+    await dbConn.insert(monitorSnapshots).values({
+      portfolioValue: snapshot.portfolioValue,
+      cash: snapshot.cash,
+      equity: snapshot.equity,
+      dailyPnl: snapshot.dailyPnl,
+      dailyPnlPct: snapshot.dailyPnlPct,
+      totalPnl: snapshot.totalPnl,
+      drawdownPct: snapshot.drawdownPct,
+      openPositions: snapshot.openPositions,
+      killSwitchActive: snapshot.killSwitchActive,
+      positionsJson: JSON.stringify(snapshot.positions),
+      createdAt: snapshot.capturedAt,
+    });
+
+    // Write info log
+    const logEntry = buildLogEntry("info", "monitor", snapshotToLogLine(snapshot));
+    await dbConn.insert(monitorLogs).values({
+      level: logEntry.level,
+      source: logEntry.source,
+      message: logEntry.message,
+      createdAt: logEntry.createdAt,
+    });
+
+    return { ...snapshot, stale: false };
+  }),
+
+  getEquityCurve: protectedProcedure
+    .input(z.object({ limit: z.number().int().min(10).max(1000).default(200) }))
+    .query(async ({ input }) => {
+      const { monitorSnapshots } = await import("../drizzle/schema");
+      const { desc } = await import("drizzle-orm");
+      const dbConn = (await db.getDb())!;
+      const rows = await dbConn.select({
+        ts: monitorSnapshots.createdAt,
+        equity: monitorSnapshots.equity,
+        dailyPnl: monitorSnapshots.dailyPnl,
+      }).from(monitorSnapshots).orderBy(desc(monitorSnapshots.createdAt)).limit(input.limit);
+      return rows.reverse(); // chronological order
+    }),
+
+  getMonitorLogs: protectedProcedure
+    .input(z.object({
+      limit: z.number().int().min(1).max(500).default(100),
+      level: z.enum(["debug","info","warn","error","critical"]).optional(),
+      source: z.enum(["bot","risk","execution","signal","backtest","monitor","system"]).optional(),
+    }))
+    .query(async ({ input }) => {
+      const { monitorLogs } = await import("../drizzle/schema");
+      const { desc, eq, and } = await import("drizzle-orm");
+      const dbConn = (await db.getDb())!;
+      const conditions = [];
+      if (input.level) conditions.push(eq(monitorLogs.level, input.level));
+      if (input.source) conditions.push(eq(monitorLogs.source, input.source));
+      const rows = await dbConn.select().from(monitorLogs)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(monitorLogs.createdAt)).limit(input.limit);
+      return rows;
+    }),
+
+  writeMonitorLog: protectedProcedure
+    .input(z.object({
+      level: z.enum(["debug","info","warn","error","critical"]),
+      source: z.enum(["bot","risk","execution","signal","backtest","monitor","system"]),
+      message: z.string().min(1).max(2000),
+      meta: z.record(z.string(), z.unknown()).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { monitorLogs } = await import("../drizzle/schema");
+      const dbConn = (await db.getDb())!;
+      await dbConn.insert(monitorLogs).values({
+        level: input.level,
+        source: input.source,
+        message: input.message,
+        metaJson: input.meta ? JSON.stringify(input.meta) : null,
+        createdAt: Date.now(),
+      });
+      return { ok: true };
+    }),
+
+  getKillSwitchState: protectedProcedure.query(async () => {
+    const { killSwitchState } = await import("../drizzle/schema");
+    const { eq } = await import("drizzle-orm");
+    const dbConn = (await db.getDb())!;
+    const [row] = await dbConn.select().from(killSwitchState).where(eq(killSwitchState.id, 1));
+    if (!row) return { active: false, reason: "", triggeredBy: "", triggeredAt: null, resetAt: null, updatedAt: Date.now() };
+    return {
+      active: Boolean(row.active),
+      reason: row.reason,
+      triggeredBy: row.triggeredBy,
+      triggeredAt: row.triggeredAt ?? null,
+      resetAt: row.resetAt ?? null,
+      updatedAt: row.updatedAt,
+    };
+  }),
+
+  triggerKillSwitch: protectedProcedure
+    .input(z.object({ reason: z.string().min(1).max(255) }))
+    .mutation(async ({ input }) => {
+      const { killSwitchState, monitorLogs } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const { notifyOwner } = await import("./_core/notification");
+      const dbConn = (await db.getDb())!;
+      const now = Date.now();
+      await dbConn.update(killSwitchState).set({
+        active: true,
+        reason: input.reason,
+        triggeredBy: "manual",
+        triggeredAt: now,
+        updatedAt: now,
+      }).where(eq(killSwitchState.id, 1));
+      await dbConn.insert(monitorLogs).values({
+        level: "critical",
+        source: "monitor",
+        message: `KILL SWITCH ACTIVATED (manual): ${input.reason}`,
+        createdAt: now,
+      });
+      await notifyOwner({ title: "🚨 Kill Switch Activated", content: `Manual kill switch triggered. Reason: ${input.reason}` });
+      return { ok: true, triggeredAt: now };
+    }),
+
+  resetKillSwitch: protectedProcedure
+    .input(z.object({ confirm: z.literal(true) }))
+    .mutation(async ({ input: _input }) => {
+      const { killSwitchState, monitorLogs } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const dbConn = (await db.getDb())!;
+      const now = Date.now();
+      await dbConn.update(killSwitchState).set({
+        active: false,
+        reason: "",
+        triggeredBy: "",
+        triggeredAt: null,
+        resetAt: now,
+        updatedAt: now,
+      }).where(eq(killSwitchState.id, 1));
+      await dbConn.insert(monitorLogs).values({
+        level: "warn",
+        source: "monitor",
+        message: "Kill switch RESET by operator",
+        createdAt: now,
+      });
+      return { ok: true, resetAt: now };
+    }),
+
 });
 
 export const appRouter = router({
