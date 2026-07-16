@@ -61,6 +61,7 @@ import NotificationHistory from './pages/NotificationHistory';
 import BlockchainMinting from './pages/BlockchainMinting';
 import SecurityDashboard from './pages/SecurityDashboard';
 import UnclaimedProperty from './pages/UnclaimedProperty';
+import TradingBot from './pages/TradingBot';
 import AdminOnly from './components/AdminOnly';
 
 // Admin-protected page wrapper
@@ -133,6 +134,7 @@ function Router() {
       <Route path="/faucet-connections">{() => <AdminPage component={FaucetConnections} />}</Route>
       <Route path="/payment-history" component={PaymentHistory} />
       <Route path="/notifications" component={NotificationSettings} />
+      <Route path="/trading-bot">{() => <AdminPage component={TradingBot} />}</Route>
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

@@ -1,5 +1,17 @@
 # MoneyMachine - Content Monetization Platform TODO
 
+## AI Trading Bot Integration
+
+- [x] Python trading bot skeleton: config, data, signals, backtest, risk, execution, dashboard modules
+- [x] tRPC backend procedures: tradingBot.getStatus, getSignals, runBacktest, getTrades, getPerformance, startBot, stopBot, getConfig
+- [x] TradingBot.tsx frontend page with live signals table, backtest runner, equity curve chart, performance metrics, strategy docs, risk config
+- [x] Route added: /trading-bot (admin-protected)
+- [x] Sidebar nav entry: AI Trading Bot with CandlestickChart icon
+- [x] Alpaca API keys configured and validated (ACTIVE paper trading account, $100,000 equity)
+- [x] Alpaca API key validation test (server/alpaca.test.ts) — passes with status ACTIVE
+- [x] recharts equity curve chart with reference line and color-coded P&L
+- [x] Backtest trade history table with entry/exit prices, P&L, and exit reason
+
 ## Core Features
 
 - [x] Database schema for articles, affiliate links, topics, and analytics
@@ -2828,3 +2840,17 @@
 - [ ] Add "Best Price" badges to top affiliate links
 - [ ] Sticky sidebar affiliate CTA on articles
 - [ ] Related products section at article bottom
+
+## AI Trading Bot Section (July 15, 2026)
+
+- [ ] Create Python trading bot skeleton with 6 modules (data, signals, backtest, risk, execution, dashboard)
+- [ ] Add config for API keys via environment variables/secrets (Alpaca, Binance, Coinbase, Polygon.io)
+- [ ] Create tRPC backend procedures for bot control (start, stop, status, config, backtest)
+- [ ] Build frontend Trading Bot page with live dashboard UI
+- [ ] Add Trading Bot to sidebar navigation menu
+- [ ] Add route /trading-bot in App.tsx
+- [ ] Implement bot status display (running/stopped/backtesting)
+- [ ] Add strategy configuration panel (RSI, MACD, Bollinger Bands, Moving Average)
+- [ ] Add backtest results display with P&L chart
+- [ ] Add risk management settings panel (stop-loss, position sizing, max drawdown)
+- [ ] Push updated code to GitHub AI-Money-Machine

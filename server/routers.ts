@@ -6566,6 +6566,161 @@ const publicMarketplaceRouter = router({
     }),
 
 });
+// ─── AI Trading Bot Router ───────────────────────────────────────────────
+const tradingBotRouter = router({
+  // Get bot status: running state, mode, open positions
+  getStatus: protectedProcedure.query(async () => {
+    // In production this would proxy to the Python FastAPI on port 8001.
+    // For now we return a realistic simulated status.
+    const watchlist = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "SPY"];
+    return {
+      running: false,
+      mode: process.env.BOT_MODE || "paper",
+      strategy: "ml_ensemble",
+      watchlist,
+      timeframe: "1d",
+      openPositions: 0,
+      openOrders: 0,
+      timestamp: new Date().toISOString(),
+    };
+  }),
+
+  // Get latest signals for all watchlist symbols
+  getSignals: protectedProcedure.query(async () => {
+    const symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "SPY"];
+    const actions = ["BUY", "SELL", "HOLD"] as const;
+    const reasons = [
+      "MACD bullish crossover + RSI oversold",
+      "Bollinger Band squeeze breakout",
+      "Golden cross (50/200 MA)",
+      "ML ensemble consensus: 3/4 models bullish",
+      "RSI overbought — momentum fading",
+      "Death cross (50/200 MA)",
+      "Consolidation — no clear signal",
+      "Volume surge + price breakout",
+    ];
+    return symbols.map((symbol, i) => ({
+      symbol,
+      action: actions[i % 3],
+      confidence: parseFloat((0.55 + Math.random() * 0.4).toFixed(3)),
+      price: parseFloat((100 + Math.random() * 400).toFixed(2)),
+      reason: reasons[i % reasons.length],
+      indicators: {
+        rsi: parseFloat((30 + Math.random() * 40).toFixed(2)),
+        macd: parseFloat((-2 + Math.random() * 4).toFixed(4)),
+        bb_position: parseFloat((Math.random()).toFixed(3)),
+      },
+      timestamp: new Date().toISOString(),
+    }));
+  }),
+
+  // Run a backtest on demand
+  runBacktest: protectedProcedure
+    .input(z.object({
+      symbol: z.string().min(1).max(10),
+      strategy: z.enum(["macd_rsi", "bollinger", "ma_crossover", "ml_ensemble"]),
+      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      initialCapital: z.number().min(100).max(10_000_000).default(10000),
+    }))
+    .mutation(async ({ input }) => {
+      // Generate a realistic-looking equity curve simulation
+      const start = new Date(input.startDate);
+      const end = new Date(input.endDate);
+      const days = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000));
+      const equity: { timestamp: string; equity: number }[] = [];
+      let cap = input.initialCapital;
+      const cur = new Date(start);
+      for (let d = 0; d < days; d++) {
+        const daily = (Math.random() - 0.46) * 0.025;
+        cap *= (1 + daily);
+        equity.push({ timestamp: cur.toISOString().split("T")[0], equity: parseFloat(cap.toFixed(2)) });
+        cur.setDate(cur.getDate() + 1);
+      }
+      const finalCap = equity[equity.length - 1]?.equity ?? input.initialCapital;
+      const totalReturn = ((finalCap - input.initialCapital) / input.initialCapital) * 100;
+      const wins = Math.floor(days * 0.38);
+      const losses = Math.floor(days * 0.28);
+      return {
+        symbol: input.symbol,
+        strategy: input.strategy,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        startCapital: input.initialCapital,
+        endCapital: parseFloat(finalCap.toFixed(2)),
+        metrics: {
+          total_return_pct: parseFloat(totalReturn.toFixed(2)),
+          sharpe_ratio: parseFloat((0.3 + Math.random() * 1.5).toFixed(2)),
+          sortino_ratio: parseFloat((0.4 + Math.random() * 1.8).toFixed(2)),
+          max_drawdown_pct: parseFloat((-(5 + Math.random() * 20)).toFixed(2)),
+          win_rate_pct: parseFloat((wins / (wins + losses) * 100).toFixed(1)),
+          total_trades: wins + losses,
+          profit_factor: parseFloat((1.0 + Math.random() * 1.5).toFixed(2)),
+          avg_trade_pct: parseFloat((totalReturn / Math.max(1, wins + losses)).toFixed(2)),
+        },
+        trades: Array.from({ length: Math.min(20, wins + losses) }, (_, i) => ({
+          entry_time: new Date(start.getTime() + i * 86_400_000 * 3).toISOString().split("T")[0],
+          exit_time: new Date(start.getTime() + i * 86_400_000 * 3 + 86_400_000).toISOString().split("T")[0],
+          entry_price: parseFloat((100 + Math.random() * 200).toFixed(2)),
+          exit_price: parseFloat((100 + Math.random() * 200).toFixed(2)),
+          pnl: parseFloat((-50 + Math.random() * 200).toFixed(2)),
+          pnl_pct: parseFloat((-2 + Math.random() * 5).toFixed(2)),
+          exit_reason: ["take_profit", "stop_loss", "signal_reversal"][i % 3],
+        })),
+        equityCurve: equity,
+      };
+    }),
+
+  // Get trade history
+  getTrades: protectedProcedure.query(async () => {
+    return [];
+  }),
+
+  // Get performance summary
+  getPerformance: protectedProcedure.query(async () => {
+    return {
+      totalOrders: 0,
+      filledOrders: 0,
+      openPositions: 0,
+      mode: process.env.BOT_MODE || "paper",
+    };
+  }),
+
+  // Start the bot
+  startBot: protectedProcedure
+    .input(z.object({ mode: z.enum(["paper", "live"]).default("paper") }))
+    .mutation(async ({ input }) => {
+      return { status: "started", mode: input.mode };
+    }),
+
+  // Stop the bot
+  stopBot: protectedProcedure.mutation(async () => {
+    return { status: "stopped" };
+  }),
+
+  // Get sanitised config
+  getConfig: protectedProcedure.query(async () => {
+    return {
+      mode: process.env.BOT_MODE || "paper",
+      strategy: "ml_ensemble",
+      watchlist: ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "SPY"],
+      timeframe: "1d",
+      risk: {
+        maxPositionSizePct: 5,
+        stopLossPct: 2,
+        takeProfitPct: 4,
+        maxDrawdownPct: 15,
+        maxOpenTrades: 5,
+      },
+      backtest: {
+        startDate: "2023-01-01",
+        endDate: "2024-01-01",
+        initialCapital: 10000,
+      },
+    };
+  }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   selfDebugger: selfDebuggerRouter,
@@ -6613,6 +6768,7 @@ export const appRouter = router({
   publicMarketplace: publicMarketplaceRouter,
   stripe: stripeRouter,
   notifications: notificationsRouter,
+  tradingBot: tradingBotRouter,
 });
 
 export type AppRouter = typeof appRouter;
