@@ -1647,3 +1647,28 @@ export const riskEvents = mysqlTable("risk_events", {
 });
 export type RiskEventRow = typeof riskEvents.$inferSelect;
 export type InsertRiskEventRow = typeof riskEvents.$inferInsert;
+
+// ─── Execution Orders (Paper Trading) ────────────────────────────────────────
+
+export const executionOrders = mysqlTable("execution_orders", {
+  id:               int("id").autoincrement().primaryKey(),
+  alpacaOrderId:    varchar("alpaca_order_id", { length: 64 }).notNull().unique(),
+  clientOrderId:    varchar("client_order_id", { length: 128 }),
+  symbol:           varchar("symbol", { length: 16 }).notNull(),
+  side:             varchar("side", { length: 8 }).notNull(),       // 'buy' | 'sell'
+  orderType:        varchar("order_type", { length: 16 }).notNull(), // 'market' | 'limit' | 'stop' | 'stop_limit'
+  timeInForce:      varchar("time_in_force", { length: 8 }).notNull(),
+  qty:              int("qty").notNull(),
+  limitPrice:       double("limit_price"),
+  stopPrice:        double("stop_price"),
+  filledQty:        int("filled_qty").default(0),
+  filledAvgPrice:   double("filled_avg_price"),
+  status:           varchar("status", { length: 32 }).notNull().default("new"),
+  mode:             varchar("mode", { length: 8 }).notNull().default("paper"), // ALWAYS 'paper'
+  submittedAt:      bigint("submitted_at", { mode: "number" }).notNull(),
+  filledAt:         bigint("filled_at", { mode: "number" }),
+  canceledAt:       bigint("canceled_at", { mode: "number" }),
+  rawResponse:      text("raw_response"),                           // JSON snapshot of Alpaca response
+  createdAt:        bigint("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  updatedAt:        bigint("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+});

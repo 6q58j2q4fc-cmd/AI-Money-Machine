@@ -2924,3 +2924,41 @@
 - [x] TradingBot.tsx Risk tab: kill switch banner, 4 status cards, config editor, guard status panel, manual controls, event log
 - [x] Owner alert dispatched via notifyOwner() when kill switch activates
 - [x] Unit tests: server/tradingBot.risk.test.ts — 53/53 passing
+
+## Execution Adapter (Paper Mode Only)
+
+- [ ] server/tradingBot/execution.ts — Alpaca paper trading adapter, PAPER mode only, no live trading path
+- [ ] Hard guard: PAPER_BASE_URL constant, live URL blocked at compile time
+- [ ] Hard guard: LIVE_TRADING_DISABLED flag checked before every outbound request
+- [ ] submitPaperOrder() — market/limit/stop orders via Alpaca paper API
+- [ ] cancelPaperOrder() — cancel by orderId
+- [ ] getOrderStatus() — fetch single order status
+- [ ] listOpenOrders() — list all open orders
+- [ ] getPositions() — fetch current paper positions
+- [ ] getAccountInfo() — fetch paper account equity, buying power, cash
+- [ ] execution_orders DB table (symbol, side, qty, type, status, alpacaOrderId, filledAt, filledAvgPrice)
+- [ ] tRPC procedures: submitOrder, cancelOrder, getOrderStatus, listOpenOrders, getPositions, getAccountInfo
+- [ ] TradingBot.tsx Execution tab: order entry form, open orders table, positions table, account info panel
+- [ ] Unit tests: server/tradingBot.execution.test.ts — all order paths, guard enforcement, error handling
+
+## Execution Adapter (Paper Mode Only — Alpaca)
+
+- [x] server/tradingBot/execution.ts — paper-mode Alpaca adapter, zero live trading paths
+- [x] PAPER_BASE_URL = "https://paper-api.alpaca.markets" (const literal, never overridable)
+- [x] LIVE_TRADING_DISABLED = true (const literal true, TypeScript prevents reassignment)
+- [x] assertPaperMode() — throws if LIVE_TRADING_DISABLED is somehow false
+- [x] buildHeaders() — reads ALPACA_API_KEY/ALPACA_SECRET_KEY at call time (not module load)
+- [x] alpacaFetch<T>() — thin wrapper: enforces paper mode, returns typed ExecutionResult<T>
+- [x] submitPaperOrder() — validates qty/symbol/prices, sends POST /v2/orders to paper API
+- [x] cancelPaperOrder() — sends DELETE /v2/orders/{id} to paper API
+- [x] getOrderStatus() — GET /v2/orders/{id}
+- [x] listOpenOrders() — GET /v2/orders with optional symbol filter
+- [x] getPositions() — GET /v2/positions
+- [x] getAccountInfo() — GET /v2/account
+- [x] cancelAllPaperOrders() — DELETE /v2/orders (batch cancel)
+- [x] closePaperPosition() — DELETE /v2/positions/{symbol}
+- [x] DB table: execution_orders (migrated to production)
+- [x] tRPC procedures: submitOrder, cancelOrder, getOrderStatus, listOpenOrders, getPositions, getAccountInfo, listOrderHistory
+- [x] TradingBot.tsx Execution tab: paper mode banner, account info cards, order entry form, positions panel, open orders table with cancel, order history table
+- [x] Unit tests: server/tradingBot.execution.test.ts — 34/34 passing
+- [x] Dev server restarted — float schema error cleared

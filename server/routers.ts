@@ -7178,6 +7178,118 @@ const tradingBotRouter = router({
       return evaluateTradeRisk(input.entryPrice, state, config);
     }),
 
+  // ─── Execution Adapter (Paper Mode Only) ─────────────────────────────────────
+
+  submitOrder: protectedProcedure
+    .input(z.object({
+      symbol:      z.string().min(1),
+      qty:         z.number().int().positive(),
+      side:        z.enum(["buy", "sell"]),
+      type:        z.enum(["market", "limit", "stop", "stop_limit"]),
+      timeInForce: z.enum(["day", "gtc", "ioc", "fok"]),
+      limitPrice:  z.number().positive().optional(),
+      stopPrice:   z.number().positive().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { submitPaperOrder, LIVE_TRADING_DISABLED, PAPER_BASE_URL } = await import("./tradingBot/execution");
+      if (!LIVE_TRADING_DISABLED) throw new Error("Live trading is disabled");
+      const result = await submitPaperOrder({
+        symbol: input.symbol,
+        qty: input.qty,
+        side: input.side,
+        type: input.type,
+        timeInForce: input.timeInForce,
+        limitPrice: input.limitPrice,
+        stopPrice: input.stopPrice,
+      });
+      if (!result.ok) throw new Error(result.error.message);
+      const { executionOrders } = await import("../drizzle/schema");
+      const dbConn = (await db.getDb())!;
+      await dbConn.insert(executionOrders).values({
+        alpacaOrderId: result.data.id,
+        clientOrderId: result.data.clientOrderId,
+        symbol:        result.data.symbol,
+        side:          result.data.side,
+        orderType:     result.data.type,
+        timeInForce:   result.data.timeInForce,
+        qty:           parseInt(result.data.qty, 10),
+        limitPrice:    result.data.limitPrice ? parseFloat(result.data.limitPrice) : undefined,
+        stopPrice:     result.data.stopPrice  ? parseFloat(result.data.stopPrice)  : undefined,
+        status:        result.data.status,
+        mode:          "paper",
+        submittedAt:   new Date(result.data.submittedAt).getTime(),
+        rawResponse:   JSON.stringify(result.data),
+        createdAt:     Date.now(),
+        updatedAt:     Date.now(),
+      });
+      return { mode: "paper", baseUrl: PAPER_BASE_URL, order: result.data };
+    }),
+
+  cancelOrder: protectedProcedure
+    .input(z.object({ orderId: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const { cancelPaperOrder, LIVE_TRADING_DISABLED } = await import("./tradingBot/execution");
+      if (!LIVE_TRADING_DISABLED) throw new Error("Live trading is disabled");
+      const result = await cancelPaperOrder(input.orderId);
+      if (!result.ok) throw new Error(result.error.message);
+      const { executionOrders } = await import("../drizzle/schema");
+      const dbConn = (await db.getDb())!;
+      const { eq } = await import("drizzle-orm");
+      await dbConn.update(executionOrders)
+        .set({ status: "canceled", canceledAt: Date.now(), updatedAt: Date.now() })
+        .where(eq(executionOrders.alpacaOrderId, input.orderId));
+      return { canceled: true };
+    }),
+
+  getOrderStatus: protectedProcedure
+    .input(z.object({ orderId: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const { getOrderStatus, LIVE_TRADING_DISABLED } = await import("./tradingBot/execution");
+      if (!LIVE_TRADING_DISABLED) throw new Error("Live trading is disabled");
+      const result = await getOrderStatus(input.orderId);
+      if (!result.ok) throw new Error(result.error.message);
+      return result.data;
+    }),
+
+  listOpenOrders: protectedProcedure
+    .input(z.object({ symbol: z.string().optional() }))
+    .query(async ({ input }) => {
+      const { listOpenOrders, LIVE_TRADING_DISABLED } = await import("./tradingBot/execution");
+      if (!LIVE_TRADING_DISABLED) throw new Error("Live trading is disabled");
+      const result = await listOpenOrders(input.symbol);
+      if (!result.ok) throw new Error(result.error.message);
+      return result.data;
+    }),
+
+  getPositions: protectedProcedure.query(async () => {
+    const { getPositions, LIVE_TRADING_DISABLED } = await import("./tradingBot/execution");
+    if (!LIVE_TRADING_DISABLED) throw new Error("Live trading is disabled");
+    const result = await getPositions();
+    if (!result.ok) throw new Error(result.error.message);
+    return result.data;
+  }),
+
+  getAccountInfo: protectedProcedure.query(async () => {
+    const { getAccountInfo, LIVE_TRADING_DISABLED, PAPER_BASE_URL } = await import("./tradingBot/execution");
+    if (!LIVE_TRADING_DISABLED) throw new Error("Live trading is disabled");
+    const result = await getAccountInfo();
+    if (!result.ok) throw new Error(result.error.message);
+    return { mode: "paper", baseUrl: PAPER_BASE_URL, account: result.data };
+  }),
+
+  listOrderHistory: protectedProcedure
+    .input(z.object({
+      symbol: z.string().optional(),
+      limit:  z.number().int().min(1).max(200).default(50),
+    }))
+    .query(async ({ input }) => {
+      const { executionOrders } = await import("../drizzle/schema");
+      const { desc } = await import("drizzle-orm");
+      const dbConn = (await db.getDb())!;
+      const rows = await dbConn.select().from(executionOrders).orderBy(desc(executionOrders.createdAt)).limit(input.limit);
+      return rows;
+    }),
+
 });
 
 export const appRouter = router({

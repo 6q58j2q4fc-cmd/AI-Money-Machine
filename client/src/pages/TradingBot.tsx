@@ -192,6 +192,379 @@ function MetricCard({
 }
 
 
+
+// ─── Execution Tab Component (Paper Mode Only) ────────────────────────────────
+function ExecutionTab() {
+  const utils = trpc.useUtils();
+  const [orderForm, setOrderForm] = useState({
+    symbol: "AAPL",
+    qty: "1",
+    side: "buy" as "buy" | "sell",
+    type: "market" as "market" | "limit" | "stop" | "stop_limit",
+    timeInForce: "day" as "day" | "gtc" | "ioc" | "fok",
+    limitPrice: "",
+    stopPrice: "",
+  });
+
+  const { data: account, isLoading: acctLoading, refetch: refetchAcct } =
+    trpc.tradingBot.getAccountInfo.useQuery(undefined, { refetchInterval: 30_000 });
+
+  const { data: openOrders, isLoading: ordersLoading, refetch: refetchOrders } =
+    trpc.tradingBot.listOpenOrders.useQuery({ symbol: undefined }, { refetchInterval: 15_000 });
+
+  const { data: positions, isLoading: posLoading, refetch: refetchPos } =
+    trpc.tradingBot.getPositions.useQuery(undefined, { refetchInterval: 15_000 });
+
+  const { data: orderHistory } =
+    trpc.tradingBot.listOrderHistory.useQuery({ limit: 50 });
+
+  const submitOrder = trpc.tradingBot.submitOrder.useMutation({
+    onSuccess: (res) => {
+      toast.success(`Paper order submitted: ${res.order.id.slice(0, 8)}…`);
+      utils.tradingBot.listOpenOrders.invalidate();
+      utils.tradingBot.getAccountInfo.invalidate();
+      utils.tradingBot.listOrderHistory.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const cancelOrder = trpc.tradingBot.cancelOrder.useMutation({
+    onSuccess: () => {
+      toast.success("Order canceled");
+      utils.tradingBot.listOpenOrders.invalidate();
+      utils.tradingBot.listOrderHistory.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  function handleSubmit() {
+    const qty = parseInt(orderForm.qty, 10);
+    if (isNaN(qty) || qty < 1) { toast.error("Quantity must be a positive integer"); return; }
+    submitOrder.mutate({
+      symbol: orderForm.symbol.toUpperCase(),
+      qty,
+      side: orderForm.side,
+      type: orderForm.type,
+      timeInForce: orderForm.timeInForce,
+      limitPrice: orderForm.limitPrice ? parseFloat(orderForm.limitPrice) : undefined,
+      stopPrice: orderForm.stopPrice ? parseFloat(orderForm.stopPrice) : undefined,
+    });
+  }
+
+  const acct = account?.account;
+
+  return (
+    <div className="space-y-6">
+      {/* Paper Mode Banner */}
+      <div className="bg-amber-950/40 border border-amber-700/40 rounded-xl p-3 flex items-center gap-3">
+        <Shield className="w-4 h-4 text-amber-400 flex-shrink-0" />
+        <p className="text-amber-300 text-sm">
+          <span className="font-semibold">Paper Trading Mode</span> — all orders execute against{" "}
+          <code className="text-amber-200 text-xs bg-amber-900/40 px-1 rounded">paper-api.alpaca.markets</code>.
+          Live trading is permanently disabled in this adapter.
+        </p>
+      </div>
+
+      {/* Account Info */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Equity", value: acct ? `$${parseFloat(acct.equity).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : (acctLoading ? "Loading…" : "—") },
+          { label: "Cash", value: acct ? `$${parseFloat(acct.cash).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—" },
+          { label: "Buying Power", value: acct ? `$${parseFloat(acct.buyingPower).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—" },
+          { label: "Account Status", value: acct?.status ?? "—" },
+        ].map((m) => (
+          <Card key={m.label} className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-4 pb-3">
+              <p className="text-zinc-500 text-xs mb-1">{m.label}</p>
+              <p className="text-white text-lg font-bold font-mono">{m.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Order Entry Form */}
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white text-base flex items-center gap-2">
+              <Zap className="w-4 h-4 text-emerald-400" />
+              Submit Paper Order
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-zinc-400 text-xs">Symbol</Label>
+                <Input
+                  className="bg-zinc-800 border-zinc-700 text-white font-mono uppercase mt-1"
+                  value={orderForm.symbol}
+                  onChange={(e) => setOrderForm((p) => ({ ...p, symbol: e.target.value.toUpperCase() }))}
+                  placeholder="AAPL"
+                />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Quantity (shares)</Label>
+                <Input
+                  className="bg-zinc-800 border-zinc-700 text-white font-mono mt-1"
+                  value={orderForm.qty}
+                  onChange={(e) => setOrderForm((p) => ({ ...p, qty: e.target.value }))}
+                  placeholder="1"
+                  type="number"
+                  min="1"
+                  step="1"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-zinc-400 text-xs">Side</Label>
+                <Select value={orderForm.side} onValueChange={(v) => setOrderForm((p) => ({ ...p, side: v as typeof p.side }))}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="buy">Buy</SelectItem>
+                    <SelectItem value="sell">Sell</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Order Type</Label>
+                <Select value={orderForm.type} onValueChange={(v) => setOrderForm((p) => ({ ...p, type: v as typeof p.type }))}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="market">Market</SelectItem>
+                    <SelectItem value="limit">Limit</SelectItem>
+                    <SelectItem value="stop">Stop</SelectItem>
+                    <SelectItem value="stop_limit">Stop Limit</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {(orderForm.type === "limit" || orderForm.type === "stop_limit") && (
+              <div>
+                <Label className="text-zinc-400 text-xs">Limit Price</Label>
+                <Input
+                  className="bg-zinc-800 border-zinc-700 text-white font-mono mt-1"
+                  value={orderForm.limitPrice}
+                  onChange={(e) => setOrderForm((p) => ({ ...p, limitPrice: e.target.value }))}
+                  placeholder="0.00"
+                  type="number"
+                  step="0.01"
+                />
+              </div>
+            )}
+            {(orderForm.type === "stop" || orderForm.type === "stop_limit") && (
+              <div>
+                <Label className="text-zinc-400 text-xs">Stop Price</Label>
+                <Input
+                  className="bg-zinc-800 border-zinc-700 text-white font-mono mt-1"
+                  value={orderForm.stopPrice}
+                  onChange={(e) => setOrderForm((p) => ({ ...p, stopPrice: e.target.value }))}
+                  placeholder="0.00"
+                  type="number"
+                  step="0.01"
+                />
+              </div>
+            )}
+            <div>
+              <Label className="text-zinc-400 text-xs">Time in Force</Label>
+              <Select value={orderForm.timeInForce} onValueChange={(v) => setOrderForm((p) => ({ ...p, timeInForce: v as typeof p.timeInForce }))}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="day">Day</SelectItem>
+                  <SelectItem value="gtc">GTC (Good Till Canceled)</SelectItem>
+                  <SelectItem value="ioc">IOC (Immediate or Cancel)</SelectItem>
+                  <SelectItem value="fok">FOK (Fill or Kill)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              className={`w-full mt-2 font-semibold ${
+                orderForm.side === "buy"
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-red-600 hover:bg-red-700"
+              } text-white`}
+              onClick={handleSubmit}
+              disabled={submitOrder.isPending}
+            >
+              {submitOrder.isPending ? (
+                <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+              ) : orderForm.side === "buy" ? (
+                <TrendingUp className="w-4 h-4 mr-2" />
+              ) : (
+                <TrendingDown className="w-4 h-4 mr-2" />
+              )}
+              {submitOrder.isPending ? "Submitting…" : `Paper ${orderForm.side === "buy" ? "Buy" : "Sell"} ${orderForm.qty} ${orderForm.symbol}`}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Positions */}
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-white text-base flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-blue-400" />
+              Open Positions
+            </CardTitle>
+            <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-400 h-7 text-xs" onClick={() => refetchPos()}>
+              <RefreshCw className="w-3 h-3 mr-1" /> Refresh
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {posLoading ? (
+              <div className="flex items-center justify-center h-24 text-zinc-500">
+                <RefreshCw className="w-4 h-4 animate-spin mr-2" /> Loading…
+              </div>
+            ) : !positions || positions.length === 0 ? (
+              <div className="text-center py-8 text-zinc-500 text-sm">No open positions</div>
+            ) : (
+              <div className="space-y-2">
+                {positions.map((pos) => (
+                  <div key={pos.symbol} className="flex items-center justify-between p-2 bg-zinc-800 rounded-lg">
+                    <div>
+                      <p className="text-white font-mono font-semibold text-sm">{pos.symbol}</p>
+                      <p className="text-zinc-500 text-xs">{pos.qty} shares · avg ${parseFloat(pos.avgEntryPrice).toFixed(2)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white text-sm font-mono">${parseFloat(pos.marketValue).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      <p className={`text-xs font-mono ${parseFloat(pos.unrealizedPl) >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                        {parseFloat(pos.unrealizedPl) >= 0 ? "+" : ""}
+                        ${parseFloat(pos.unrealizedPl).toFixed(2)} ({(parseFloat(pos.unrealizedPlpc) * 100).toFixed(2)}%)
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Open Orders */}
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle className="text-white text-base flex items-center gap-2">
+            <Activity className="w-4 h-4 text-amber-400" />
+            Open Orders
+          </CardTitle>
+          <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-400 h-7 text-xs" onClick={() => refetchOrders()}>
+            <RefreshCw className="w-3 h-3 mr-1" /> Refresh
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {ordersLoading ? (
+            <div className="flex items-center justify-center h-16 text-zinc-500">
+              <RefreshCw className="w-4 h-4 animate-spin mr-2" /> Loading…
+            </div>
+          ) : !openOrders || openOrders.length === 0 ? (
+            <div className="text-center py-6 text-zinc-500 text-sm">No open orders</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-800">
+                    {["Order ID", "Symbol", "Side", "Type", "Qty", "Status", "Submitted", ""].map((h) => (
+                      <th key={h} className="text-left text-zinc-500 text-xs py-2 pr-4 font-medium">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {openOrders.map((o) => (
+                    <tr key={o.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                      <td className="py-2 pr-4 font-mono text-zinc-400 text-xs">{o.id.slice(0, 8)}…</td>
+                      <td className="py-2 pr-4 font-mono text-white font-semibold">{o.symbol}</td>
+                      <td className="py-2 pr-4">
+                        <Badge className={o.side === "buy" ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}>
+                          {o.side.toUpperCase()}
+                        </Badge>
+                      </td>
+                      <td className="py-2 pr-4 text-zinc-300 capitalize">{o.type}</td>
+                      <td className="py-2 pr-4 font-mono text-zinc-300">{o.qty}</td>
+                      <td className="py-2 pr-4">
+                        <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-xs">{o.status}</Badge>
+                      </td>
+                      <td className="py-2 pr-4 text-zinc-500 text-xs">{new Date(o.submittedAt).toLocaleTimeString()}</td>
+                      <td className="py-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-red-800 text-red-400 hover:bg-red-950 h-6 text-xs px-2"
+                          onClick={() => cancelOrder.mutate({ orderId: o.id })}
+                          disabled={cancelOrder.isPending}
+                        >
+                          Cancel
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Order History */}
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white text-base flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-zinc-400" />
+            Order History (last 50)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!orderHistory || orderHistory.length === 0 ? (
+            <div className="text-center py-6 text-zinc-500 text-sm">No order history yet</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-800">
+                    {["Symbol", "Side", "Type", "Qty", "Filled Avg", "Status", "Mode", "Submitted"].map((h) => (
+                      <th key={h} className="text-left text-zinc-500 text-xs py-2 pr-4 font-medium">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {orderHistory.map((o) => (
+                    <tr key={o.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                      <td className="py-2 pr-4 font-mono text-white font-semibold">{o.symbol}</td>
+                      <td className="py-2 pr-4">
+                        <Badge className={o.side === "buy" ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}>
+                          {o.side.toUpperCase()}
+                        </Badge>
+                      </td>
+                      <td className="py-2 pr-4 text-zinc-300 capitalize">{o.orderType}</td>
+                      <td className="py-2 pr-4 font-mono text-zinc-300">{o.qty}</td>
+                      <td className="py-2 pr-4 font-mono text-zinc-300">{o.filledAvgPrice ? `$${o.filledAvgPrice.toFixed(2)}` : "—"}</td>
+                      <td className="py-2 pr-4">
+                        <Badge variant="outline" className={`border-zinc-700 text-xs ${
+                          o.status === "filled" ? "text-emerald-400 border-emerald-800" :
+                          o.status === "canceled" ? "text-red-400 border-red-800" :
+                          "text-zinc-400"
+                        }`}>{o.status}</Badge>
+                      </td>
+                      <td className="py-2 pr-4">
+                        <Badge className="bg-amber-500/10 text-amber-400 border-amber-700/30 text-xs">{o.mode.toUpperCase()}</Badge>
+                      </td>
+                      <td className="py-2 text-zinc-500 text-xs">{new Date(o.submittedAt).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Risk Management Tab Component ───────────────────────────────────────────
 function RiskManagementTab() {
   const utils = trpc.useUtils();
@@ -713,6 +1086,10 @@ export default function TradingBot() {
             <TabsTrigger value="strategies" className="data-[state=active]:bg-zinc-700">
               <Target className="w-4 h-4 mr-1" />
               Strategies
+            </TabsTrigger>
+            <TabsTrigger value="execution" className="data-[state=active]:bg-zinc-700">
+              <Activity className="w-4 h-4 mr-1" />
+              Execution
             </TabsTrigger>
             <TabsTrigger value="risk" className="data-[state=active]:bg-zinc-700">
               <Shield className="w-4 h-4 mr-1" />
@@ -1265,6 +1642,11 @@ export default function TradingBot() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          {/* ── Execution Tab ── */}
+          <TabsContent value="execution">
+            <ExecutionTab />
           </TabsContent>
 
           {/* ── Risk Config Tab ── */}
