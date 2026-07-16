@@ -6768,6 +6768,117 @@ const tradingBotRouter = router({
     const { getSupportedSymbols } = await import("./tradingBot/data");
     return getSupportedSymbols();
   }),
+
+  // ─── Signals Module ────────────────────────────────────────────────────
+
+  /**
+   * Generate a single signal for one symbol using cached OHLCV candles.
+   * Fetches candles from DB cache (does NOT trigger a live Alpaca call).
+   */
+  generateSignal: protectedProcedure
+    .input(z.object({
+      symbol:       z.string().min(1).max(20),
+      timeframe:    z.enum(["1m","5m","15m","30m","1h","4h","1d"]).default("1d"),
+      strategy:     z.enum(["sma_crossover","ema_crossover","macd"]).default("sma_crossover"),
+      fastPeriod:   z.number().int().min(2).max(200).optional(),
+      slowPeriod:   z.number().int().min(3).max(500).optional(),
+      signalPeriod: z.number().int().min(2).max(50).optional(),
+      rsiPeriod:    z.number().int().min(2).max(50).optional(),
+      portfolioValue:    z.number().positive().optional(),
+      riskPctPerTrade:   z.number().min(0.001).max(0.5).optional(),
+      stopLossPct:       z.number().min(0.001).max(0.5).optional(),
+      takeProfitPct:     z.number().min(0.001).max(1).optional(),
+      maxPositionPct:    z.number().min(0.001).max(1).optional(),
+      limit:        z.number().int().min(30).max(1000).default(200),
+    }))
+    .query(async ({ input }) => {
+      const { getCachedOHLCV } = await import("./tradingBot/data");
+      const { generateSignal } = await import("./tradingBot/signals");
+
+      const candles = await getCachedOHLCV(input.symbol, input.timeframe, undefined, undefined, input.limit);
+      if (candles.length < 3) {
+        return {
+          symbol: input.symbol, action: "HOLD" as const, confidence: 0,
+          positionSize: 0, price: 0, stopLoss: 0, takeProfit: 0,
+          strategy: input.strategy, reason: "No cached candles — run fetchOHLCV first",
+          indicators: { fastMA: 0, slowMA: 0, maSpreadPct: 0 },
+          timestamp: Date.now(),
+        };
+      }
+
+      return generateSignal(
+        input.symbol,
+        candles,
+        input.strategy,
+        {
+          fastPeriod:   input.fastPeriod,
+          slowPeriod:   input.slowPeriod,
+          signalPeriod: input.signalPeriod,
+          rsiPeriod:    input.rsiPeriod,
+        },
+        {
+          portfolioValue:  input.portfolioValue,
+          riskPctPerTrade: input.riskPctPerTrade,
+          stopLossPct:     input.stopLossPct,
+          takeProfitPct:   input.takeProfitPct,
+          maxPositionPct:  input.maxPositionPct,
+        }
+      );
+    }),
+
+  /**
+   * Generate signals for multiple symbols in one call.
+   * Returns one Signal per symbol using cached candles.
+   */
+  batchSignals: protectedProcedure
+    .input(z.object({
+      symbols:   z.array(z.string().min(1).max(20)).min(1).max(20),
+      timeframe: z.enum(["1m","5m","15m","30m","1h","4h","1d"]).default("1d"),
+      strategy:  z.enum(["sma_crossover","ema_crossover","macd"]).default("sma_crossover"),
+      portfolioValue:  z.number().positive().optional(),
+      riskPctPerTrade: z.number().min(0.001).max(0.5).optional(),
+      stopLossPct:     z.number().min(0.001).max(0.5).optional(),
+      takeProfitPct:   z.number().min(0.001).max(1).optional(),
+      maxPositionPct:  z.number().min(0.001).max(1).optional(),
+      limit:     z.number().int().min(30).max(1000).default(200),
+    }))
+    .query(async ({ input }) => {
+      const { getCachedOHLCV } = await import("./tradingBot/data");
+      const { generateSignal } = await import("./tradingBot/signals");
+
+      const results = await Promise.all(
+        input.symbols.map(async (symbol) => {
+          const candles = await getCachedOHLCV(symbol, input.timeframe, undefined, undefined, input.limit);
+          if (candles.length < 3) {
+            return {
+              symbol, action: "HOLD" as const, confidence: 0,
+              positionSize: 0, price: 0, stopLoss: 0, takeProfit: 0,
+              strategy: input.strategy, reason: "No cached candles",
+              indicators: { fastMA: 0, slowMA: 0, maSpreadPct: 0 },
+              timestamp: Date.now(),
+            };
+          }
+          return generateSignal(
+            symbol, candles, input.strategy,
+            {},
+            {
+              portfolioValue:  input.portfolioValue,
+              riskPctPerTrade: input.riskPctPerTrade,
+              stopLossPct:     input.stopLossPct,
+              takeProfitPct:   input.takeProfitPct,
+              maxPositionPct:  input.maxPositionPct,
+            }
+          );
+        })
+      );
+      return results;
+    }),
+
+  /** Return metadata for all available strategies */
+  getStrategyInfo: publicProcedure.query(async () => {
+    const { getStrategyInfo } = await import("./tradingBot/signals");
+    return getStrategyInfo();
+  }),
 });
 
 export const appRouter = router({

@@ -2855,6 +2855,23 @@
 - [ ] Add risk management settings panel (stop-loss, position sizing, max drawdown)
 - [ ] Push updated code to GitHub AI-Money-Machine
 
+## Signals Module (MA Crossover Strategy)
+
+- [x] server/tradingBot/signals.ts — pure functions, no I/O, no side effects
+- [x] Math helpers: sma(), ema(), emaSeries(), rsi() (Wilder smoothing), macd()
+- [x] Position sizing: calculatePositionSize() — Kelly fixed-fractional, clamped to maxPositionPct, floored to integer
+- [x] Exit prices: calculateExitPrices() — stop-loss and take-profit from entry price + config
+- [x] Confidence scoring: computeConfidence() — MA spread normalised + RSI penalty, clamped [0.05, 0.95]
+- [x] Strategy: smaCrossoverSignal() — golden/death cross with RSI overbought/oversold filter
+- [x] Strategy: emaCrossoverSignal() — same logic, exponential MAs
+- [x] Strategy: macdSignal() — histogram sign crossover (MACD line vs signal line)
+- [x] Dispatcher: generateSignal() — merges partial config overrides, routes to strategy
+- [x] Batch: batchSignals() — map over symbol+candles array
+- [x] Metadata: getStrategyInfo() — display names, descriptions, pros/cons, minCandlesRequired
+- [x] tRPC procedures: tradingBot.generateSignal, batchSignals, getStrategyInfo
+- [x] TradingBot.tsx updated to call live signal procedures and render real output
+- [x] Unit tests: server/tradingBot.signals.test.ts — 73/73 passing
+
 ## OHLCV Data Module (Trading Bot)
 
 - [x] ohlcv_cache table added to Drizzle schema (symbol, timeframe, openTime, OHLCV, source enum, composite index)

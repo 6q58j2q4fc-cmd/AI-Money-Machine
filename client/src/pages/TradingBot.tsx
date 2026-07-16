@@ -44,14 +44,28 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Signal = {
+type SignalAction = "BUY" | "SELL" | "HOLD";
+
+type LiveSignal = {
   symbol: string;
-  action: "BUY" | "SELL" | "HOLD";
+  action: SignalAction;
   confidence: number;
+  positionSize: number;
   price: number;
+  stopLoss: number;
+  takeProfit: number;
+  strategy: string;
   reason: string;
-  indicators: { rsi: number; macd: number; bb_position: number };
-  timestamp: string;
+  indicators: {
+    fastMA: number;
+    slowMA: number;
+    maSpreadPct: number;
+    rsi?: number;
+    macdLine?: number;
+    signalLine?: number;
+    macdHistogram?: number;
+  };
+  timestamp: number;
 };
 
 type BacktestResult = {
@@ -168,9 +182,29 @@ export default function TradingBot() {
     refetchInterval: 30_000,
   });
 
-  // Signals
-  const { data: signals, isLoading: signalsLoading, refetch: refetchSignals } =
-    trpc.tradingBot.getSignals.useQuery(undefined, { refetchInterval: 60_000 });
+  // Live signals — batch across all 10 default stock symbols
+  const [signalStrategy, setSignalStrategy] = useState<"sma_crossover" | "ema_crossover" | "macd">("sma_crossover");
+  const [signalTimeframe, setSignalTimeframe] = useState<"1d" | "1h" | "4h">("1d");
+  const signalSymbols = useMemo(() => ["AAPL","MSFT","GOOGL","AMZN","TSLA","NVDA","META","SPY","QQQ","AMD"], []);
+
+  const { data: liveSignals, isLoading: signalsLoading, refetch: refetchSignals } =
+    trpc.tradingBot.batchSignals.useQuery(
+      { symbols: signalSymbols, timeframe: signalTimeframe, strategy: signalStrategy },
+      { refetchInterval: 60_000 }
+    );
+
+  // Strategy metadata from server
+  const { data: strategyInfoList } = trpc.tradingBot.getStrategyInfo.useQuery();
+
+  // Fetch OHLCV data for all symbols (triggers cache population)
+  const fetchOHLCV = trpc.tradingBot.fetchOHLCV.useMutation({
+    onSuccess: (data) => {
+      const loaded = data.filter((r: { candles: unknown[] }) => r.candles.length > 0).length;
+      toast.success("Market Data Loaded", { description: `Fetched candles for ${loaded}/${data.length} symbols` });
+      refetchSignals();
+    },
+    onError: (err) => toast.error("Data Fetch Failed", { description: err.message }),
+  });
 
   // Bot controls
   const startBot = trpc.tradingBot.startBot.useMutation({
@@ -213,6 +247,10 @@ export default function TradingBot() {
   }, [btResult]);
 
   const strategyLabels: Record<string, string> = {
+    sma_crossover: "SMA Crossover",
+    ema_crossover: "EMA Crossover",
+    macd: "MACD",
+    // legacy labels kept for backtest display
     macd_rsi: "MACD + RSI",
     bollinger: "Bollinger Bands",
     ma_crossover: "MA Crossover",
@@ -338,63 +376,143 @@ export default function TradingBot() {
 
           {/* ── Signals Tab ── */}
           <TabsContent value="signals">
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-white text-base flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-amber-400" />
-                  Latest Trading Signals
-                  <Badge variant="outline" className="ml-auto text-xs border-zinc-700 text-zinc-400">
-                    Auto-refreshes every 60s
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {signalsLoading ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="h-12 bg-zinc-800 rounded animate-pulse" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-zinc-500 text-xs uppercase border-b border-zinc-800">
-                          <th className="text-left pb-2 pr-4">Symbol</th>
-                          <th className="text-left pb-2 pr-4">Signal</th>
-                          <th className="text-left pb-2 pr-4 w-32">Confidence</th>
-                          <th className="text-right pb-2 pr-4">Price</th>
-                          <th className="text-right pb-2 pr-4">RSI</th>
-                          <th className="text-left pb-2">Reason</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-800/50">
-                        {(signals as Signal[] | undefined)?.map((s) => (
-                          <tr key={s.symbol} className="hover:bg-zinc-800/30 transition-colors">
-                            <td className="py-3 pr-4 font-mono font-bold text-white">{s.symbol}</td>
-                            <td className="py-3 pr-4">
-                              <ActionBadge action={s.action} />
-                            </td>
-                            <td className="py-3 pr-4 w-32">
-                              <ConfidenceBar value={s.confidence} />
-                            </td>
-                            <td className="py-3 pr-4 text-right font-mono text-zinc-300">
-                              ${s.price.toFixed(2)}
-                            </td>
-                            <td className="py-3 pr-4 text-right font-mono text-zinc-400">
-                              {s.indicators.rsi.toFixed(1)}
-                            </td>
-                            <td className="py-3 text-zinc-400 text-xs max-w-xs truncate">
-                              {s.reason}
-                            </td>
+            <div className="space-y-4">
+              {/* Controls row */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-zinc-500">Strategy</span>
+                  <Select value={signalStrategy} onValueChange={(v) => setSignalStrategy(v as typeof signalStrategy)}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white h-8 text-xs w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700">
+                      <SelectItem value="sma_crossover">SMA Crossover</SelectItem>
+                      <SelectItem value="ema_crossover">EMA Crossover</SelectItem>
+                      <SelectItem value="macd">MACD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-zinc-500">Timeframe</span>
+                  <Select value={signalTimeframe} onValueChange={(v) => setSignalTimeframe(v as typeof signalTimeframe)}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white h-8 text-xs w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700">
+                      <SelectItem value="1h">1 Hour</SelectItem>
+                      <SelectItem value="4h">4 Hour</SelectItem>
+                      <SelectItem value="1d">Daily</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 h-8 text-xs"
+                  onClick={() => fetchOHLCV.mutate({ symbols: signalSymbols, timeframe: signalTimeframe })}
+                  disabled={fetchOHLCV.isPending}
+                >
+                  {fetchOHLCV.isPending ? <RefreshCw className="w-3 h-3 mr-1 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+                  {fetchOHLCV.isPending ? "Fetching…" : "Fetch Market Data"}
+                </Button>
+                <Badge variant="outline" className="ml-auto text-xs border-zinc-700 text-zinc-400">
+                  Auto-refreshes every 60s
+                </Badge>
+              </div>
+
+              <Card className="bg-zinc-900 border-zinc-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-base flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-400" />
+                    {strategyLabels[signalStrategy]} Signals — {signalTimeframe.toUpperCase()} bars
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {signalsLoading ? (
+                    <div className="space-y-3">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="h-12 bg-zinc-800 rounded animate-pulse" />
+                      ))}
+                    </div>
+                  ) : !liveSignals || liveSignals.length === 0 ? (
+                    <div className="text-center py-12 text-zinc-500">
+                      <Zap className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                      <p className="text-sm">No cached candles yet.</p>
+                      <p className="text-xs mt-1">Click <strong>Fetch Market Data</strong> above to load OHLCV data from Alpaca.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-zinc-500 text-xs uppercase border-b border-zinc-800">
+                            <th className="text-left pb-2 pr-4">Symbol</th>
+                            <th className="text-left pb-2 pr-4">Signal</th>
+                            <th className="text-left pb-2 pr-4 w-32">Confidence</th>
+                            <th className="text-right pb-2 pr-4">Price</th>
+                            <th className="text-right pb-2 pr-4">Fast MA</th>
+                            <th className="text-right pb-2 pr-4">Slow MA</th>
+                            <th className="text-right pb-2 pr-4">RSI</th>
+                            <th className="text-right pb-2 pr-4">Size</th>
+                            <th className="text-left pb-2">Reason</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-800/50">
+                          {(liveSignals as LiveSignal[]).map((s) => (
+                            <tr key={s.symbol} className="hover:bg-zinc-800/30 transition-colors">
+                              <td className="py-3 pr-4 font-mono font-bold text-white">{s.symbol}</td>
+                              <td className="py-3 pr-4">
+                                <ActionBadge action={s.action} />
+                              </td>
+                              <td className="py-3 pr-4 w-32">
+                                <ConfidenceBar value={s.confidence} />
+                              </td>
+                              <td className="py-3 pr-4 text-right font-mono text-zinc-300">
+                                {s.price > 0 ? `$${s.price.toFixed(2)}` : "—"}
+                              </td>
+                              <td className="py-3 pr-4 text-right font-mono text-zinc-400 text-xs">
+                                {s.indicators.fastMA > 0 ? s.indicators.fastMA.toFixed(2) : "—"}
+                              </td>
+                              <td className="py-3 pr-4 text-right font-mono text-zinc-400 text-xs">
+                                {s.indicators.slowMA > 0 ? s.indicators.slowMA.toFixed(2) : "—"}
+                              </td>
+                              <td className="py-3 pr-4 text-right font-mono text-zinc-400 text-xs">
+                                {s.indicators.rsi != null ? s.indicators.rsi.toFixed(1) : "—"}
+                              </td>
+                              <td className="py-3 pr-4 text-right font-mono text-zinc-300 text-xs">
+                                {s.positionSize > 0 ? s.positionSize : "—"}
+                              </td>
+                              <td className="py-3 text-zinc-400 text-xs max-w-xs truncate" title={s.reason}>
+                                {s.reason}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* BUY/SELL summary strip */}
+              {liveSignals && liveSignals.length > 0 && (
+                <div className="grid grid-cols-3 gap-3">
+                  {(["BUY","SELL","HOLD"] as SignalAction[]).map((action) => {
+                    const count = (liveSignals as LiveSignal[]).filter((s) => s.action === action).length;
+                    const color = action === "BUY" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/30"
+                      : action === "SELL" ? "text-red-400 bg-red-500/10 border-red-500/30"
+                      : "text-zinc-400 bg-zinc-800 border-zinc-700";
+                    return (
+                      <Card key={action} className={`border ${color}`}>
+                        <CardContent className="p-3 text-center">
+                          <p className="text-2xl font-bold">{count}</p>
+                          <p className="text-xs uppercase tracking-wider mt-0.5">{action}</p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           {/* ── Backtest Tab ── */}
@@ -662,80 +780,81 @@ export default function TradingBot() {
             </div>
           </TabsContent>
 
-          {/* ── Strategies Tab ── */}
+          {/* ── Strategies Tab — driven by getStrategyInfo() from server ── */}
           <TabsContent value="strategies">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                {
-                  name: "ML Ensemble",
-                  key: "ml_ensemble",
-                  description:
-                    "Combines MACD+RSI, Bollinger, and MA Crossover signals with weighted voting. Requires 3/4 models to agree before generating a trade signal. Best for volatile markets.",
-                  indicators: ["MACD", "RSI", "Bollinger Bands", "MA Crossover"],
-                  best: "All market conditions",
-                  risk: "Medium",
-                },
-                {
-                  name: "MACD + RSI",
-                  key: "macd_rsi",
-                  description:
-                    "Combines MACD crossover signals with RSI overbought/oversold confirmation. Buys when MACD crosses up and RSI < 40; sells when MACD crosses down and RSI > 60.",
-                  indicators: ["MACD (12/26/9)", "RSI (14)"],
-                  best: "Trending markets",
-                  risk: "Medium-Low",
-                },
-                {
-                  name: "Bollinger Bands",
-                  key: "bollinger",
-                  description:
-                    "Mean-reversion strategy. Buys when price touches lower band with RSI oversold; sells at upper band. Uses ATR for dynamic stop-loss placement.",
-                  indicators: ["Bollinger Bands (20/2)", "RSI (14)", "ATR (14)"],
-                  best: "Range-bound markets",
-                  risk: "Low-Medium",
-                },
-                {
-                  name: "MA Crossover",
-                  key: "ma_crossover",
-                  description:
-                    "Classic golden/death cross strategy using 50-day and 200-day moving averages. Trend-following with volume confirmation to filter false signals.",
-                  indicators: ["SMA 50", "SMA 200", "Volume"],
-                  best: "Long-term trends",
-                  risk: "Low",
-                },
-              ].map((s) => (
-                <Card key={s.key} className="bg-zinc-900 border-zinc-800">
+              {(strategyInfoList ?? []).map((s) => (
+                <Card key={s.name} className="bg-zinc-900 border-zinc-800">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-white text-base flex items-center justify-between">
-                      {s.name}
+                      {s.displayName}
                       <Badge
                         variant="outline"
-                        className={`text-xs border-zinc-700 ${
-                          status?.strategy === s.key ? "border-emerald-500 text-emerald-400" : "text-zinc-500"
+                        className={`text-xs ${
+                          signalStrategy === s.name
+                            ? "border-emerald-500 text-emerald-400"
+                            : "border-zinc-700 text-zinc-500"
                         }`}
                       >
-                        {status?.strategy === s.key ? "Active" : "Available"}
+                        {signalStrategy === s.name ? "Active" : "Available"}
                       </Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <p className="text-zinc-400 text-sm leading-relaxed">{s.description}</p>
-                    <div className="flex flex-wrap gap-1">
-                      {s.indicators.map((ind) => (
-                        <Badge key={ind} variant="outline" className="text-xs border-zinc-700 text-zinc-400">
-                          {ind}
-                        </Badge>
-                      ))}
-                    </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-zinc-500">Best for: </span>
-                        <span className="text-zinc-300">{s.best}</span>
+                        <span className="text-zinc-500">Fast period: </span>
+                        <span className="text-zinc-300 font-mono">{s.defaultConfig.fastPeriod}</span>
                       </div>
                       <div>
-                        <span className="text-zinc-500">Risk level: </span>
-                        <span className="text-zinc-300">{s.risk}</span>
+                        <span className="text-zinc-500">Slow period: </span>
+                        <span className="text-zinc-300 font-mono">{s.defaultConfig.slowPeriod}</span>
+                      </div>
+                      {s.defaultConfig.signalPeriod && (
+                        <div>
+                          <span className="text-zinc-500">Signal period: </span>
+                          <span className="text-zinc-300 font-mono">{s.defaultConfig.signalPeriod}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-zinc-500">Min candles: </span>
+                        <span className="text-zinc-300 font-mono">{s.minCandlesRequired}</span>
                       </div>
                     </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-zinc-500 uppercase tracking-wider">Pros</p>
+                      <ul className="space-y-0.5">
+                        {s.pros.map((p) => (
+                          <li key={p} className="text-xs text-zinc-400 flex items-start gap-1.5">
+                            <CheckCircle className="w-3 h-3 text-emerald-500 flex-shrink-0 mt-0.5" />{p}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-zinc-500 uppercase tracking-wider">Cons</p>
+                      <ul className="space-y-0.5">
+                        {s.cons.map((c) => (
+                          <li key={c} className="text-xs text-zinc-400 flex items-start gap-1.5">
+                            <AlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />{c}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className={`w-full h-7 text-xs border-zinc-700 ${
+                        signalStrategy === s.name ? "border-emerald-500 text-emerald-400" : "text-zinc-300 hover:bg-zinc-800"
+                      }`}
+                      onClick={() => {
+                        setSignalStrategy(s.name as "sma_crossover" | "ema_crossover" | "macd");
+                        toast.success("Strategy Selected", { description: `Now using ${s.displayName} for signals` });
+                      }}
+                    >
+                      {signalStrategy === s.name ? "Currently Active" : "Use This Strategy"}
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
@@ -829,36 +948,36 @@ export default function TradingBot() {
                 </CardContent>
               </Card>
 
-              {/* Setup Instructions */}
+              {/* Setup Instructions — updated to reflect real Alpaca + signals module */}
               <Card className="bg-zinc-900 border-zinc-800 md:col-span-2">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-white text-base flex items-center gap-2">
                     <Zap className="w-4 h-4 text-blue-400" />
-                    Setup & Integration
+                    How Position Sizing Works
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div className="bg-zinc-800 rounded-lg p-4">
-                      <p className="text-white font-semibold mb-2">1. Data Source</p>
+                      <p className="text-white font-semibold mb-2">1. Risk Per Trade</p>
                       <p className="text-zinc-400 text-xs leading-relaxed">
-                        By default the bot uses <strong className="text-zinc-300">Yahoo Finance</strong> (free, no key needed).
-                        For real-time data, configure a <strong className="text-zinc-300">Polygon.io</strong> API key in Secrets.
+                        Each trade risks <strong className="text-zinc-300">2% of portfolio</strong> ($2,000 on a $100k account).
+                        The position size is calculated as: <code className="text-amber-400">riskAmount / (entryPrice × stopLossPct)</code>.
                       </p>
                     </div>
                     <div className="bg-zinc-800 rounded-lg p-4">
-                      <p className="text-white font-semibold mb-2">2. Paper Trading</p>
+                      <p className="text-white font-semibold mb-2">2. Stop-Loss &amp; Take-Profit</p>
                       <p className="text-zinc-400 text-xs leading-relaxed">
-                        Paper trading simulates real orders without real money. No API key required.
-                        Enable live trading by adding an <strong className="text-zinc-300">Alpaca Markets</strong> API key.
+                        Stop-loss is placed <strong className="text-zinc-300">2% below entry</strong> for longs (above for shorts).
+                        Take-profit targets <strong className="text-zinc-300">4% gain</strong>, giving a 2:1 reward-to-risk ratio.
                       </p>
                     </div>
                     <div className="bg-zinc-800 rounded-lg p-4">
-                      <p className="text-white font-semibold mb-2">3. Python Bot</p>
+                      <p className="text-white font-semibold mb-2">3. Position Cap</p>
                       <p className="text-zinc-400 text-xs leading-relaxed">
-                        The full Python bot is at <code className="text-amber-400">trading_bot/</code>. Run it with{" "}
-                        <code className="text-amber-400">python -m trading_bot.main --mode paper</code> for live signals
-                        via the FastAPI dashboard on port 8001.
+                        No single position can exceed <strong className="text-zinc-300">5% of portfolio value</strong>.
+                        Minimum position size is <strong className="text-zinc-300">1 share</strong>.
+                        All sizing is computed server-side as a pure function.
                       </p>
                     </div>
                   </div>
