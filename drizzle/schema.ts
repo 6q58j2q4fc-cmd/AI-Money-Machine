@@ -1614,3 +1614,36 @@ export const backtestTrades = mysqlTable("backtest_trades", {
 });
 export type BacktestTrade = typeof backtestTrades.$inferSelect;
 export type InsertBacktestTrade = typeof backtestTrades.$inferInsert;
+
+// ─── Risk Management ──────────────────────────────────────────────────────────
+
+export const riskState = mysqlTable("risk_state", {
+  id:                    int("id").primaryKey().autoincrement(),
+  portfolioValue:        double("portfolioValue").notNull().default(100000),
+  dayStartValue:         double("dayStartValue").notNull().default(100000),
+  peakValue:             double("peakValue").notNull().default(100000),
+  realisedDailyPnl:      double("realisedDailyPnl").notNull().default(0),
+  lastDailyResetAt:      bigint("lastDailyResetAt", { mode: "number" }).notNull().default(0),
+  killSwitchActive:      boolean("killSwitchActive").notNull().default(false),
+  killSwitchReason:      varchar("killSwitchReason", { length: 40 }),
+  killSwitchActivatedAt: bigint("killSwitchActivatedAt", { mode: "number" }),
+  configJson:            varchar("configJson", { length: 2000 }).notNull().default("{}"),
+  updatedAt:             timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type RiskStateRow = typeof riskState.$inferSelect;
+export type InsertRiskStateRow = typeof riskState.$inferInsert;
+
+export const riskEvents = mysqlTable("risk_events", {
+  id:             int("id").primaryKey().autoincrement(),
+  eventType:      varchar("eventType", { length: 40 }).notNull(),
+  severity:       mysqlEnum("severity", ["info", "warning", "critical"]).notNull(),
+  message:        text("message").notNull(),
+  portfolioValue: double("portfolioValue").notNull(),
+  dailyPnl:       double("dailyPnl").notNull(),
+  drawdownPct:    double("drawdownPct").notNull(),
+  triggeredAt:    bigint("triggeredAt", { mode: "number" }).notNull(),
+  acknowledgedAt: bigint("acknowledgedAt", { mode: "number" }),
+  createdAt:      timestamp("createdAt").defaultNow().notNull(),
+});
+export type RiskEventRow = typeof riskEvents.$inferSelect;
+export type InsertRiskEventRow = typeof riskEvents.$inferInsert;

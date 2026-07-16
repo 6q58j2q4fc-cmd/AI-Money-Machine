@@ -1,0 +1,1 @@
+ALTER TABLE `risk_state` MODIFY COLUMN `configJson` varchar(2000) NOT NULL DEFAULT '{}';

@@ -191,6 +191,321 @@ function MetricCard({
   );
 }
 
+
+// ─── Risk Management Tab Component ───────────────────────────────────────────
+function RiskManagementTab() {
+  const utils = trpc.useUtils();
+
+  const { data: riskData, isLoading: riskLoading, refetch: refetchRisk } =
+    trpc.tradingBot.getRiskState.useQuery(undefined, { refetchInterval: 15_000 });
+
+  const { data: riskEvents } = trpc.tradingBot.getRiskEvents.useQuery({ limit: 50 });
+
+  const [configEditing, setConfigEditing] = useState(false);
+  const [cfgForm, setCfgForm] = useState({
+    maxRiskPctPerTrade: "",
+    stopLossPct: "",
+    takeProfitPct: "",
+    maxPositionPct: "",
+    dailyLossLimitPct: "",
+    maxDrawdownPct: "",
+  });
+
+  const updateConfig = trpc.tradingBot.updateRiskConfig.useMutation({
+    onSuccess: () => {
+      toast.success("Risk config updated");
+      setConfigEditing(false);
+      utils.tradingBot.getRiskState.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const resetDaily = trpc.tradingBot.resetDailyLoss.useMutation({
+    onSuccess: () => { toast.success("Daily loss counter reset"); utils.tradingBot.getRiskState.invalidate(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const ackKill = trpc.tradingBot.acknowledgeKillSwitch.useMutation({
+    onSuccess: (r) => {
+      if (r.success) { toast.success("Kill switch deactivated. Trading may resume."); utils.tradingBot.getRiskState.invalidate(); }
+      else toast.error(r.message);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const cfg = riskData?.config;
+  const state = riskData?.state;
+  const dailyCheck = riskData?.dailyCheck;
+  const killCheck = riskData?.killCheck;
+
+  function startEdit() {
+    if (!cfg) return;
+    setCfgForm({
+      maxRiskPctPerTrade: String(cfg.maxRiskPctPerTrade),
+      stopLossPct: String(cfg.stopLossPct),
+      takeProfitPct: String(cfg.takeProfitPct),
+      maxPositionPct: String(cfg.maxPositionPct),
+      dailyLossLimitPct: String(cfg.dailyLossLimitPct),
+      maxDrawdownPct: String(cfg.maxDrawdownPct),
+    });
+    setConfigEditing(true);
+  }
+
+  function submitConfig() {
+    const parsed: Record<string, number> = {};
+    for (const [k, v] of Object.entries(cfgForm)) {
+      const n = parseFloat(v);
+      if (!isNaN(n)) parsed[k] = n;
+    }
+    updateConfig.mutate(parsed as any);
+  }
+
+  const severityColor = (s: string) =>
+    s === "critical" ? "text-red-400" : s === "warning" ? "text-amber-400" : "text-zinc-400";
+
+  const eventTypeLabel = (t: string) => t.replace(/_/g, " ");
+
+  if (riskLoading) {
+    return (
+      <div className="flex items-center justify-center h-48 text-zinc-500">
+        <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Loading risk state…
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Kill Switch Banner */}
+      {state?.killSwitchActive && (
+        <div className="bg-red-950 border border-red-700 rounded-xl p-4 flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-red-300 font-semibold text-sm">Kill Switch Active — Trading Halted</p>
+              <p className="text-red-400 text-xs mt-0.5">{state.killSwitchReason ?? "Max drawdown exceeded."}</p>
+              {state.killSwitchActivatedAt && (
+                <p className="text-red-500 text-xs mt-1">
+                  Activated: {new Date(state.killSwitchActivatedAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-red-700 text-red-300 hover:bg-red-900 flex-shrink-0"
+            onClick={() => ackKill.mutate()}
+            disabled={ackKill.isPending}
+          >
+            {ackKill.isPending ? <RefreshCw className="w-3 h-3 animate-spin" /> : "Acknowledge & Resume"}
+          </Button>
+        </div>
+      )}
+
+      {/* Status Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          {
+            label: "Portfolio Value",
+            value: state ? `$${state.portfolioValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—",
+            sub: state ? `Peak: $${state.peakValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "",
+            color: "text-emerald-400",
+          },
+          {
+            label: "Daily P&L",
+            value: state ? `${state.dailyPnl >= 0 ? "+" : ""}$${state.dailyPnl.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—",
+            sub: dailyCheck ? (dailyCheck.allowed ? "Within limit" : "⚠ Limit breached") : "",
+            color: state && state.dailyPnl >= 0 ? "text-emerald-400" : "text-red-400",
+          },
+          {
+            label: "Drawdown",
+            value: state ? `${state.currentDrawdownPct.toFixed(2)}%` : "—",
+            sub: cfg ? `Limit: ${(cfg.maxDrawdownPct * 100).toFixed(0)}%` : "",
+            color: state && cfg && state.currentDrawdownPct > cfg.maxDrawdownPct * 100 * 0.8 ? "text-amber-400" : "text-zinc-300",
+          },
+          {
+            label: "Kill Switch",
+            value: state?.killSwitchActive ? "ACTIVE" : "Standby",
+            sub: state?.killSwitchActive ? "Trading halted" : "All guards passing",
+            color: state?.killSwitchActive ? "text-red-400" : "text-emerald-400",
+          },
+        ].map((m) => (
+          <Card key={m.label} className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-4 pb-3">
+              <p className="text-zinc-500 text-xs mb-1">{m.label}</p>
+              <p className={`text-lg font-bold font-mono ${m.color}`}>{m.value}</p>
+              <p className="text-zinc-600 text-xs mt-0.5">{m.sub}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Risk Config Panel */}
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-white text-base flex items-center gap-2">
+              <Shield className="w-4 h-4 text-amber-400" />
+              Risk Configuration
+            </CardTitle>
+            <div className="flex gap-2">
+              {!configEditing ? (
+                <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 h-7 text-xs" onClick={startEdit}>
+                  Edit
+                </Button>
+              ) : (
+                <>
+                  <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-400 h-7 text-xs" onClick={() => setConfigEditing(false)}>
+                    Cancel
+                  </Button>
+                  <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white h-7 text-xs" onClick={submitConfig} disabled={updateConfig.isPending}>
+                    {updateConfig.isPending ? <RefreshCw className="w-3 h-3 animate-spin" /> : "Save"}
+                  </Button>
+                </>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {cfg && (
+              <div className="space-y-3">
+                {[
+                  { key: "maxRiskPctPerTrade", label: "Max Risk / Trade", value: `${(cfg.maxRiskPctPerTrade * 100).toFixed(1)}%`, desc: "Capital at risk per trade (default 1%)" },
+                  { key: "stopLossPct", label: "Stop Loss", value: `${(cfg.stopLossPct * 100).toFixed(1)}%`, desc: "Auto-exit on loss" },
+                  { key: "takeProfitPct", label: "Take Profit", value: `${(cfg.takeProfitPct * 100).toFixed(1)}%`, desc: "Auto-exit on gain" },
+                  { key: "maxPositionPct", label: "Max Position Size", value: `${(cfg.maxPositionPct * 100).toFixed(0)}%`, desc: "Portfolio cap per position" },
+                  { key: "dailyLossLimitPct", label: "Daily Loss Limit", value: `${(cfg.dailyLossLimitPct * 100).toFixed(0)}%`, desc: "Hard daily loss ceiling" },
+                  { key: "maxDrawdownPct", label: "Max Drawdown Kill", value: `${(cfg.maxDrawdownPct * 100).toFixed(0)}%`, desc: "Kill switch threshold" },
+                ].map((r) => (
+                  <div key={r.key} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
+                    <div>
+                      <p className="text-white text-sm font-medium">{r.label}</p>
+                      <p className="text-zinc-500 text-xs">{r.desc}</p>
+                    </div>
+                    {configEditing ? (
+                      <Input
+                        className="w-24 h-7 text-xs bg-zinc-800 border-zinc-700 text-white font-mono text-right"
+                        value={cfgForm[r.key as keyof typeof cfgForm]}
+                        onChange={(e) => setCfgForm((prev) => ({ ...prev, [r.key]: e.target.value }))}
+                        placeholder={r.value}
+                      />
+                    ) : (
+                      <Badge variant="outline" className="border-zinc-700 text-zinc-300 font-mono">{r.value}</Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Guard Status + Manual Controls */}
+        <div className="space-y-4">
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-white text-base flex items-center gap-2">
+                <Target className="w-4 h-4 text-blue-400" />
+                Guard Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {[
+                  { label: "Daily Loss Guard", ok: dailyCheck?.allowed ?? true, detail: dailyCheck?.message ?? "—" },
+                  { label: "Max Drawdown Guard", ok: killCheck?.allowed ?? true, detail: killCheck?.message ?? "—" },
+                  { label: "Kill Switch", ok: !(state?.killSwitchActive ?? false), detail: state?.killSwitchActive ? `Active since ${state.killSwitchActivatedAt ? new Date(state.killSwitchActivatedAt).toLocaleTimeString() : "unknown"}` : "Inactive" },
+                ].map((g) => (
+                  <div key={g.label} className="flex items-start gap-3 py-2 border-b border-zinc-800 last:border-0">
+                    {g.ok ? (
+                      <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                      <p className="text-white text-sm font-medium">{g.label}</p>
+                      <p className="text-zinc-500 text-xs mt-0.5">{g.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-white text-base flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-emerald-400" />
+                Manual Controls
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white text-sm font-medium">Reset Daily Loss Counter</p>
+                  <p className="text-zinc-500 text-xs">Resets today's P&L tracking to zero</p>
+                </div>
+                <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 h-7 text-xs" onClick={() => resetDaily.mutate()} disabled={resetDaily.isPending}>
+                  {resetDaily.isPending ? <RefreshCw className="w-3 h-3 animate-spin" /> : "Reset"}
+                </Button>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white text-sm font-medium">Refresh Risk State</p>
+                  <p className="text-zinc-500 text-xs">Pull latest state from server</p>
+                </div>
+                <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 h-7 text-xs" onClick={() => refetchRisk()}>
+                  <RefreshCw className="w-3 h-3 mr-1" /> Refresh
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Event Log */}
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white text-base flex items-center gap-2">
+            <Activity className="w-4 h-4 text-zinc-400" />
+            Risk Event Log
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!riskEvents || riskEvents.length === 0 ? (
+            <p className="text-zinc-500 text-sm text-center py-6">No risk events recorded yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-zinc-800">
+                    <th className="text-left text-zinc-500 font-medium pb-2 pr-4">Time</th>
+                    <th className="text-left text-zinc-500 font-medium pb-2 pr-4">Event</th>
+                    <th className="text-left text-zinc-500 font-medium pb-2 pr-4">Severity</th>
+                    <th className="text-left text-zinc-500 font-medium pb-2">Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {riskEvents.map((ev) => (
+                    <tr key={ev.id} className="border-b border-zinc-800/50 last:border-0">
+                      <td className="py-2 pr-4 text-zinc-500 font-mono whitespace-nowrap">
+                        {new Date(Number(ev.triggeredAt)).toLocaleString()}
+                      </td>
+                      <td className="py-2 pr-4 text-zinc-300 font-mono">{eventTypeLabel(ev.eventType)}</td>
+                      <td className="py-2 pr-4">
+                        <span className={`font-semibold ${severityColor(ev.severity)}`}>{ev.severity.toUpperCase()}</span>
+                      </td>
+                      <td className="py-2 text-zinc-400">{ev.message}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function TradingBot() {
@@ -954,127 +1269,7 @@ export default function TradingBot() {
 
           {/* ── Risk Config Tab ── */}
           <TabsContent value="risk">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-zinc-900 border-zinc-800">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-white text-base flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-amber-400" />
-                    Risk Parameters
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      { label: "Max Position Size", value: "5%", desc: "Maximum % of portfolio per trade" },
-                      { label: "Stop Loss", value: "2%", desc: "Automatic exit on loss" },
-                      { label: "Take Profit", value: "4%", desc: "Automatic exit on gain" },
-                      { label: "Max Drawdown", value: "15%", desc: "Circuit breaker — halts trading" },
-                      { label: "Max Open Trades", value: "5", desc: "Concurrent position limit" },
-                    ].map((r) => (
-                      <div key={r.label} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
-                        <div>
-                          <p className="text-white text-sm font-medium">{r.label}</p>
-                          <p className="text-zinc-500 text-xs">{r.desc}</p>
-                        </div>
-                        <Badge variant="outline" className="border-zinc-700 text-zinc-300 font-mono">
-                          {r.value}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-zinc-900 border-zinc-800">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-white text-base flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-emerald-400" />
-                    Position Sizing Methods
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      {
-                        name: "Fixed Percent",
-                        desc: "Allocates a fixed % of portfolio to each trade. Simple and consistent.",
-                        active: true,
-                      },
-                      {
-                        name: "Kelly Criterion",
-                        desc: "Mathematically optimal sizing based on win rate and average win/loss ratio.",
-                        active: false,
-                      },
-                      {
-                        name: "ATR-Based",
-                        desc: "Sizes positions based on market volatility (Average True Range). Reduces size in volatile markets.",
-                        active: false,
-                      },
-                      {
-                        name: "Fixed Dollar",
-                        desc: "Fixed dollar amount per trade regardless of portfolio size.",
-                        active: false,
-                      },
-                    ].map((m) => (
-                      <div key={m.name} className="flex items-start gap-3 py-2 border-b border-zinc-800 last:border-0">
-                        <div
-                          className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
-                            m.active ? "bg-emerald-400" : "bg-zinc-600"
-                          }`}
-                        />
-                        <div>
-                          <p className="text-white text-sm font-medium flex items-center gap-2">
-                            {m.name}
-                            {m.active && (
-                              <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                                Active
-                              </Badge>
-                            )}
-                          </p>
-                          <p className="text-zinc-500 text-xs mt-0.5">{m.desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Setup Instructions — updated to reflect real Alpaca + signals module */}
-              <Card className="bg-zinc-900 border-zinc-800 md:col-span-2">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-white text-base flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-blue-400" />
-                    How Position Sizing Works
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="bg-zinc-800 rounded-lg p-4">
-                      <p className="text-white font-semibold mb-2">1. Risk Per Trade</p>
-                      <p className="text-zinc-400 text-xs leading-relaxed">
-                        Each trade risks <strong className="text-zinc-300">2% of portfolio</strong> ($2,000 on a $100k account).
-                        The position size is calculated as: <code className="text-amber-400">riskAmount / (entryPrice × stopLossPct)</code>.
-                      </p>
-                    </div>
-                    <div className="bg-zinc-800 rounded-lg p-4">
-                      <p className="text-white font-semibold mb-2">2. Stop-Loss &amp; Take-Profit</p>
-                      <p className="text-zinc-400 text-xs leading-relaxed">
-                        Stop-loss is placed <strong className="text-zinc-300">2% below entry</strong> for longs (above for shorts).
-                        Take-profit targets <strong className="text-zinc-300">4% gain</strong>, giving a 2:1 reward-to-risk ratio.
-                      </p>
-                    </div>
-                    <div className="bg-zinc-800 rounded-lg p-4">
-                      <p className="text-white font-semibold mb-2">3. Position Cap</p>
-                      <p className="text-zinc-400 text-xs leading-relaxed">
-                        No single position can exceed <strong className="text-zinc-300">5% of portfolio value</strong>.
-                        Minimum position size is <strong className="text-zinc-300">1 share</strong>.
-                        All sizing is computed server-side as a pure function.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <RiskManagementTab />
           </TabsContent>
         </Tabs>
       </div>

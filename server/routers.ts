@@ -7050,6 +7050,134 @@ const tradingBotRouter = router({
 
       return { trades, windows: result.windows.length };
     }),
+  // ─── Risk Management ──────────────────────────────────────────────────────────
+
+  getRiskState: protectedProcedure.query(async () => {
+    const { buildRiskState, checkDailyLossLimit, checkMaxDrawdown, DEFAULT_RISK_CONFIG } = await import("./tradingBot/risk");
+    const { riskState: riskStateTable } = await import("../drizzle/schema");
+    const dbConn = (await db.getDb())!;
+    let row = (await dbConn.select().from(riskStateTable).limit(1))[0];
+    if (!row) { await dbConn.insert(riskStateTable).values({ id: 1 }); row = (await dbConn.select().from(riskStateTable).limit(1))[0]!; }
+    let config: any;
+    try { config = { ...DEFAULT_RISK_CONFIG, ...JSON.parse(row.configJson || "{}") }; }
+    catch { config = DEFAULT_RISK_CONFIG; }
+    const state = buildRiskState({ portfolioValue: row.portfolioValue, dayStartValue: row.dayStartValue, peakValue: row.peakValue, realisedDailyPnl: row.realisedDailyPnl, killSwitchActive: row.killSwitchActive, killSwitchReason: (row.killSwitchReason as any) ?? null, killSwitchActivatedAt: row.killSwitchActivatedAt ?? null });
+    const dailyCheck = checkDailyLossLimit(state.dailyPnl, state.dayStartValue, config);
+    const killCheck  = checkMaxDrawdown(state.portfolioValue, state.peakValue, state.killSwitchActive, config);
+    return { state, config, dailyCheck, killCheck };
+  }),
+
+  updateRiskConfig: protectedProcedure
+    .input(z.object({
+      maxRiskPctPerTrade:  z.number().min(0.001).max(0.1).optional(),
+      stopLossPct:         z.number().min(0.001).max(0.5).optional(),
+      takeProfitPct:       z.number().min(0.001).max(1.0).optional(),
+      maxPositionPct:      z.number().min(0.01).max(0.5).optional(),
+      dailyLossLimitPct:   z.number().min(0.001).max(0.5).optional(),
+      maxDrawdownPct:      z.number().min(0.01).max(0.9).optional(),
+      minCapitalThreshold: z.number().min(1).max(100000).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { DEFAULT_RISK_CONFIG, buildRiskEvent, buildRiskState } = await import("./tradingBot/risk");
+      const { riskState: riskStateTable, riskEvents: riskEventsTable } = await import("../drizzle/schema");
+      const dbConn = (await db.getDb())!;
+      let row = (await dbConn.select().from(riskStateTable).limit(1))[0];
+      if (!row) { await dbConn.insert(riskStateTable).values({ id: 1 }); row = (await dbConn.select().from(riskStateTable).limit(1))[0]!; }
+      let current: any;
+      try { current = { ...DEFAULT_RISK_CONFIG, ...JSON.parse(row.configJson || "{}") }; }
+      catch { current = DEFAULT_RISK_CONFIG; }
+      const updated = { ...current, ...input };
+      await dbConn.update(riskStateTable).set({ configJson: JSON.stringify(updated) });
+      const state = buildRiskState({ portfolioValue: row.portfolioValue, dayStartValue: row.dayStartValue, peakValue: row.peakValue, realisedDailyPnl: row.realisedDailyPnl, killSwitchActive: row.killSwitchActive, killSwitchReason: (row.killSwitchReason as any) ?? null, killSwitchActivatedAt: row.killSwitchActivatedAt ?? null });
+      const ev = buildRiskEvent("CONFIG_UPDATED", state, `Risk config updated: ${JSON.stringify(input)}`, "info");
+      await dbConn.insert(riskEventsTable).values({ ...ev, triggeredAt: Number(ev.triggeredAt) });
+      return { success: true, config: updated };
+    }),
+
+  updatePortfolioValue: protectedProcedure
+    .input(z.object({ portfolioValue: z.number().positive(), realisedPnlDelta: z.number().optional() }))
+    .mutation(async ({ input }) => {
+      const { buildRiskState, checkMaxDrawdown, resolveKillSwitchTransition, updatePeak, shouldResetDailyState, buildRiskEvent, DEFAULT_RISK_CONFIG } = await import("./tradingBot/risk");
+      const { riskState: riskStateTable, riskEvents: riskEventsTable } = await import("../drizzle/schema");
+      const dbConn = (await db.getDb())!;
+      let row = (await dbConn.select().from(riskStateTable).limit(1))[0];
+      if (!row) { await dbConn.insert(riskStateTable).values({ id: 1 }); row = (await dbConn.select().from(riskStateTable).limit(1))[0]!; }
+      let config: any;
+      try { config = { ...DEFAULT_RISK_CONFIG, ...JSON.parse(row.configJson || "{}") }; }
+      catch { config = DEFAULT_RISK_CONFIG; }
+      const nowMs = Date.now();
+      const needsReset = shouldResetDailyState(row.lastDailyResetAt || 0, nowMs);
+      const newDayStart = needsReset ? input.portfolioValue : row.dayStartValue;
+      const newDailyPnl = needsReset ? 0 : row.realisedDailyPnl + (input.realisedPnlDelta ?? 0);
+      const newPeak = updatePeak(row.peakValue, input.portfolioValue);
+      const state = buildRiskState({ portfolioValue: input.portfolioValue, dayStartValue: newDayStart, peakValue: newPeak, realisedDailyPnl: newDailyPnl, killSwitchActive: row.killSwitchActive, killSwitchReason: (row.killSwitchReason as any) ?? null, killSwitchActivatedAt: row.killSwitchActivatedAt ?? null });
+      const ddCheck = checkMaxDrawdown(input.portfolioValue, newPeak, row.killSwitchActive, config);
+      const { shouldActivate, reason } = resolveKillSwitchTransition(state, ddCheck);
+      const updates: any = { portfolioValue: input.portfolioValue, peakValue: newPeak, dayStartValue: newDayStart, realisedDailyPnl: newDailyPnl };
+      if (needsReset) updates.lastDailyResetAt = nowMs;
+      if (shouldActivate) { updates.killSwitchActive = true; updates.killSwitchReason = reason; updates.killSwitchActivatedAt = nowMs; }
+      await dbConn.update(riskStateTable).set(updates);
+      if (shouldActivate) {
+        const ev = buildRiskEvent("MAX_DRAWDOWN_KILL", { ...state, killSwitchActive: true, killSwitchReason: reason, killSwitchActivatedAt: nowMs }, ddCheck.message, "critical");
+        await dbConn.insert(riskEventsTable).values({ ...ev, triggeredAt: Number(ev.triggeredAt) });
+        const { notifyOwner } = await import("./_core/notification");
+        await notifyOwner({ title: "🚨 Kill Switch Activated", content: ddCheck.message });
+      }
+      return { state: { ...state, killSwitchActive: shouldActivate || row.killSwitchActive }, killSwitchActivated: shouldActivate };
+    }),
+
+  resetDailyLoss: protectedProcedure.mutation(async () => {
+    const { buildRiskState, buildRiskEvent } = await import("./tradingBot/risk");
+    const { riskState: riskStateTable, riskEvents: riskEventsTable } = await import("../drizzle/schema");
+    const dbConn = (await db.getDb())!;
+    let row = (await dbConn.select().from(riskStateTable).limit(1))[0];
+    if (!row) { await dbConn.insert(riskStateTable).values({ id: 1 }); row = (await dbConn.select().from(riskStateTable).limit(1))[0]!; }
+    await dbConn.update(riskStateTable).set({ realisedDailyPnl: 0, dayStartValue: row.portfolioValue, lastDailyResetAt: Date.now() });
+    const state = buildRiskState({ portfolioValue: row.portfolioValue, dayStartValue: row.portfolioValue, peakValue: row.peakValue, realisedDailyPnl: 0, killSwitchActive: row.killSwitchActive, killSwitchReason: (row.killSwitchReason as any) ?? null, killSwitchActivatedAt: row.killSwitchActivatedAt ?? null });
+    const ev = buildRiskEvent("DAILY_RESET", state, "Daily loss counter manually reset.", "info");
+    await dbConn.insert(riskEventsTable).values({ ...ev, triggeredAt: Number(ev.triggeredAt) });
+    return { success: true };
+  }),
+
+  acknowledgeKillSwitch: protectedProcedure.mutation(async () => {
+    const { buildRiskState, buildRiskEvent } = await import("./tradingBot/risk");
+    const { riskState: riskStateTable, riskEvents: riskEventsTable } = await import("../drizzle/schema");
+    const dbConn = (await db.getDb())!;
+    let row = (await dbConn.select().from(riskStateTable).limit(1))[0];
+    if (!row) return { success: false, message: "No risk state found." };
+    if (!row.killSwitchActive) return { success: false, message: "Kill switch is not active." };
+    await dbConn.update(riskStateTable).set({ killSwitchActive: false, killSwitchReason: null, killSwitchActivatedAt: null });
+    const state = buildRiskState({ portfolioValue: row.portfolioValue, dayStartValue: row.dayStartValue, peakValue: row.peakValue, realisedDailyPnl: row.realisedDailyPnl, killSwitchActive: false, killSwitchReason: null, killSwitchActivatedAt: null });
+    const ev = buildRiskEvent("KILL_SWITCH_ACKNOWLEDGED", state, "Kill switch acknowledged and deactivated. Trading may resume.", "info");
+    await dbConn.insert(riskEventsTable).values({ ...ev, triggeredAt: Number(ev.triggeredAt) });
+    return { success: true };
+  }),
+
+  getRiskEvents: protectedProcedure
+    .input(z.object({ limit: z.number().min(1).max(200).default(50) }))
+    .query(async ({ input }) => {
+      const { riskEvents: riskEventsTable } = await import("../drizzle/schema");
+      const { desc: descOrder } = await import("drizzle-orm");
+      const dbConn = (await db.getDb())!;
+      const events = await dbConn.select().from(riskEventsTable).orderBy(descOrder(riskEventsTable.triggeredAt)).limit(input.limit);
+      return events;
+    }),
+
+  evaluateTradeRisk: protectedProcedure
+    .input(z.object({ entryPrice: z.number().positive() }))
+    .query(async ({ input }) => {
+      const { buildRiskState, evaluateTradeRisk, DEFAULT_RISK_CONFIG } = await import("./tradingBot/risk");
+      const { riskState: riskStateTable } = await import("../drizzle/schema");
+      const dbConn = (await db.getDb())!;
+      let row = (await dbConn.select().from(riskStateTable).limit(1))[0];
+      if (!row) { await dbConn.insert(riskStateTable).values({ id: 1 }); row = (await dbConn.select().from(riskStateTable).limit(1))[0]!; }
+      let config: any;
+      try { config = { ...DEFAULT_RISK_CONFIG, ...JSON.parse(row.configJson || "{}") }; }
+      catch { config = DEFAULT_RISK_CONFIG; }
+      const state = buildRiskState({ portfolioValue: row.portfolioValue, dayStartValue: row.dayStartValue, peakValue: row.peakValue, realisedDailyPnl: row.realisedDailyPnl, killSwitchActive: row.killSwitchActive, killSwitchReason: (row.killSwitchReason as any) ?? null, killSwitchActivatedAt: row.killSwitchActivatedAt ?? null });
+      return evaluateTradeRisk(input.entryPrice, state, config);
+    }),
+
 });
 
 export const appRouter = router({

@@ -2904,3 +2904,23 @@
 - [x] tRPC procedures: runWalkForward, getWalkForwardTrades, listBacktestRuns
 - [x] TradingBot.tsx updated: aggregate metrics grid, equity curve chart, window breakdown table, window detail panel
 - [x] Unit tests: server/tradingBot.backtest.test.ts — 54/54 passing
+
+## Risk Management Module
+
+- [x] server/tradingBot/risk.ts — pure risk functions, no I/O, no side effects
+- [x] calculateRiskAdjustedSize() — max 1% capital per trade, position-capped, integer shares
+- [x] checkDailyLossLimit() — hard daily-loss limit guard (HALT/ALLOW + severity + message)
+- [x] checkMaxDrawdown() — max drawdown kill switch guard (HALT/ALLOW + severity + message)
+- [x] checkCapitalSufficiency() — minimum capital threshold guard
+- [x] evaluateTradeRisk() — composite guard: kill switch → daily loss → capital → sizing
+- [x] buildRiskState() — pure snapshot computation (dailyPnl, drawdownPct, killSwitchActive)
+- [x] resolveKillSwitchTransition() — determines if kill switch should activate
+- [x] buildRiskEvent() — creates event record for persistence
+- [x] updatePeak() — pure peak-value tracker
+- [x] shouldResetDailyState() — UTC-midnight daily reset detection
+- [x] DEFAULT_RISK_CONFIG: 1% risk/trade, 2% daily loss limit, 10% max drawdown kill switch
+- [x] DB tables: risk_state, risk_events (migrated to production)
+- [x] tRPC procedures: getRiskState, updateRiskConfig, resetDailyLoss, acknowledgeKillSwitch, getRiskEvents
+- [x] TradingBot.tsx Risk tab: kill switch banner, 4 status cards, config editor, guard status panel, manual controls, event log
+- [x] Owner alert dispatched via notifyOwner() when kill switch activates
+- [x] Unit tests: server/tradingBot.risk.test.ts — 53/53 passing
